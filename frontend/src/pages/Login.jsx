@@ -11,18 +11,21 @@ const Login = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     
-    // Developer Trick: Route based on the email entered!
+    // 1. Give them the "logged in" wristband
+    localStorage.setItem('isLoggedIn', 'true');
+    
+    // 2. Route them based on their email, and save their role!
     if (email === 'admin@uni.edu') {
-      alert('Welcome Admin! Routing to control panel...');
+      localStorage.setItem('userRole', 'admin');
       navigate('/admin-dashboard');
     } 
     else if (email === 'counsellor@uni.edu') {
-      alert('Welcome Counsellor! Routing to your schedule...');
+      localStorage.setItem('userRole', 'counsellor');
       navigate('/counsellor-dashboard');
     } 
     else {
-      // If it is any other email, assume it is a student
-      alert('Welcome Student! Routing to your dashboard...');
+      // If it's any other email, treat them as a student
+      localStorage.setItem('userRole', 'student');
       navigate('/student-dashboard');
     }
   };

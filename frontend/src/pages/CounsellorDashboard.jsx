@@ -7,6 +7,11 @@ const CounsellorDashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // Destroy the wristband!
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    
+    // Send them back to login
     navigate('/');
   };
 

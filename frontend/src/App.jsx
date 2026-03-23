@@ -7,17 +7,36 @@ import OTPVerification from './pages/OTPVerification'; // <-- We imported it her
 import StudentDashboard from './pages/StudentDashboard'; // <-- Import it!
 import CounsellorDashboard from './pages/CounsellorDashboard'; // <-- Imported
 import AdminDashboard from './pages/AdminDashboard';           // <-- Imported
+import ProtectedRoute from './components/ProtectedRoute'; // <-- Import the Bouncer!
+
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes - Anyone can see these */}
         <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* We added this route! */}
-        <Route path="/verify-otp" element={<OTPVerification />} /> {/* <-- We added the route here! */}
-        <Route path="/student-dashboard" element={<StudentDashboard />} /> {/* <-- Add route! */}
-        <Route path="/counsellor-dashboard" element={<CounsellorDashboard />} /> {/* <-- Added */}
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />           {/* <-- Added */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<OTPVerification />} />
+        
+        {/* Protected Routes - The Bouncer is guarding these! */}
+        <Route path="/student-dashboard" element={
+          <ProtectedRoute>
+            <StudentDashboard />
+          </ProtectedRoute>
+        } /> 
+        
+        <Route path="/counsellor-dashboard" element={
+          <ProtectedRoute>
+            <CounsellorDashboard />
+          </ProtectedRoute>
+        } /> 
+        
+        <Route path="/admin-dashboard" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />           
       </Routes>
     </Router>
   );

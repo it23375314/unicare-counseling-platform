@@ -7,7 +7,11 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Send them back to the login page
+    // Destroy the wristband!
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    
+    // Send them back to login
     navigate('/');
   };
 
