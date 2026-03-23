@@ -12,6 +12,7 @@ const OTPVerification = () => {
     
     if (otp.length === 4) {
       alert(`Verifying OTP: ${otp}. Success! Redirecting to Dashboard...`);
+      navigate('/dashboard');
       // Later, we will change this to navigate to the actual dashboard
     } else {
       alert('Please enter a 4-digit code.');
