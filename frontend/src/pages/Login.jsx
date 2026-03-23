@@ -10,8 +10,21 @@ const Login = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    alert(`Testing Login for: ${email}`);
-    // Later, this will navigate to the dashboard!
+    
+    // Developer Trick: Route based on the email entered!
+    if (email === 'admin@uni.edu') {
+      alert('Welcome Admin! Routing to control panel...');
+      navigate('/admin-dashboard');
+    } 
+    else if (email === 'counsellor@uni.edu') {
+      alert('Welcome Counsellor! Routing to your schedule...');
+      navigate('/counsellor-dashboard');
+    } 
+    else {
+      // If it is any other email, assume it is a student
+      alert('Welcome Student! Routing to your dashboard...');
+      navigate('/student-dashboard');
+    }
   };
 
   return (
