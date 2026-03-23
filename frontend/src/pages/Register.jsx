@@ -13,8 +13,8 @@ const Register = () => {
   const handleRegister = (e) => {
     e.preventDefault();
     alert(`Testing Registration for ${fullName} as a ${role}`);
-    // Later, this will send data to your backend and navigate to the OTP page!
-    navigate('/'); 
+    // Now it sends them to the OTP page!
+    navigate('/verify-otp'); 
   };
 
   return (

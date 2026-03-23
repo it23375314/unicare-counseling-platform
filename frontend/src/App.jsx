@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register'; // We added this import!
+import OTPVerification from './pages/OTPVerification'; // <-- We imported it here!
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} /> {/* We added this route! */}
+        <Route path="/verify-otp" element={<OTPVerification />} /> {/* <-- We added the route here! */}
       </Routes>
     </Router>
   );
