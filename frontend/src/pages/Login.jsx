@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate } from 'react-router-dom';
 import '../styles/Auth.css'; 
 
 const Login = () => {
@@ -46,7 +46,13 @@ const Login = () => {
 
           <button type="submit" className="auth-button">Log In</button>
         </form>
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <p style={{ color: '#555', fontSize: '14px' }}>
+            Don't have an account? <Link to="/register" style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}>Register here</Link>
+          </p>
+        </div>
       </div>
+      
     </div>
   );
 };
