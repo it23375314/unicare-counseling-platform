@@ -1,16 +1,23 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react'; 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
-import Register from './pages/Register'; // We added this import!
-import OTPVerification from './pages/OTPVerification'; // <-- We imported it here!
-import StudentDashboard from './pages/StudentDashboard'; // <-- Import it!
-import CounsellorDashboard from './pages/CounsellorDashboard'; // <-- Imported
-import AdminDashboard from './pages/AdminDashboard';           // <-- Imported
-import ProtectedRoute from './components/ProtectedRoute'; // <-- Import the Bouncer!
-
+import Register from './pages/Register'; 
+import OTPVerification from './pages/OTPVerification'; 
+import StudentDashboard from './pages/StudentDashboard'; 
+import CounsellorDashboard from './pages/CounsellorDashboard'; 
+import AdminDashboard from './pages/AdminDashboard';           
+import ProtectedRoute from './components/ProtectedRoute'; 
+import Settings from './pages/Settings';
 
 function App() {
+
+  useEffect(() => {
+    // When the app first loads, check if they like dark mode
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+    }
+  }, []);
   return (
     <Router>
       <Routes>
@@ -36,7 +43,13 @@ function App() {
           <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
-        } />           
+        } />  
+
+        <Route path="/settings" element={
+          <ProtectedRoute>
+           <Settings />
+          </ProtectedRoute>
+        } />         
       </Routes>
     </Router>
   );

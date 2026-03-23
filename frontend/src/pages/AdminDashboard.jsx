@@ -25,6 +25,7 @@ const AdminDashboard = () => {
           <li>👥 User Management</li>
           <li>📝 Platform Logs</li>
           <li>⚙️ Global Settings</li>
+          <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>
           <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>

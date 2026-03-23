@@ -25,6 +25,7 @@ const CounsellorDashboard = () => {
           <li>📅 My Schedule</li>
           <li>📁 Student Records</li>
           <li>💬 Messages</li>
+          <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>
           <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>
