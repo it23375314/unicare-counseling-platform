@@ -39,6 +39,7 @@ const SystemConfig = () => {
           <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
           <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
           <li onClick={() => navigate('/system-config')}>⚙️ System Config</li>
+          <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>
           <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>
