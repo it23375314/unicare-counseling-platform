@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute'; 
 import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
+import PlatformLogs from './pages/PlatformLogs';
 
 function App() {
 
@@ -53,7 +54,9 @@ function App() {
         } />  
 
         <Route path="/admin-users" element={<UserManagement />} />   
-            
+
+        <Route path="/admin-logs" element={<PlatformLogs />} />
+
       </Routes>
     </Router>
   );
