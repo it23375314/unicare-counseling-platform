@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css'; 
+import FeedbackForm from '../components/FeedbackForm';
 
 const CounsellorDashboard = () => {
   const navigate = useNavigate();
@@ -128,6 +129,10 @@ const CounsellorDashboard = () => {
             )}
           </div>
 
+        </div>
+        {/* ADD THE FEEDBACK FORM HERE */}
+        <div style={{ marginTop: '30px' }}>
+          <FeedbackForm />
         </div>
       </div>
     </div>
