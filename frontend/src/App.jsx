@@ -9,6 +9,7 @@ import CounsellorDashboard from './pages/CounsellorDashboard';
 import AdminDashboard from './pages/AdminDashboard';           
 import ProtectedRoute from './components/ProtectedRoute'; 
 import Settings from './pages/Settings';
+import UserManagement from './pages/UserManagement';
 
 function App() {
 
@@ -49,7 +50,10 @@ function App() {
           <ProtectedRoute>
            <Settings />
           </ProtectedRoute>
-        } />         
+        } />  
+
+        <Route path="/admin-users" element={<UserManagement />} />   
+            
       </Routes>
     </Router>
   );

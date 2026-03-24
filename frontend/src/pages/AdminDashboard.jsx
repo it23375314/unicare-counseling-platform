@@ -38,7 +38,8 @@ const AdminDashboard = () => {
         <h2 style={{ color: '#333' }}>UniCare Admin</h2>
         <ul>
           <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>📊 System Analytics</li>
-          <li>👥 User Management</li>
+          {/* Change this line inside the AdminDashboard.jsx sidebar: */}
+          <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
           <li>📝 Platform Logs</li>
           <li>⚙️ Global Settings</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
