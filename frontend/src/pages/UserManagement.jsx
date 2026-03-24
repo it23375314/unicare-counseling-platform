@@ -51,9 +51,13 @@ const UserManagement = () => {
       <div className="sidebar">
         <h2 style={{ color: '#333' }}>UniCare Admin</h2>
         <ul>
-          <li onClick={() => navigate('/admin-dashboard')}>📊 System Analytics</li>
-          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>👥 User Management</li>
-          <li>📝 Platform Logs</li>
+          {/* Active page gets the blue background */}
+          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} onClick={() => navigate('/admin-dashboard')}>
+            🛡️ Control Panel
+          </li>
+          <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
+          <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
+          <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
           <li>⚙️ Global Settings</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>

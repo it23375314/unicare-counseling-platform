@@ -33,12 +33,15 @@ const AdminDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Left Sidebar for Admin (Kept exactly as yours!) */}
+      {/* Left Sidebar for Admin */}
       <div className="sidebar">
         <h2 style={{ color: '#333' }}>UniCare Admin</h2>
         <ul>
-          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>📊 System Analytics</li>
-          {/* Change this line inside the AdminDashboard.jsx sidebar: */}
+          {/* Active page gets the blue background */}
+          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} onClick={() => navigate('/admin-dashboard')}>
+            🛡️ Control Panel
+          </li>
+          <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
           <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
           <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
           <li>⚙️ Global Settings</li>
