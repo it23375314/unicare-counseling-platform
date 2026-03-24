@@ -12,6 +12,7 @@ import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
 import PlatformLogs from './pages/PlatformLogs';
 import SystemAnalytics from './pages/SystemAnalytics';
+import SystemConfig from './pages/SystemConfig';
 
 function App() {
 
@@ -57,6 +58,7 @@ function App() {
         <Route path="/admin-users" element={<UserManagement />} />   
         <Route path="/admin-logs" element={<PlatformLogs />} />
         <Route path="/admin-analytics" element={<SystemAnalytics />} />
+        <Route path="/system-config" element={<SystemConfig />} />
 
       </Routes>
     </Router>

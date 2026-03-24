@@ -42,7 +42,7 @@ const SystemAnalytics = () => {
           <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
           <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
           <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
-          <li>⚙️ Global Settings</li>
+          <li onClick={() => navigate('/system-config')}>⚙️ System Config</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>
