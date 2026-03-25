@@ -1,0 +1,83 @@
+/* src/styles/Settings.css */
+.settings-wrapper {
+  min-height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* Light Mode Defaults */
+.settings-wrapper.light { background-color: #f4f7f6; color: #333; }
+.settings-wrapper.light .settings-main-card { background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+/* Dark Mode Defaults */
+.settings-wrapper.dark { background-color: #121212; color: #f1f1f1; }
+.settings-wrapper.dark .settings-main-card { background: #1e1e1e; border: 1px solid #333; }
+.settings-wrapper.dark input { background: #2d2d2d; color: white; border-color: #444; }
+
+.settings-main-card {
+  display: flex;
+  width: 900px;
+  background-color: white; /* Default light mode */
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Settings Sidebar Menu */
+.settings-sidebar {
+  width: 250px;
+  background-color: #f8f9fa; /* Default light mode */
+  padding: 30px 20px;
+  border-right: 1px solid #eee;
+}
+.settings-wrapper.dark .settings-sidebar { border-color: #333; }
+
+.settings-sidebar h3 { margin-top: 0; margin-bottom: 20px; font-size: 18px; }
+
+.settings-menu-item {
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.settings-menu-item:hover { background: rgba(0, 123, 255, 0.1); }
+.settings-menu-item.active { background: #007bff; color: white; }
+
+/* Settings Content Area */
+.settings-content {
+  flex: 1;
+  padding: 40px;
+}
+
+.settings-content h2 { margin-top: 0; margin-bottom: 25px; }
+
+/* Device List */
+.device-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.settings-wrapper.dark .device-item { border-color: #444; }
+
+.device-info h4 { margin: 0 0 5px 0; }
+.device-info p { margin: 0; font-size: 13px; color: #777; }
+
+/* Toggle Switch / Buttons */
+.danger-btn {
+  background: none; border: 1px solid #dc3545; color: #dc3545;
+  padding: 6px 12px; border-radius: 6px; cursor: pointer;
+}
+.danger-btn:hover { background: #dc3545; color: white; }
+
+.action-btn {
+  background: #007bff; color: white; border: none;
+  padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+}
