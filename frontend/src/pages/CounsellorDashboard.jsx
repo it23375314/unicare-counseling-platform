@@ -55,7 +55,7 @@ const CounsellorDashboard = () => {
         <ul>
           <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>🏠 Overview</li>
           <li>📅 My Schedule</li>
-          <li>📁 Student Records</li>
+          <li onClick={() => navigate('/student-records')}>📋 Student Records</li>
           <li>💬 Messages</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
