@@ -28,6 +28,7 @@ const StudentDashboard = () => {
           <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>🏠 Dashboard</li>
           <li>📅 Appointments</li>
           <li>🧘‍♀️ Wellness Resources</li>
+          <li onClick={() => navigate('/student-messages')}>💬 Messages</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>

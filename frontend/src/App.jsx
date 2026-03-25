@@ -15,6 +15,7 @@ import SystemAnalytics from './pages/SystemAnalytics';
 import SystemConfig from './pages/SystemConfig';
 import StudentRecords from './pages/StudentRecords';
 import Messages from './pages/Messages';
+import StudentMessages from './pages/StudentMessages';
 
 function App() {
 
@@ -63,6 +64,7 @@ function App() {
         <Route path="/system-config" element={<SystemConfig />} />
         <Route path="/student-records" element={<StudentRecords />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/student-messages" element={<StudentMessages />} />
 
       </Routes>
     </Router>
