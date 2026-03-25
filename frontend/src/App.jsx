@@ -14,6 +14,7 @@ import PlatformLogs from './pages/PlatformLogs';
 import SystemAnalytics from './pages/SystemAnalytics';
 import SystemConfig from './pages/SystemConfig';
 import StudentRecords from './pages/StudentRecords';
+import Messages from './pages/Messages';
 
 function App() {
 
@@ -61,6 +62,7 @@ function App() {
         <Route path="/admin-analytics" element={<SystemAnalytics />} />
         <Route path="/system-config" element={<SystemConfig />} />
         <Route path="/student-records" element={<StudentRecords />} />
+        <Route path="/messages" element={<Messages />} />
 
       </Routes>
     </Router>
