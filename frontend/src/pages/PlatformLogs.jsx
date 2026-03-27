@@ -42,7 +42,8 @@ const PlatformLogs = () => {
     <div className="dashboard-container">
       {/* Left Sidebar for Admin */}
       <div className="sidebar">
-        <h2 style={{ color: '#333' }}>UniCare Admin</h2>
+        {/* Applied the class that we centered in CSS */}
+        <div className="sidebar-brand">UniCare </div>
         <ul>
           {/* Active page gets the blue background */}
           <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} onClick={() => navigate('/admin-dashboard')}>

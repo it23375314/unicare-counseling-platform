@@ -32,7 +32,8 @@ const SystemConfig = () => {
     <div className="dashboard-container">
       {/* Sidebar - Consistent with other Admin pages */}
       <div className="sidebar">
-        <h2 style={{ color: '#333' }}>UniCare Admin</h2>
+        {/* Applied the class that we centered in CSS */}
+        <div className="sidebar-brand">UniCare</div>
         <ul>
           <li onClick={() => navigate('/admin-dashboard')}>🛡️ Control Panel</li>
           <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
