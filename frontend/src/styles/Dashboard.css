@@ -26,9 +26,11 @@
 .sidebar-brand {
   color: #2563eb; /* UniCare Blue */
   margin-bottom: 40px;
-  padding-left: 30px;
+  text-align: center; /* Centers the text */
+  width: 100%; /* Ensures it spans the full width of the sidebar */
   font-size: 24px;
   font-weight: 700;
+  /* padding-left: 30px; <-- I REMOVED THIS so it centers perfectly! */
 }
 
 .sidebar ul {
