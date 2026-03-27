@@ -1,17 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Dashboard.css';
-import FeedbackForm from '../components/FeedbackForm';
+import '../styles/Dashboard.css'; 
+import FeedbackForm from '../components/FeedbackForm'; 
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
 
-  // 1. Setup mock data for our widgets! (Later, this will come from a database)
-  const [appointments, setAppointments] = useState([
-    { id: 1, date: 'Oct 28', time: '10:00 AM', counselor: 'Dr. Sarah Jenkins' }
-  ]);
-
   const [quote, setQuote] = useState("You are stronger than you think. Take it one day at a time.");
+  const [selectedMood, setSelectedMood] = useState(null);
+
+  // Mock data for our beautiful CSS Bar Chart!
+  const [weeklyMoodData] = useState([
+    { day: 'Mon', score: 60 },
+    { day: 'Tue', score: 80 },
+    { day: 'Wed', score: 40 },
+    { day: 'Thu', score: 90 },
+    { day: 'Fri', score: 70 },
+    { day: 'Sat', score: 85 },
+    { day: 'Sun', score: 100 },
+  ]);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -19,74 +26,127 @@ const StudentDashboard = () => {
     navigate('/');
   };
 
+  const handleMoodSelect = (mood) => {
+    setSelectedMood(mood);
+  };
+
   return (
     <div className="dashboard-container">
       {/* Left Sidebar */}
       <div className="sidebar">
-        <h2>UniCare</h2>
+        <div className="sidebar-brand">UniCare</div>
         <ul>
-          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }}>🏠 Dashboard</li>
-          <li>📅 Appointments</li>
-          <li>🧘‍♀️ Wellness Resources</li>
+          <li className="active">🏠 Dashboard</li>
+          <li onClick={() => navigate('/appointments')}>📅 Appointments</li>
+          <li onClick={() => navigate('/resources')}>🧘‍♀️ Wellness Resources</li>
           <li onClick={() => navigate('/student-messages')}>💬 Messages</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
-        <ul style={{ flex: 0 }}>
-          <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>
-        </ul>
+        <div className="logout-btn" onClick={handleLogout} style={{ marginTop: 'auto', listStyle: 'none', paddingLeft: '15px' }}>
+          <li>🚪 Logout</li>
+        </div>
       </div>
 
       {/* Main Content Area */}
       <div className="main-content">
-        <div className="welcome-card">
-          <h1 style={{ color: '#333', marginBottom: '10px' }}>Welcome back, Student! 👋</h1>
-          <p style={{ color: '#666' }}>How are you feeling today? Let's take care of your mental well-being.</p>
+        
+        {/* Welcome Header */}
+        <div style={{ marginBottom: '30px' }}>
+          <h1 style={{ fontSize: '28px', color: '#111827', margin: '0 0 8px 0' }}>Welcome back, Student! 👋</h1>
+          <p style={{ color: '#6b7280', margin: 0 }}>How are you feeling today? Let's take care of your mental well-being.</p>
         </div>
         
         {/* Dynamic Widgets Area */}
-        <div style={{ display: 'flex', gap: '20px' }}>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
           
-          {/* Upcoming Appointments Widget */}
-          <div style={{ flex: 1, padding: '20px', background: '#e0f7fa', borderRadius: '10px' }}>
-            <h3 style={{ color: '#006064', marginBottom: '15px' }}>Upcoming Session</h3>
+          {/* Wellness Progress Graph Widget (Left) */}
+          <div className="card" style={{ flex: 1 }}>
+            <h3>Your Wellness Journey</h3>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '24px' }}>Your mood tracking over the last 7 days.</p>
             
-            {appointments.length > 0 ? (
-              appointments.map((apt) => (
-                <div key={apt.id} style={{ backgroundColor: 'rgba(255,255,255,0.5)', padding: '10px', borderRadius: '8px', marginBottom: '10px' }}>
-                  <strong>{apt.date} at {apt.time}</strong>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>with {apt.counselor}</p>
+            {/* Pure CSS Bar Chart */}
+            <div style={{ 
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', 
+              height: '160px', paddingBottom: '10px', borderBottom: '1px solid #f3f4f6' 
+            }}>
+              {weeklyMoodData.map((data, index) => (
+                // FIX APPLIED HERE: Added height: '100%' and justifyContent: 'flex-end'
+                <div key={index} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', width: '100%', height: '100%' }}>
+                  {/* The Bar */}
+                  <div 
+                    title={`Score: ${data.score}%`}
+                    style={{
+                      height: `${data.score}%`,
+                      width: '32px',
+                      backgroundColor: data.score >= 80 ? '#2563eb' : (data.score >= 60 ? '#60a5fa' : '#bfdbfe'),
+                      borderRadius: '6px 6px 0 0',
+                      transition: 'height 0.3s ease'
+                    }}
+                  ></div>
                 </div>
-              ))
-            ) : (
-              <p style={{ color: '#555' }}>No appointments booked yet.</p>
-            )}
+              ))}
+            </div>
             
-            <button style={{ marginTop: '10px', padding: '8px 16px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-              Book New Session
-            </button>
+            {/* X-Axis Labels */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
+              {weeklyMoodData.map((data, index) => (
+                <span key={index} style={{ fontSize: '13px', color: '#6b7280', width: '100%', textAlign: 'center', fontWeight: '500' }}>
+                  {data.day}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Daily Wellness Widget */}
-          <div style={{ flex: 1, padding: '20px', background: '#fce4ec', borderRadius: '10px' }}>
-            <h3 style={{ color: '#880e4f', marginBottom: '15px' }}>Daily Wellness</h3>
-            <p style={{ color: '#555', fontStyle: 'italic', lineHeight: '1.5' }}>"{quote}"</p>
+          {/* Daily Wellness Widget (Right) */}
+          <div className="card" style={{ flex: 1, backgroundColor: '#fdf2f8', border: '1px solid #fbcfe8' }}>
+            <h3 style={{ color: '#be185d' }}>Daily Wellness</h3>
+            <p style={{ color: '#831843', fontStyle: 'italic', lineHeight: '1.5', fontSize: '15px' }}>
+              "{quote}"
+            </p>
             
-            <div style={{ marginTop: '20px' }}>
-              <p style={{ marginBottom: '10px', fontSize: '14px', fontWeight: 'bold' }}>Quick Mood Check:</p>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer' }}>😫</button>
-                <button style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer' }}>😐</button>
-                <button style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer' }}>🙂</button>
+            <div style={{ marginTop: '24px' }}>
+              <p style={{ marginBottom: '12px', fontSize: '14px', fontWeight: '600', color: '#9d174d' }}>
+                Quick Mood Check:
+              </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => handleMoodSelect('sad')}
+                  style={{ 
+                    fontSize: '24px', background: selectedMood === 'sad' ? '#fbcfe8' : 'white', 
+                    border: '1px solid #f9a8d4', borderRadius: '50%', padding: '8px', 
+                    cursor: 'pointer', transition: 'all 0.2s', width: '50px', height: '50px'
+                  }}
+                >😫</button>
+                <button 
+                  onClick={() => handleMoodSelect('neutral')}
+                  style={{ 
+                    fontSize: '24px', background: selectedMood === 'neutral' ? '#fbcfe8' : 'white', 
+                    border: '1px solid #f9a8d4', borderRadius: '50%', padding: '8px', 
+                    cursor: 'pointer', transition: 'all 0.2s', width: '50px', height: '50px'
+                  }}
+                >😐</button>
+                <button 
+                  onClick={() => handleMoodSelect('happy')}
+                  style={{ 
+                    fontSize: '24px', background: selectedMood === 'happy' ? '#fbcfe8' : 'white', 
+                    border: '1px solid #f9a8d4', borderRadius: '50%', padding: '8px', 
+                    cursor: 'pointer', transition: 'all 0.2s', width: '50px', height: '50px'
+                  }}
+                >🙂</button>
               </div>
+              {selectedMood && (
+                 <p style={{ marginTop: '10px', fontSize: '13px', color: '#be185d', fontWeight: 'bold' }}>Thanks for checking in today!</p>
+              )}
             </div>
           </div>
 
         </div>
 
-        {/* ADD THE FEEDBACK FORM HERE */}
-        <div style={{ marginTop: '30px' }}>
+        {/* FEEDBACK FORM */}
+        <div style={{ marginTop: '10px' }}>
           <FeedbackForm />
         </div>
+        
       </div>
     </div>
   );

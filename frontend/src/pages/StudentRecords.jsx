@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Dashboard.css';
+import '../styles/Dashboard.css'; // Make sure this path is correct for your folder structure!
 
 const StudentRecords = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock Data
+  // Mock data for student records (Replace this with your actual state/data if you have it)
   const [records] = useState([
-    { id: 1, name: 'Emma Wilson', idNo: 'S10234', lastVisit: '2024-03-20', status: 'Ongoing', notes: 'Discussed exam anxiety.' },
-    { id: 2, name: 'Liam Brown', idNo: 'S10556', lastVisit: '2024-03-15', status: 'Follow-up', notes: 'Career goals discussed.' },
-    { id: 3, name: 'Chloe Smith', idNo: 'S10889', lastVisit: '2024-02-28', status: 'Closed', notes: 'Completed 5 sessions.' },
+    { id: 'STU-001', name: 'Alex Johnson', major: 'Computer Science', lastSession: 'Oct 25, 2026', status: 'Ongoing' },
+    { id: 'STU-002', name: 'Maria Garcia', major: 'Psychology', lastSession: 'Oct 20, 2026', status: 'Completed' },
+    { id: 'STU-003', name: 'Emma Wilson', major: 'Engineering', lastSession: 'Oct 28, 2026', status: 'Ongoing' },
   ]);
 
   const handleLogout = () => {
@@ -18,95 +19,99 @@ const StudentRecords = () => {
     navigate('/');
   };
 
+  // Filter logic for the search bar
+  const filteredRecords = records.filter(record =>
+    record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="dashboard-container">
-      {/* Sidebar - Matching UniCare Pro Style */}
+      {/* Left Sidebar */}
       <div className="sidebar">
-        <h2 style={{ color: '#007bff', marginBottom: '30px', paddingLeft: '20px' }}>UniCare Pro</h2>
+        <div className="sidebar-brand">UniCare Pro</div>
         <ul>
           <li onClick={() => navigate('/counsellor-dashboard')}>🏠 Overview</li>
           <li onClick={() => navigate('/my-schedule')}>📅 My Schedule</li>
-          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff', fontWeight: 'bold' }}>📄 Student Records</li>
+          {/* Note the "active" class is now on Student Records! */}
+          <li className="active">📋 Student Records</li>
           <li onClick={() => navigate('/messages')}>💬 Messages</li>
           <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
-        <div style={{ marginTop: 'auto', paddingLeft: '20px', paddingBottom: '20px' }}>
-          <li onClick={handleLogout} style={{ color: '#dc3545', listStyle: 'none', cursor: 'pointer' }}>🚪 Logout</li>
+        <div className="logout-btn" onClick={handleLogout} style={{ marginTop: 'auto', listStyle: 'none', paddingLeft: '15px' }}>
+          <li>🚪 Logout</li>
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className="main-content">
-        {/* Top Header Card */}
-        <div className="welcome-card">
-          <h1 style={{ color: '#333', fontSize: '28px' }}>Student Records 📋</h1>
-          <p style={{ color: '#666' }}>Access clinical histories and manage student case files securely.</p>
+        
+        {/* Page Header */}
+        <div style={{ marginBottom: '30px' }}>
+          <h1 style={{ fontSize: '28px', color: '#111827', margin: '0 0 8px 0' }}>Student Records 📂</h1>
+          <p style={{ color: '#6b7280', margin: 0 }}>View and manage your past and current student session files.</p>
         </div>
 
-        {/* Statistics Row - Matching the Admin/Counsellor Cards */}
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ flex: 1, padding: '20px', background: '#e3f2fd', borderRadius: '12px', borderLeft: '5px solid #007bff' }}>
-            <h3 style={{ color: '#0d47a1', margin: 0 }}>Total Files</h3>
-            <h2 style={{ fontSize: '32px', margin: '10px 0 0 0' }}>148</h2>
-          </div>
-          <div style={{ flex: 1, padding: '20px', background: '#e8f5e9', borderRadius: '12px', borderLeft: '5px solid #2e7d32' }}>
-            <h3 style={{ color: '#1b5e20', margin: 0 }}>Active Cases</h3>
-            <h2 style={{ fontSize: '32px', margin: '10px 0 0 0' }}>12</h2>
-          </div>
-          <div style={{ flex: 1, padding: '20px', background: '#fff3e0', borderRadius: '12px', borderLeft: '5px solid #ef6c00' }}>
-            <h3 style={{ color: '#e65100', margin: 0 }}>Pending Updates</h3>
-            <h2 style={{ fontSize: '32px', margin: '10px 0 0 0' }}>5</h2>
-          </div>
+        {/* Search Bar & Action Top Bar */}
+        <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', padding: '16px 24px' }}>
+            <input
+              type="text"
+              placeholder="Search by name or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '50px', // Pill-shaped to match the leader's buttons
+                border: '1px solid #d1d5db',
+                width: '300px',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+            <button className="btn-primary">+ Add New Record</button>
         </div>
 
-        {/* Main Records Table Card */}
-        <div style={{ background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-             <h3 style={{ margin: 0 }}>Patient Directory</h3>
-             <input 
-               type="text" 
-               placeholder="Search by name..." 
-               style={{ padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd', width: '250px' }}
-             />
-          </div>
+        {/* Records List Card */}
+        <div className="card">
+          <h3>All Records ({filteredRecords.length})</h3>
+          
+          {filteredRecords.length > 0 ? (
+            filteredRecords.map((record) => (
+              <div className="list-item" key={record.id}>
+                
+                {/* Student Info */}
+                <div>
+                  <strong style={{ fontSize: '16px' }}>
+                    {record.name} <span style={{ color: '#6b7280', fontSize: '13px', fontWeight: 'normal' }}>({record.id})</span>
+                  </strong>
+                  <div style={{ marginTop: '4px' }}>
+                    <span style={{ marginRight: '15px' }}>🎓 {record.major}</span>
+                    <span>🗓️ Last Session: {record.lastSession}</span>
+                  </div>
+                </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '2px solid #f0f0f0' }}>
-                <th style={{ padding: '12px', color: '#888' }}>Student</th>
-                <th style={{ padding: '12px', color: '#888' }}>ID</th>
-                <th style={{ padding: '12px', color: '#888' }}>Status</th>
-                <th style={{ padding: '12px', color: '#888' }}>Last Meeting</th>
-                <th style={{ padding: '12px', color: '#888', textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.map(record => (
-                <tr key={record.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                  <td style={{ padding: '15px', fontWeight: 'bold' }}>{record.name}</td>
-                  <td style={{ padding: '15px', color: '#666' }}>{record.idNo}</td>
-                  <td style={{ padding: '15px' }}>
-                    <span style={{ 
-                      padding: '5px 12px', 
-                      borderRadius: '15px', 
-                      fontSize: '12px',
-                      background: record.status === 'Ongoing' ? '#e3f2fd' : '#f5f5f5',
-                      color: record.status === 'Ongoing' ? '#007bff' : '#666'
-                    }}>
-                      {record.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '15px', color: '#666' }}>{record.lastVisit}</td>
-                  <td style={{ padding: '15px', textAlign: 'right' }}>
-                    <button style={{ background: '#007bff', color: 'white', border: 'none', padding: '6px 15px', borderRadius: '6px', cursor: 'pointer' }}>
-                      Open File
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                {/* Status Badge & Button */}
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <span style={{
+                    padding: '4px 10px',
+                    borderRadius: '50px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: record.status === 'Ongoing' ? '#e0f2fe' : '#dcfce3', // Soft blue or soft green
+                    color: record.status === 'Ongoing' ? '#0369a1' : '#166534' // Dark blue or dark green
+                  }}>
+                    {record.status}
+                  </span>
+                  <button className="btn-outline">View File</button>
+                </div>
+
+              </div>
+            ))
+          ) : (
+            <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px 0' }}>No student records match your search.</p>
+          )}
         </div>
+
       </div>
     </div>
   );
