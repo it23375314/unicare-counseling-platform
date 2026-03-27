@@ -29,8 +29,13 @@ export const CounsellorProvider = ({ children }) => {
   const { addToast } = useToast();
   
   const [counsellors, setCounsellors] = useState(() => {
-    const saved = localStorage.getItem("unicare_counsellors");
-    return saved ? JSON.parse(saved) : initialCounsellors;
+    try {
+      const saved = localStorage.getItem("unicare_counsellors");
+      return saved ? JSON.parse(saved) : initialCounsellors;
+    } catch (e) {
+      console.error("Counsellor data corrupted:", e);
+      return initialCounsellors;
+    }
   });
 
   useEffect(() => {

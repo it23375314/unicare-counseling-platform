@@ -18,7 +18,10 @@ const Navbar = () => {
   } else if (user.role === 'counsellor') {
     navLinks = [
       { name: "Home", path: "/" },
-      { name: "Dashboard", path: "/counsellor/dashboard" },
+      { name: "Availability", path: "/counsellor/availability" },
+      { name: "Appointments", path: "/counsellor/appointments" },
+      { name: "Session Notes", path: "/counsellor/notes" },
+      { name: "History", path: "/counsellor/history" },
     ];
   } else {
     navLinks = [

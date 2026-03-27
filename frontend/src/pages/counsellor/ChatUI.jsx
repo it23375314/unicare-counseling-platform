@@ -1,23 +1,44 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Send, UserCircle, Search, Settings } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Send, UserCircle, Search, Settings, ArrowLeft } from "lucide-react";
 
 export default function ChatUI() {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "counsellor", text: "Hello! How have you been feeling since our last session?", time: "10:00 AM" },
-    { id: 2, sender: "student", text: "I've been okay, but midterms are causing a lot of stress.", time: "10:05 AM" },
-    { id: 3, sender: "counsellor", text: "I understand. Let's talk about some strategies to manage that stress.", time: "10:06 AM" },
-  ]);
-  const [input, setInput] = useState("");
-  const endRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Extract ?student= from URL
+  const queryParams = new URLSearchParams(location.search);
+  const studentNameFromUrl = queryParams.get("student");
 
   const isCounsellor = user.role === "counsellor";
   const currentUserRole = isCounsellor ? "counsellor" : "student";
+  
+  // The active chat entity (counsellor side -> student name, student side -> counsellor name)
+  const activeChatEntity = studentNameFromUrl || (isCounsellor ? "Current Student" : "Dr. Sarah Jenkins");
+
+  // Local storage persistence key based on entity
+  const storageKey = `unicare_chat_${activeChatEntity.replace(/\s+/g, '_')}`;
+
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) return JSON.parse(saved);
+    // default
+    return [
+      { id: 1, sender: "counsellor", text: "Hello! How have you been feeling since our last session?", time: "10:00 AM" },
+      { id: 2, sender: "student", text: "I've been okay, but midterms are causing a lot of stress.", time: "10:05 AM" },
+      { id: 3, sender: "counsellor", text: "I understand. Let's talk about some strategies to manage that stress.", time: "10:06 AM" },
+    ];
+  });
+
+  const [input, setInput] = useState("");
+  const endRef = useRef(null);
 
   useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(messages));
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, storageKey]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -30,7 +51,7 @@ export default function ChatUI() {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
     setInput("");
 
     // Simulate auto-reply if needed
@@ -48,11 +69,16 @@ export default function ChatUI() {
   };
 
   return (
-    <div className="bg-gray-50 h-[calc(100vh-64px)] flex text-gray-900">
+    <div className="bg-gray-50 h-[calc(100vh-64px)] flex text-gray-900 pt-16 mt-[-64px]">
       {/* Sidebar */}
-      <div className="w-1/3 border-r border-gray-200 bg-white hidden md:flex flex-col">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-bold text-lg">Messages</h2>
+      <div className="w-1/3 border-r border-gray-200 bg-white hidden md:flex flex-col pt-16">
+        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+          {isCounsellor && (
+            <button onClick={() => navigate('/counsellor/appointments')} className="text-gray-500 hover:text-blue-600 transition">
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <h2 className="font-bold text-lg flex-1">Messages</h2>
           <Settings size={20} className="text-gray-500 cursor-pointer hover:text-gray-800" />
         </div>
         <div className="p-4 border-b border-gray-100">
@@ -66,8 +92,8 @@ export default function ChatUI() {
             <UserCircle size={48} className="text-gray-400" />
             <div className="flex-1">
               <div className="flex justify-between items-baseline mb-1">
-                <h3 className="font-semibold text-sm">{isCounsellor ? "Student (Active)" : "Dr. Jenkins (Active)"}</h3>
-                <span className="text-xs text-blue-600 font-medium">10:06 AM</span>
+                <h3 className="font-semibold text-sm">{activeChatEntity}</h3>
+                <span className="text-xs text-blue-600 font-medium">Active</span>
               </div>
               <p className="text-xs text-gray-600 truncate">Let's talk about some strategies...</p>
             </div>
@@ -76,17 +102,22 @@ export default function ChatUI() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white">
+      <div className="flex-1 flex flex-col bg-white pt-16">
         <div className="p-4 border-b border-gray-200 flex items-center gap-3 bg-white sticky top-0 z-10">
+          {isCounsellor && (
+            <button onClick={() => navigate('/counsellor/appointments')} className="text-gray-500 hover:text-blue-600 transition md:hidden">
+              <ArrowLeft size={20} />
+            </button>
+          )}
           <UserCircle size={40} className="text-gray-400" />
           <div>
-            <h2 className="font-bold text-gray-900">{isCounsellor ? "Current Student" : "Dr. Sarah Jenkins"}</h2>
+            <h2 className="font-bold text-gray-900">{activeChatEntity}</h2>
             <p className="text-xs text-green-600 font-medium flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span> Online</p>
           </div>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto bg-gray-50 flex flex-col gap-4">
-          <div className="text-center text-xs text-gray-400 my-4 uppercase font-semibold">Today</div>
+          <div className="text-center text-xs text-gray-400 my-4 uppercase font-semibold">Secure End-to-End Chat</div>
           {messages.map((m) => {
             const isMe = m.sender === currentUserRole;
             return (
@@ -107,7 +138,7 @@ export default function ChatUI() {
               type="text" 
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Type your message..." 
+              placeholder={`Message ${activeChatEntity}...`}
               className="flex-1 border border-gray-300 rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none bg-gray-50"
             />
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full flex items-center justify-center transition shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">

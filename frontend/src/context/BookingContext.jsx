@@ -9,8 +9,13 @@ export const BookingProvider = ({ children }) => {
   const { addToast } = useToast();
   
   const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem("unicare_bookings");
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem("unicare_bookings");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Booking data corrupted:", e);
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -138,6 +143,27 @@ export const BookingProvider = ({ children }) => {
     addToast("Booking Rejected.", "warning");
   };
 
+  const completeBooking = (bookingId) => {
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: "Completed" } : b))
+    );
+    addToast("Session marked as Completed.", "success");
+  };
+
+  const confirmBookingByCounsellor = (bookingId) => {
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: "Confirmed" } : b))
+    );
+    addToast("Booking Confirmed! Student will be notified.", "success");
+  };
+
+  const cancelBookingByCounsellor = (bookingId, reason) => {
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: "Cancelled", rejectReason: reason } : b))
+    );
+    addToast("Booking Cancelled.", "warning");
+  };
+
   const addSessionNotes = (bookingId, notes) => {
     setBookings((prev) =>
       prev.map((b) => (b.id === bookingId ? { ...b, notes } : b))
@@ -198,6 +224,9 @@ export const BookingProvider = ({ children }) => {
         checkIsRefundable,
         acceptBooking,
         rejectBooking,
+        confirmBookingByCounsellor,
+        cancelBookingByCounsellor,
+        completeBooking,
         addSessionNotes
       }}
     >
