@@ -10,6 +10,7 @@ import FindCounsellor from "./pages/appointment/FindCounsellor";
 import BookingFlow from "./pages/appointment/BookingFlow";
 import Payment from "./pages/appointment/Payment";
 import StudentDashboard from "./pages/appointment/StudentDashboard";
+import Login from "./pages/Login";
 
 // New Module Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -38,6 +39,7 @@ function App() {
                   <Route path="admin/counsellors" element={<AdminDashboard />} />
                   <Route path="counsellor/dashboard" element={<CounsellorDashboard />} />
                   <Route path="chat" element={<ChatUI />} />
+                  <Route path="login" element={<Login />} />
                 </Route>
               </Routes>
             </Router>

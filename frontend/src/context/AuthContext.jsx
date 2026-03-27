@@ -8,25 +8,29 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const { addToast } = useToast();
   
-  // Default to student if nothing in localStorage
+  // Default to null if nothing in localStorage
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("unicare_auth_user");
-    return saved ? JSON.parse(saved) : { role: "student", id: "student-1", name: "Current Student" };
+    return saved ? JSON.parse(saved) : null;
   });
 
   useEffect(() => {
-    localStorage.setItem("unicare_auth_user", JSON.stringify(user));
+    if (user) {
+      localStorage.setItem("unicare_auth_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("unicare_auth_user");
+    }
   }, [user]);
 
   const login = (role, id, name) => {
-    setUser({ role, id, name });
-    addToast(`Logged in as ${name} (${role})`, "success");
+    const newUser = { role, id, name };
+    setUser(newUser);
+    addToast(`Welcome back, ${name}!`, "success");
   };
 
   const logout = () => {
-    // Reset to generic student for demo purposes
-    setUser({ role: "student", id: "student-1", name: "Current Student" });
-    addToast("Logged out successfully.", "info");
+    setUser(null);
+    addToast("You have been signed out.", "info");
   };
 
   return (
