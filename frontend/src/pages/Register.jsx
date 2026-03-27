@@ -20,31 +20,78 @@ const Register = () => {
     licenseNumber: ''
   });
 
-  // 2. One smart function to handle ALL input changes
+  // 2. State to track validation errors
+  const [errors, setErrors] = useState({});
+
+  // 3. One smart function to handle ALL input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear the specific error when the user starts typing again
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: null });
+    }
+  };
+
+  // 4. Validation logic
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Basic fields
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address";
+    
+    if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
+    
+    // Phone validation (allows digits, spaces, and hyphens, expecting roughly 10 digits)
+    const phoneRegex = /^[\d\s-]{9,12}$/;
+    if (!phoneRegex.test(formData.phone)) newErrors.phone = "Please enter a valid phone number";
+    
+    if (!formData.age || formData.age < 16 || formData.age > 100) newErrors.age = "Age must be between 16 and 100";
+
+    // Counsellor specific fields
+    if (formData.role === 'counsellor') {
+      if (!formData.specialization.trim()) newErrors.specialization = "Specialization is required";
+      if (formData.experience === '' || formData.experience < 0) newErrors.experience = "Enter valid years of experience";
+      if (!formData.licenseNumber.trim()) newErrors.licenseNumber = "License number is required";
+    }
+
+    setErrors(newErrors);
+    
+    // Return true if there are no errors (meaning the form is valid)
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = (e) => {
     e.preventDefault();
-    console.log("Registered Data:", formData);
     
-    // Save their role TEMPORARILY so the OTP page knows where to send them later!
-    localStorage.setItem('userRole', formData.role);
-    
-    // Send them to the OTP verification page
-    navigate('/verify-otp'); 
+    // Run validation before proceeding
+    if (validateForm()) {
+      console.log("Registered Data:", formData);
+      
+      // Save their role TEMPORARILY so the OTP page knows where to send them later!
+      localStorage.setItem('userRole', formData.role);
+      
+      // Send them to the OTP verification page
+      navigate('/verify-otp'); 
+    } else {
+      console.log("Form has errors.");
+    }
   };
+
+  // Helper styles for inline errors
+  const errorStyle = { color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <h2 className="auth-title">Create an Account</h2>
         
-        <form onSubmit={handleRegister}>
+        <form onSubmit={handleRegister} noValidate>
           
           <div className="input-group">
             <label htmlFor="role">I am registering as a...</label>
@@ -62,29 +109,34 @@ const Register = () => {
 
           <div className="input-group">
             <label htmlFor="fullName">Full Name</label>
-            <input type="text" id="fullName" name="fullName" placeholder="John Doe" value={formData.fullName} onChange={handleChange} required />
+            <input type="text" id="fullName" name="fullName" placeholder="John Doe" value={formData.fullName} onChange={handleChange} />
+            {errors.fullName && <span style={errorStyle}>{errors.fullName}</span>}
           </div>
 
           <div className="input-group">
             <label htmlFor="email">University Email</label>
-            <input type="email" id="email" name="email" placeholder="student@uni.edu" value={formData.email} onChange={handleChange} required />
+            <input type="email" id="email" name="email" placeholder="student@uni.edu" value={formData.email} onChange={handleChange} />
+            {errors.email && <span style={errorStyle}>{errors.email}</span>}
           </div>
 
           <div className="input-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+            <input type="password" id="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} />
+            {errors.password && <span style={errorStyle}>{errors.password}</span>}
           </div>
 
-          {/* --- NEW DEMOGRAPHIC FIELDS --- */}
+          {/* --- DEMOGRAPHIC FIELDS --- */}
           <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
             <div className="input-group" style={{ flex: 2, marginBottom: 0 }}>
               <label htmlFor="phone">Phone Number</label>
-              <input type="tel" id="phone" name="phone" placeholder="071 234 5678" value={formData.phone} onChange={handleChange} required />
+              <input type="tel" id="phone" name="phone" placeholder="071 234 5678" value={formData.phone} onChange={handleChange} />
+              {errors.phone && <span style={errorStyle}>{errors.phone}</span>}
             </div>
             
             <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
               <label htmlFor="age">Age</label>
-              <input type="number" id="age" name="age" placeholder="18" min="16" max="100" value={formData.age} onChange={handleChange} required />
+              <input type="number" id="age" name="age" placeholder="18" value={formData.age} onChange={handleChange} />
+              {errors.age && <span style={errorStyle}>{errors.age}</span>}
             </div>
           </div>
 
@@ -106,18 +158,21 @@ const Register = () => {
               
               <div className="input-group">
                 <label htmlFor="specialization">Specialization</label>
-                <input type="text" id="specialization" name="specialization" placeholder="e.g., Academic Stress, Anxiety" value={formData.specialization} onChange={handleChange} required />
+                <input type="text" id="specialization" name="specialization" placeholder="e.g., Academic Stress, Anxiety" value={formData.specialization} onChange={handleChange} />
+                {errors.specialization && <span style={errorStyle}>{errors.specialization}</span>}
               </div>
                      
               <div style={{ display: 'flex', gap: '15px' }}>
                 <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label htmlFor="experience">Years Exp.</label>
-                  <input type="number" id="experience" name="experience" placeholder="5" value={formData.experience} onChange={handleChange} required />
+                  <input type="number" id="experience" name="experience" placeholder="5" value={formData.experience} onChange={handleChange} />
+                  {errors.experience && <span style={errorStyle}>{errors.experience}</span>}
                 </div>
-                       
+                        
                 <div className="input-group" style={{ flex: 2, marginBottom: 0 }}>
                   <label htmlFor="licenseNumber">License / Reg Number</label>
-                  <input type="text" id="licenseNumber" name="licenseNumber" placeholder="SLMC-12345" value={formData.licenseNumber} onChange={handleChange} required />
+                  <input type="text" id="licenseNumber" name="licenseNumber" placeholder="SLMC-12345" value={formData.licenseNumber} onChange={handleChange} />
+                  {errors.licenseNumber && <span style={errorStyle}>{errors.licenseNumber}</span>}
                 </div>
               </div>
             </div>
