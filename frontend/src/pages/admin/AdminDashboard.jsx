@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function AdminDashboard() {
   const { counsellors, addCounsellor, editCounsellor, deleteCounsellor } = useCounsellorContext();
@@ -15,8 +16,8 @@ export default function AdminDashboard() {
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
       newErrors.name = "Full name is required";
-    } else if (/[0-9]/.test(trimmedName) || /[@#$%&*!+=/\\<>!]/.test(trimmedName)) {
-      newErrors.name = "Full name cannot contain numbers or special symbols";
+    } else if (/[^a-zA-Z\s]/.test(trimmedName)) {
+      newErrors.name = "Full name must contain letters only";
     }
 
     // Email
@@ -38,11 +39,13 @@ export default function AdminDashboard() {
     }
 
     // Experience
-    const expValue = formData.experience.toString().trim().replace(/[^0-9]/g, '');
-    if (!formData.experience.toString().trim()) {
+    const expRaw = formData.experience.toString().trim();
+    if (!expRaw) {
       newErrors.experience = "Experience is required";
+    } else if (/[^0-9]/.test(expRaw)) {
+      newErrors.experience = "Experience must be a number only";
     } else {
-      const years = parseInt(expValue);
+      const years = parseInt(expRaw);
       if (isNaN(years) || years < 0) {
         newErrors.experience = "Enter valid experience";
       } else if (years > 50) {
@@ -67,7 +70,10 @@ export default function AdminDashboard() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before saving.");
+      return;
+    }
 
     const finalData = {
       ...formData,
@@ -78,14 +84,15 @@ export default function AdminDashboard() {
     try {
       if (formData.id) {
         editCounsellor(formData.id, finalData);
+        toast.success("Counsellor updated successfully!");
       } else {
         addCounsellor(finalData);
-        alert("Counsellor added successfully");
+        toast.success("Counsellor added successfully!");
       }
       setShowModal(false);
       setErrors({});
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || "An error occurred.");
     }
   };
 
@@ -146,7 +153,11 @@ export default function AdminDashboard() {
                 <input 
                   type="text" 
                   value={formData.name} 
-                  onChange={e => { setFormData({...formData, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }} 
+                  onChange={e => { 
+                    const val = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                    setFormData({...formData, name: val}); 
+                    if(errors.name) setErrors({...errors, name: null}); 
+                  }} 
                   className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
                 />
                 {errors.name && <p className="text-red-600 text-xs mt-1 font-medium">{errors.name}</p>}
@@ -177,7 +188,11 @@ export default function AdminDashboard() {
                   type="text" 
                   placeholder="e.g. 5" 
                   value={formData.experience} 
-                  onChange={e => { setFormData({...formData, experience: e.target.value}); if(errors.experience) setErrors({...errors, experience: null}); }} 
+                  onChange={e => { 
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    setFormData({...formData, experience: val}); 
+                    if(errors.experience) setErrors({...errors, experience: null}); 
+                  }} 
                   className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.experience ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
                 />
                 {errors.experience && <p className="text-red-600 text-xs mt-1 font-medium">{errors.experience}</p>}

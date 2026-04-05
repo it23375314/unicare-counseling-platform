@@ -30,7 +30,7 @@ export const CounsellorProvider = ({ children }) => {
   
   const [counsellors, setCounsellors] = useState(() => {
     try {
-      const saved = localStorage.getItem("unicare_counsellors");
+      const saved = localStorage.getItem("unicare_counsellors_v2");
       return saved ? JSON.parse(saved) : initialCounsellors;
     } catch (e) {
       console.error("Counsellor data corrupted:", e);
@@ -39,7 +39,7 @@ export const CounsellorProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("unicare_counsellors", JSON.stringify(counsellors));
+    localStorage.setItem("unicare_counsellors_v2", JSON.stringify(counsellors));
   }, [counsellors]);
 
   // CRUD Operations
