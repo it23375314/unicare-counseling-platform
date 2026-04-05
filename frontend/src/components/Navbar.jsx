@@ -54,7 +54,7 @@ const Navbar = () => {
               <div className="bg-blue-600 text-white p-1.5 rounded-lg">
                 <HeartPulse size={24} />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-700 to-teal-500 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-500 bg-clip-text text-transparent">
                 UniCare
               </span>
             </Link>
@@ -66,10 +66,10 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm font-bold transition-all px-4 py-2 rounded-full ${
                   isActive(link.path)
-                    ? "text-blue-600 border-b-2 border-blue-600 pb-1"
-                    : "text-gray-600 hover:text-blue-600"
+                    ? "bg-blue-50/80 text-blue-600 shadow-sm border border-blue-100/50"
+                    : "text-gray-500 hover:text-blue-600 hover:bg-gray-50/80"
                 }`}
               >
                 {link.name}
@@ -118,10 +118,10 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-3 py-3 rounded-md text-base font-medium ${
+                className={`block px-4 py-3 rounded-2xl text-base font-bold transition-all ${
                   isActive(link.path)
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                    ? "bg-blue-50/80 text-blue-600 border border-blue-100/50 shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50/80 hover:text-blue-600"
                 }`}
               >
                 {link.name}

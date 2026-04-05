@@ -11,16 +11,16 @@ export const AuthProvider = ({ children }) => {
   // Default to student if nothing in localStorage
   const [user, setUser] = useState(() => {
     try {
-      const saved = localStorage.getItem("unicare_auth_user");
-      return saved ? JSON.parse(saved) : { role: "student", id: "student-1", name: "Current Student" };
+      const saved = localStorage.getItem("unicare_auth_v2");
+      return saved ? JSON.parse(saved) : { role: "counsellor", id: "1", name: "Dr. Sarah Jenkins" };
     } catch (e) {
       console.error("Auth data corrupted:", e);
-      return { role: "student", id: "student-1", name: "Current Student" };
+      return { role: "counsellor", id: "1", name: "Dr. Sarah Jenkins" };
     }
   });
 
   useEffect(() => {
-    localStorage.setItem("unicare_auth_user", JSON.stringify(user));
+    localStorage.setItem("unicare_auth_v2", JSON.stringify(user));
   }, [user]);
 
   const login = (role, id, name) => {

@@ -1,11 +1,61 @@
 import { useState } from "react";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function AdminDashboard() {
   const { counsellors, addCounsellor, editCounsellor, deleteCounsellor } = useCounsellorContext();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ id: null, name: "", email: "", specialization: "", experience: "" });
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    // Full Name
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
+      newErrors.name = "Full name is required";
+    } else if (/[^a-zA-Z\s]/.test(trimmedName)) {
+      newErrors.name = "Full name must contain letters only";
+    }
+
+    // Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Enter a valid email address";
+    } else {
+      const isDuplicate = counsellors.some(c => c.email.toLowerCase() === formData.email.toLowerCase() && c.id !== formData.id);
+      if (isDuplicate) newErrors.email = "This email is already registered";
+    }
+
+    // Specialization
+    if (!formData.specialization.trim()) {
+      newErrors.specialization = "Specialization is required";
+    } else if (/^[0-9!@#$%^&*()_+={}\[\]|\\:;"'<,>.?/]*$/.test(formData.specialization.trim())) {
+      newErrors.specialization = "Specialization cannot be only numbers or symbols";
+    }
+
+    // Experience
+    const expRaw = formData.experience.toString().trim();
+    if (!expRaw) {
+      newErrors.experience = "Experience is required";
+    } else if (/[^0-9]/.test(expRaw)) {
+      newErrors.experience = "Experience must be a number only";
+    } else {
+      const years = parseInt(expRaw);
+      if (isNaN(years) || years < 0) {
+        newErrors.experience = "Enter valid experience";
+      } else if (years > 50) {
+        newErrors.experience = "Experience value is not realistic";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleOpenEdit = (c) => {
     setFormData(c);
@@ -14,20 +64,35 @@ export default function AdminDashboard() {
 
   const handleOpenAdd = () => {
     setFormData({ id: null, name: "", email: "", specialization: "", experience: "" });
+    setErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before saving.");
+      return;
+    }
+
+    const finalData = {
+      ...formData,
+      name: formData.name.trim(),
+      specialization: formData.specialization.trim()
+    };
+
     try {
       if (formData.id) {
-        editCounsellor(formData.id, formData);
+        editCounsellor(formData.id, finalData);
+        toast.success("Counsellor updated successfully!");
       } else {
-        addCounsellor(formData);
+        addCounsellor(finalData);
+        toast.success("Counsellor added successfully!");
       }
       setShowModal(false);
+      setErrors({});
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || "An error occurred.");
     }
   };
 
@@ -85,19 +150,52 @@ export default function AdminDashboard() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none" />
+                <input 
+                  type="text" 
+                  value={formData.name} 
+                  onChange={e => { 
+                    const val = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                    setFormData({...formData, name: val}); 
+                    if(errors.name) setErrors({...errors, name: null}); 
+                  }} 
+                  className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
+                />
+                {errors.name && <p className="text-red-600 text-xs mt-1 font-medium">{errors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none" />
+                <input 
+                  type="email" 
+                  value={formData.email} 
+                  onChange={e => { setFormData({...formData, email: e.target.value}); if(errors.email) setErrors({...errors, email: null}); }} 
+                  className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
+                />
+                {errors.email && <p className="text-red-600 text-xs mt-1 font-medium">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Specialization *</label>
-                <input required type="text" value={formData.specialization} onChange={e => setFormData({...formData, specialization: e.target.value})} className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none" />
+                <input 
+                  type="text" 
+                  value={formData.specialization} 
+                  onChange={e => { setFormData({...formData, specialization: e.target.value}); if(errors.specialization) setErrors({...errors, specialization: null}); }} 
+                  className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.specialization ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
+                />
+                {errors.specialization && <p className="text-red-600 text-xs mt-1 font-medium">{errors.specialization}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Experience *</label>
-                <input required type="text" placeholder="e.g. 5 years" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none" />
+                <input 
+                  type="text" 
+                  placeholder="e.g. 5" 
+                  value={formData.experience} 
+                  onChange={e => { 
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    setFormData({...formData, experience: val}); 
+                    if(errors.experience) setErrors({...errors, experience: null}); 
+                  }} 
+                  className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition ${errors.experience ? 'border-red-500 bg-red-50' : 'border-gray-300'}`} 
+                />
+                {errors.experience && <p className="text-red-600 text-xs mt-1 font-medium">{errors.experience}</p>}
               </div>
               <div className="flex justify-end gap-3 mt-8">
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition">Cancel</button>

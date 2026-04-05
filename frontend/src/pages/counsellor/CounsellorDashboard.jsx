@@ -4,7 +4,47 @@ import { useAuth } from "../../context/AuthContext";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import studentProfilePlaceholder from "../../assets/student_profile_john_smith.png";
+import student1 from "../../assets/student1.png";
+import student2 from "../../assets/student2.png";
+import student3 from "../../assets/student3.png";
+
+const guestPhotos = [student1, student2, student3];
+const guestNames = ["Alex Johnson", "Taylor Smith", "Jordan Lee", "Morgan Davis", "Casey Wilson", "Riley Taylor", "Quinn Brown", "Avery Miller"];
+
+const getDeterministicIndex = (idString, arrayLength) => {
+  let hash = 0;
+  for (let i = 0; i < idString.length; i++) {
+    hash = idString.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % arrayLength;
+};
+
+const getGuestPhoto = (idString) => {
+  if (!idString) return guestPhotos[0];
+  return guestPhotos[getDeterministicIndex(idString, guestPhotos.length)];
+};
+
+const getGuestName = (idString) => {
+  if (!idString) return guestNames[0];
+  return guestNames[getDeterministicIndex(idString, guestNames.length)];
+};
+
+const getAvatarColor = (name) => {
+  if (!name) return 'bg-blue-600';
+  const colors = [
+    'bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500', 
+    'bg-amber-500', 'bg-indigo-500', 'bg-sky-500', 'bg-fuchsia-500',
+    'bg-teal-500', 'bg-orange-500'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
@@ -12,7 +52,8 @@ export default function CounsellorDashboard() {
   const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
-  const counsellor = getCounsellorById(user.id);
+  const counsellor = getCounsellorById(user?.id) || null;
+  const counsellorName = counsellor?.name || user?.name || "";
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -43,15 +84,16 @@ export default function CounsellorDashboard() {
 
   const handleSaveAvailability = () => {
     if (!selectedDate) {
-      alert("Please select a date first.");
+      toast.error("Please select a date first.");
       return;
     }
     const today = new Date().toISOString().split('T')[0];
     if (selectedDate < today) {
-      alert("Must choose a future date.");
+      toast.error("Must choose a future date.");
       return;
     }
-    updateAvailability(counsellor.id, selectedDate, selectedSlots);
+    updateAvailability(counsellor?.id, selectedDate, selectedSlots);
+    toast.success("Availability updated efficiently!");
   };
 
   const handleDateChange = (e) => {
@@ -158,7 +200,7 @@ export default function CounsellorDashboard() {
 
   
   const filteredAppointments = myBookings.filter(b => {
-    const actName = (b?.studentName || b?.name || "Unknown Student");
+    const actName = (b?.studentName || b?.name || getGuestName((b?.id || "").toString()));
     const safeSid = (b?.studentId || "").toString();
     const safeAid = (b?.id || "").toString();
     
@@ -236,7 +278,15 @@ export default function CounsellorDashboard() {
   }, [searchNotes]);
 
   const safeNotes = Array.isArray(notes) ? notes : [];
-  const myNotes = safeNotes.filter(n => n.counsellorId === counsellor?.id);
+  // Match by counsellorId OR counsellorName as a fallback (handles user.id mismatch)
+  const myNotes = safeNotes.filter(n => {
+    if (!n) return false;
+    if (counsellor?.id && n.counsellorId === String(counsellor.id)) return true;
+    if (counsellorName && n.counsellorName && n.counsellorName.toLowerCase() === counsellorName.toLowerCase()) return true;
+    // If counsellor context is missing, show all notes for safety
+    if (!counsellor && !counsellorName) return true;
+    return false;
+  });
   const filteredNotes = myNotes.filter(n => {
     const term = (debouncedSearchNotes || "").toLowerCase();
     const nameMatch = (n.studentName || "N/A").toLowerCase().includes(term);
@@ -267,7 +317,7 @@ export default function CounsellorDashboard() {
 
   const analyzeRisk = () => {
     if (!noteText.trim()) {
-      alert("Please write some session notes first.");
+      toast.error("Please write some session notes first.");
       return;
     }
     
@@ -367,19 +417,23 @@ export default function CounsellorDashboard() {
   };
 
   const saveNotes = () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("There are validation errors. Please check the form.");
+      return;
+    }
 
     const bookingToSave = currentBooking || rawHistoryBookings.find(b => b.id === selectedBookingId);
     if (!bookingToSave) {
-      alert("Invalid appointment selected.");
+      toast.error("Invalid appointment selected.");
       return;
     }
 
     const noteData = {
-      counsellorId: counsellor.id,
-      counsellorName: counsellor.name,
+      counsellorId: counsellor?.id || user?.id || "unknown",
+      counsellorName: counsellor?.name || user?.name || "Unknown Counsellor",
       studentId: bookingToSave.studentId || "student",
       studentName: bookingToSave.studentName || "Student",
+      studentProfile: bookingToSave.studentProfile || bookingToSave.profileImage || null,
       appointmentId: bookingToSave.id,
       sessionDate: bookingToSave.date,
       title: noteTitle,
@@ -392,8 +446,10 @@ export default function CounsellorDashboard() {
 
     if (existingNoteId) {
       updateNote(existingNoteId, noteData);
+      toast.success("Session note updated.");
     } else {
       addNote(noteData);
+      toast.success("New session note saved.");
     }
     setShowNoteModal(false);
   };
@@ -405,189 +461,372 @@ export default function CounsellorDashboard() {
     }
   };
 
-  if (user.role !== "counsellor" || !counsellor) {
-    return <div className="text-center py-20">Access Denied. Counsellors only.</div>;
+  if (user?.role !== "counsellor") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-12 max-w-md w-full text-center">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
+            <User size={32} className="text-blue-600" />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-3">Counsellor Access Required</h2>
+          <p className="text-gray-500 mb-8 leading-relaxed">You need to be logged in as a Counsellor to access this page. Use the role switcher in the top navigation bar to switch to Counsellor mode.</p>
+          <div className="bg-blue-50 rounded-2xl p-4 text-sm text-blue-700 font-medium">
+            💡 Click your name in the navbar → <strong>"Login as Counsellor"</strong>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-12 pb-24">
+    <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 font-serif mb-2">Welcome, {counsellor.name}</h1>
-        <p className="text-gray-600 mb-8">Manage your schedule, view appointments, and add session notes.</p>
+        <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
+        <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
 
         {/* In-page tabs removed in favor of global Navbar routing */}
 
         {/* Availability Tab */}
         {activeTab === "availability" && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold mb-4">Set Availability</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Date (Future Only)</label>
-                <input type="date" value={selectedDate} onChange={handleDateChange} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-600" min={new Date().toISOString().split('T')[0]} />
-                
-                {selectedDate && (
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Add Time Slot</label>
-                    <div className="flex gap-2">
-                      <input type="time" value={slotInput} onChange={e => setSlotInput(e.target.value)} className="border border-gray-300 rounded-lg p-3 flex-grow focus:ring-2 focus:ring-blue-600" />
-                      <button onClick={handleAddSlot} className="bg-gray-100 px-4 py-2 rounded-lg font-medium hover:bg-gray-200">Add</button>
+          <div className="space-y-8 animate-in fade-in duration-700">
+            <div className="bg-gradient-to-br from-blue-50/60 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-blue-100/50 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600"></div>
+              <h2 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
+                <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Set Your Availability
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 gap-10">
+                <div className="space-y-10">
+                  <div className="group">
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 transition-colors group-focus-within:text-blue-600 ml-1">Select Date (Future Only)</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} strokeWidth={2.5} />
+                      <input 
+                        type="date" 
+                        value={selectedDate} 
+                        onChange={handleDateChange} 
+                        className="w-full border-2 border-gray-100 rounded-2xl p-4 pl-14 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all hover:border-blue-200 bg-white font-black text-gray-700 shadow-sm" 
+                        min={new Date().toISOString().split('T')[0]} 
+                      />
                     </div>
                   </div>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Slots for {selectedDate || "selected date"}</h3>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {selectedSlots.map(slot => (
-                     <div key={slot} className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
-                      {slot} <button onClick={() => setSelectedSlots(selectedSlots.filter(s => s !== slot))} className="text-blue-400 hover:text-blue-900"><XCircle size={14}/></button>
+                  
+                  {selectedDate && (
+                    <div className="group animate-in fade-in slide-in-from-top-6 duration-500">
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 transition-colors group-focus-within:text-blue-600 ml-1">Add Time Slot</label>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="relative flex-grow">
+                          <Clock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} strokeWidth={2.5} />
+                          <input 
+                            type="time" 
+                            value={slotInput} 
+                            onChange={e => setSlotInput(e.target.value)} 
+                            className="w-full bg-white border-2 border-gray-100 shadow-sm rounded-2xl pl-14 pr-4 p-4 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-black text-gray-700 hover:border-blue-200"
+                          />
+                        </div>
+                        <button 
+                          onClick={handleAddSlot} 
+                          className="w-full sm:w-auto bg-blue-50 border-2 border-blue-200 text-blue-700 px-8 py-4 rounded-2xl font-black text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-3 shadow-md active:scale-95"
+                        >
+                          <Plus size={20} strokeWidth={3} /> Add Slot
+                        </button>
+                      </div>
                     </div>
-                  ))}
-                  {selectedSlots.length === 0 && <p className="text-gray-500 text-sm">No slots added yet.</p>}
+                  )}
                 </div>
-                <button onClick={handleSaveAvailability} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-sm">Save Availability</button>
+                
+                <div className="flex flex-col h-full mt-4 lg:mt-0">
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Planned Slots: <span className="text-blue-600">{selectedDate || "---"}</span></h3>
+                  <div className="flex-grow bg-blue-50/40 border-2 border-blue-100/50 rounded-[1.5rem] p-6 flex flex-wrap gap-4 content-start min-h-[180px] shadow-inner mb-8">
+                    {selectedSlots.length > 0 ? selectedSlots.map((slot, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setSelectedSlots(selectedSlots.filter((_, i) => i !== idx))}
+                        className="bg-white text-blue-700 px-5 py-2.5 rounded-2xl border-2 border-blue-200 shadow-md flex items-center gap-3 font-black text-sm group transition-all hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-rose-200 cursor-pointer active:scale-90"
+                        title="Click to remove slot"
+                      >
+                        {slot}
+                        <XCircle size={18} strokeWidth={3} className="text-blue-400 group-hover:text-white transition-colors" />
+                      </button>
+                    )) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-center py-8 text-gray-400 opacity-60">
+                        <Clock size={40} strokeWidth={2.5} className="mb-4 text-blue-300" />
+                        <p className="text-sm font-black uppercase tracking-widest">No slots added</p>
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleSaveAvailability} 
+                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-200 hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                  >
+                    <CheckCircle size={24} strokeWidth={3} /> Save Availability
+                  </button>
+                </div>
               </div>
             </div>
             
-            <div className="mt-8 pt-8 border-t border-gray-100">
-              <h3 className="font-bold text-gray-800 mb-4">Current Schedule</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {counsellor.availability?.map(avail => (
-                  <div key={avail.date} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <div className="font-semibold text-gray-900 flex items-center gap-2 mb-2"><Calendar size={16}/> {avail.date}</div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {avail.slots.map(s => <div key={s} className="flex items-center gap-2"><Clock size={14}/> {s}</div>)}
+            <div className="bg-gradient-to-br from-indigo-50/50 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-indigo-100/50 relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-indigo-500"></div>
+              <h3 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
+                <Activity size={28} strokeWidth={3} className="text-indigo-600" /> Current Weekly Schedule
+              </h3>
+              
+              {(counsellor?.availability?.length || 0) > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {(counsellor?.availability || []).map(avail => (
+                    <div key={avail.date} className="bg-white group hover:shadow-2xl hover:-translate-y-1.5 border-2 border-gray-100 hover:border-indigo-400 rounded-[1.5rem] p-8 transition-all duration-500">
+                      <div className="font-black text-gray-900 flex items-center gap-2.5 mb-6 text-sm border-b-2 border-gray-50 pb-4 group-hover:border-indigo-100 transition-colors">
+                        <Calendar size={20} strokeWidth={2.5} className="text-indigo-500 shrink-0"/> {avail.date}
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {avail.slots.map(s => (
+                          <div key={s} className="bg-indigo-50/50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border-2 border-indigo-100/50 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shadow-sm">
+                            <Clock size={14} strokeWidth={3} className="shrink-0" /> {s}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                  <Calendar size={48} className="text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 font-bold">No sessions scheduled yet.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* Appointments Tab */}
         {activeTab === "appointments" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Appointment Management</h2>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Calendar size={18} className="text-blue-600" /> Appointment Management
+              </h2>
             </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search appointments..." 
-                  value={searchApptStudent}
-                  onChange={(e) => setSearchApptStudent(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
-                />
-                {apptSearchError && <p className="text-red-500 text-xs mt-1 absolute left-0 top-full">{apptSearchError}</p>}
-              </div>
-              <div className="flex gap-4">
+            
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Search Student or ID</label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input 
-                    type="date" 
-                    value={filterApptDate}
-                    onChange={(e) => setFilterApptDate(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
+                    type="text" 
+                    placeholder="Search by student name, ID, or appointment ID" 
+                    value={searchApptStudent}
+                    onChange={(e) => setSearchApptStudent(e.target.value)}
+                    className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium"
                   />
                 </div>
-                <div className="relative">
-                  <Filter className="absolute left-3 top-3 text-gray-400" size={18} />
-                  <select 
-                    value={filterApptStatus} 
-                    onChange={(e) => setFilterApptStatus(e.target.value)}
-                    className="pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none appearance-none bg-white"
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                {apptSearchError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider mt-1 ml-1">{apptSearchError}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <input 
+                      type="date" 
+                      value={filterApptDate}
+                      onChange={(e) => setFilterApptDate(e.target.value)}
+                      className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-3 text-gray-400" size={18} />
-                  <select 
-                    value={filterApptTiming} 
-                    onChange={(e) => setFilterApptTiming(e.target.value)}
-                    className="pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none appearance-none bg-white"
-                  >
-                    <option value="All">All Timing</option>
-                    <option value="Upcoming">Upcoming</option>
-                    <option value="Past">Past</option>
-                  </select>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Status</label>
+                  <div className="relative">
+                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <select 
+                      value={filterApptStatus} 
+                      onChange={(e) => setFilterApptStatus(e.target.value)}
+                      className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm appearance-none text-gray-700"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Timing</label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <select 
+                      value={filterApptTiming} 
+                      onChange={(e) => setFilterApptTiming(e.target.value)}
+                      className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm appearance-none text-gray-700"
+                    >
+                      <option value="All">All Timing</option>
+                      <option value="Upcoming">Upcoming</option>
+                      <option value="Past">Past</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {filteredAppointments.length > 0 ? (
                 filteredAppointments.map(b => {
                   if (!b) return null;
                   const note = getNoteByBookingId(b.id);
                   const safeID = (b.id || "").toString();
-                  const studentDispName = b.studentName || b.name || "Unknown Student";
-                  
+                  const studentDispName = b.studentName || b.name || getGuestName(safeID);
+                  const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
+                  const profileSrc = b.studentProfile || b.profileImage || (studentDispName === "John Smith" ? studentProfilePlaceholder : getGuestPhoto(safeID || 'default'));
                   return (
-                    <div key={b.id || Math.random()} className={`bg-white p-6 rounded-2xl shadow-sm border ${b.status === 'Cancelled' || b.status === 'Rejected' ? 'border-red-200 opacity-75' : 'border-gray-100'} flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 transition hover:shadow-md`}>
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                          <div>
-                            <h3 className="font-bold text-gray-900 text-xl leading-tight">{studentDispName}</h3>
-                            <p className="text-sm font-semibold text-gray-500 uppercase tracking-tight mt-1">Student ID: {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A ID")}</p>
+                    <div key={b.id || Math.random()} className={`rounded-[2rem] shadow-md border-2 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group overflow-hidden relative ${
+                      b.status === 'Cancelled' || b.status === 'Rejected' 
+                        ? 'border-rose-200 bg-gradient-to-br from-rose-50/60 via-white to-white' 
+                        : b.status === 'Completed'
+                        ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/60 via-white to-white'
+                        : 'border-blue-200 bg-gradient-to-br from-blue-50/60 via-white to-white'
+                    }`}>
+                      <div className={`absolute left-0 top-0 bottom-0 w-2.5 transition-all duration-300 group-hover:w-3.5 ${
+                        b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-500' : b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-600'
+                      }`}></div>
+                      
+                      <div className="flex-1 p-10 pl-12">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-8">
+                          <div className="relative group/avatar shrink-0">
+                            <div className={`w-14 h-14 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-2 border-white shadow-md overflow-hidden transition-all duration-500 group-hover/avatar:rotate-3 group-hover/avatar:scale-110`}>
+                              {profileSrc ? (
+                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-white font-black text-lg">{initials}</span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
                           </div>
-                          <span className={`w-fit text-xs px-2 py-1 rounded font-semibold border ${
-                            b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                            b.status === 'Completed' ? 'bg-green-50 text-green-700 border-green-200' : 
-                            b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' : 
-                            'bg-amber-50 text-amber-700 border-amber-200'
+                          <div>
+                            <h3 className="font-black text-gray-900 text-2xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{studentDispName}</h3>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[10px] font-black text-blue-600/60 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100/50">
+                                {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A ID")}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className={`sm:ml-auto flex items-center gap-2.5 px-5 py-2 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 shadow-sm transition-all duration-300 ${
+                            b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                            b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
+                            b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
+                            'bg-amber-100 text-amber-800 border-amber-200'
                           }`}>
+                            <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+                              b.status === 'Completed' ? 'bg-emerald-600' : 
+                              b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-600' : 
+                              b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-600' : 'bg-amber-600'
+                            }`}></span>
                             {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : (b.status || "Pending")}
-                          </span>
+                          </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 text-sm text-gray-600 font-medium">
-                          <div className="flex items-center gap-2"><Activity size={16} className="text-gray-400"/> {b.sessionType || "1-on-1 Session"}</div>
-                          <div className="flex items-center gap-2"><Calendar size={16} className="text-blue-500"/> {b.date || "N/A Date"}</div>
-                          <div className="flex items-center gap-2"><Clock size={16} className="text-blue-500"/> {b.time || "N/A Time"}</div>
-                          <div className="flex items-center gap-2"><FileText size={16} className="text-gray-400"/> Appt ID: {safeID ? safeID.substring(0,8) : "N/A"}</div>
+                        <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 mt-10">
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-violet-100 hover:bg-violet-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-violet-100/50 flex items-center justify-center text-violet-600 shadow-sm group-hover/item:scale-110 transition-transform"><Activity size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Type</span>
+                              <span className="text-xs font-bold text-gray-800 capitalize leading-none mt-0.5">{b.sessionType || "1-on-1"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-blue-100 hover:bg-blue-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm group-hover/item:scale-110 transition-transform"><Calendar size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</span>
+                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.date || "N/A"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm group-hover/item:scale-110 transition-transform"><Clock size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Time</span>
+                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.time || "N/A"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm group-hover/item:scale-110 transition-transform"><FileText size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ID</span>
+                              <span className="text-xs font-bold text-gray-800 uppercase leading-none mt-0.5">{safeID ? safeID.substring(0,8) : "N/A"}</span>
+                            </div>
+                          </div>
                         </div>
-                        {b.rejectReason && <p className="text-sm text-red-600 mt-3 font-semibold bg-red-50 inline-block px-3 py-1 rounded-md">Reason: {b.rejectReason}</p>}
+                        {b.rejectReason && <p className="text-sm text-rose-700 mt-6 font-bold bg-rose-100/50 border border-rose-200/50 inline-block px-5 py-2.5 rounded-2xl shadow-sm">Reason: {b.rejectReason}</p>}
                       </div>
 
-                      <div className="flex flex-wrap gap-2 w-full lg:w-auto mt-4 lg:mt-0">
-                        <button onClick={() => navigate(`/counsellor/appointment/${b.id}`)} className="flex-1 lg:flex-none justify-center bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 px-4 py-2 rounded-xl font-medium transition">
-                          View Details
+                      <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto p-10 lg:pl-0 lg:pr-12 lg:ml-auto">
+                        <button 
+                          onClick={() => navigate(`/counsellor/appointment/${b.id}`)} 
+                          className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-gray-100 bg-white text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-700 hover:shadow-xl active:scale-95"
+                        >
+                          Details
                         </button>
                       
                         {b.status === "Pending" && (
                           <>
-                            <button onClick={() => confirmBookingByCounsellor(b.id)} className="flex-1 lg:flex-none justify-center bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition"><CheckCircle size={16}/> Confirm</button>
-                            <button onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} className="flex-1 lg:flex-none justify-center bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition"><XCircle size={16}/> Cancel</button>
+                            <button 
+                              onClick={() => confirmBookingByCounsellor(b.id)} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
+                            >
+                              <CheckCircle size={20} strokeWidth={3}/> Confirm
+                            </button>
+                            <button 
+                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
+                            >
+                              <XCircle size={20} strokeWidth={3}/> Cancel
+                            </button>
                           </>
                         )}
 
                         {(b.status === "Confirmed" || b.status === "Accepted") && (
                           <>
-                            <button onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} className="flex-1 lg:flex-none justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition">
-                              <MessageCircle size={16}/> {hasChatHistory(b.studentName || b.name) ? "Continue Chat" : "Start Chat"}
+                            <button 
+                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
+                            >
+                              <MessageCircle size={20} strokeWidth={3}/> {hasChatHistory(b.studentName || b.name) ? "Chat" : "Start Chat"}
                             </button>
-                            <button onClick={() => completeBooking(b.id)} className="flex-1 lg:flex-none justify-center bg-green-600 text-white hover:bg-green-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition"><CheckCircle size={16}/> Mark Completed</button>
-                            <button onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} className="flex-1 lg:flex-none justify-center text-red-600 hover:bg-red-50 hover:text-red-700 border border-transparent hover:border-red-200 px-4 py-2 rounded-xl font-medium transition">Cancel</button>
+                            <button 
+                              onClick={() => completeBooking(b.id)} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-emerald-200"
+                            >
+                              <CheckCircle size={20} strokeWidth={3}/> Complete
+                            </button>
+                            <button 
+                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
+                            >
+                              Cancel
+                            </button>
                           </>
                         )}
 
                         {b.status === "Completed" && (
                           <>
-                            <button onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} className="flex-1 lg:flex-none justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition">
-                              <MessageCircle size={16}/> {hasChatHistory(b.studentName || b.name) ? "Continue Chat" : "Start Chat"}
+                            <button 
+                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
+                            >
+                              <MessageCircle size={20} strokeWidth={3}/> Chat
                             </button>
-                            <button onClick={() => openNotesModal("booking", b)} className={`flex-1 lg:flex-none justify-center px-4 py-2 rounded-xl font-medium flex items-center gap-2 transition border ${note ? 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50' : 'bg-blue-50 text-blue-700 border-transparent hover:bg-blue-100'}`}>
-                              <FileText size={16} /> {note ? "View Session Note" : "Add Session Note"}
+                            <button 
+                              onClick={() => openNotesModal("booking", b)} 
+                              className={`flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] active:scale-95 ${
+                                note 
+                                  ? 'border-sky-200 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-400 hover:shadow-xl' 
+                                  : 'border-sky-500 bg-white text-sky-600 hover:bg-sky-600 hover:text-white hover:shadow-xl shadow-sky-100'
+                              }`}
+                            >
+                              <FileText size={20} strokeWidth={3} /> {note ? "Note" : "Add Note"}
                             </button>
                           </>
                         )}
@@ -596,10 +835,10 @@ export default function CounsellorDashboard() {
                   );
                 })
               ) : (
-                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                  <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900">No appointments found</h3>
-                  <p className="text-gray-500">Try adjusting your filters or search term.</p>
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                  <Calendar className="mx-auto h-16 w-16 text-gray-100 mb-6" />
+                  <h3 className="text-lg font-black text-gray-900 tracking-tight">No appointments found</h3>
+                  <p className="text-gray-400 text-sm font-medium mt-1">Try adjusting your filters or search term.</p>
                 </div>
               )}
             </div>
@@ -608,55 +847,112 @@ export default function CounsellorDashboard() {
 
         {/* History Tab */}
         {activeTab === "history" && (
-          <div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search past appointments by student name..." 
-                  value={searchHistory}
-                  onChange={(e) => setSearchHistory(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
-                />
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Past Student Name</label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Search past appointments..." 
+                    value={searchHistory}
+                    onChange={(e) => setSearchHistory(e.target.value)}
+                    className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium"
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-3 text-gray-400" size={18} />
-                <input 
-                  type="date" 
-                  value={filterDateHistory}
-                  onChange={(e) => setFilterDateHistory(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
-                />
+              <div className="w-full md:w-64 space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Filter by Date</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                  <input 
+                    type="date" 
+                    value={filterDateHistory}
+                    onChange={(e) => setFilterDateHistory(e.target.value)}
+                    className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-xs shadow-sm shadow-gray-100/50"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {historyBookings.length > 0 ? (
                 historyBookings.map(b => {
                   if (!b) return null;
                   const note = getNoteByBookingId(b.id);
                   const safeID = (b.id || "").toString();
                   const studentDispName = b.studentName || b.name || "N/A Student";
+                  const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
+                  const profileSrc = b.studentProfile || b.profileImage || (studentDispName === "John Smith" ? studentProfilePlaceholder : null);
                   
                   return (
-                    <div key={b.id || Math.random()} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-blue-100 transition">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-bold text-gray-900">{studentDispName}</h3>
-                          <span className={`text-xs px-2 py-1 rounded font-medium ${b.status === 'Accepted' || b.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {b.status || "N/A"}
-                          </span>
+                    <div key={b.id || Math.random()} className={`rounded-3xl shadow-sm border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 group overflow-hidden relative p-8 ${
+                      b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed'
+                        ? 'border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-white'
+                        : 'border-blue-100/80 bg-gradient-to-br from-blue-50/40 via-white to-white'
+                    }`}>
+                      <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2 ${
+                        b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-400' : 'bg-blue-400/50'
+                      }`}></div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-5">
+                          <div className="relative group/avatar shrink-0">
+                            <div className={`w-14 h-14 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-2 border-white shadow-md overflow-hidden transition-all duration-500 group-hover/avatar:rotate-3 group-hover/avatar:scale-110`}>
+                              {profileSrc ? (
+                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-white font-black text-lg">{initials}</span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-gray-900 text-2xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{studentDispName}</h3>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className={`text-[10px] items-center gap-2 px-3 py-1 rounded-xl font-black uppercase tracking-[0.15em] border shadow-sm transition-all duration-300 flex ${
+                                b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200/50' : 'bg-blue-100/50 text-blue-700 border-blue-200/50'
+                              }`}>
+                                <span className={`w-2 h-2 rounded-full animate-pulse ${
+                                  b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
+                                }`}></span>
+                                {b.status || "N/A"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600 mt-2 flex items-center gap-4">
-                          <span className="flex items-center gap-1"><Calendar size={14}/> {b.date || "N/A"}</span>
-                          <span className="flex items-center gap-1"><Clock size={14}/> {b.time || "N/A"}</span>
-                          {safeID && <span className="text-gray-400">ID: {safeID.substring(0,8)}</span>}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100/50 flex items-center justify-center text-emerald-600 shadow-sm group-hover/item:scale-110 transition-transform"><Calendar size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</span>
+                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.date || "N/A"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm group-hover/item:scale-110 transition-transform"><Clock size={18}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Time</span>
+                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.time || "N/A"}</span>
+                            </div>
+                          </div>
+                          {safeID && (
+                            <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/30 transition-all">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm group-hover/item:scale-110 transition-transform"><FileText size={18}/></div>
+                              <div className="flex flex-col">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ID</span>
+                                <span className="text-xs font-bold text-gray-800 uppercase leading-none mt-0.5">{safeID.substring(0,8)}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        {b.rejectReason && <p className="text-sm text-red-600 mt-2">Reason: {b.rejectReason}</p>}
+                        {b.rejectReason && <p className="text-xs text-rose-600 mt-4 font-black uppercase tracking-wider bg-rose-50 inline-block px-4 py-1.5 rounded-full border border-rose-100">Reason: {b.rejectReason}</p>}
                       </div>
+                      
                       {(b.status === "Accepted" || b.status === "Confirmed" || b.status === "Completed") && (
-                        <button onClick={() => openNotesModal("booking", b)} className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition shadow-sm border ${note ? 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700'}`}>
+                        <button onClick={() => openNotesModal("booking", b)} className={`h-11 px-8 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] flex items-center gap-3 transition-all shadow-sm active:scale-95 border ${
+                          note ? 'bg-white text-blue-700 border-blue-100 hover:bg-gray-50' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700 shadow-lg shadow-blue-100'
+                        }`}>
                           <FileText size={18} /> {note ? "View Note" : "Add Note"}
                         </button>
                       )}
@@ -664,9 +960,10 @@ export default function CounsellorDashboard() {
                   );
                 })
               ) : (
-                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                  <Activity className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900">No history found</h3>
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                  <Activity className="mx-auto h-16 w-16 text-gray-100 mb-6" />
+                  <h3 className="text-lg font-black text-gray-900 tracking-tight">No history records found</h3>
+                  <p className="text-gray-400 text-sm font-medium mt-1">Visit your appointments tab to manage current sessions.</p>
                 </div>
               )}
             </div>
@@ -675,129 +972,166 @@ export default function CounsellorDashboard() {
 
         {/* Session Notes Tab */}
         {activeTab === "session notes" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Your Session Notes</h2>
-              <button onClick={() => openNotesModal("new")} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition flex items-center gap-2">
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                <FileText size={18} className="text-blue-600" /> Manage Professional Notes
+              </h2>
+              <button onClick={() => openNotesModal("new")} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all flex items-center gap-2 active:scale-95">
                 <Plus size={18} /> Create New Note
               </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search by student, title, or keywords..." 
-                  value={searchNotes}
-                  maxLength={50}
-                  onChange={(e) => setSearchNotes(e.target.value)}
-                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition ${searchNotesError ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
-                />
-                {searchNotes && (
-                  <button 
-                    onClick={() => setSearchNotes("")}
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Clear search"
-                  >
-                    <XCircle size={18} />
-                  </button>
-                )}
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Keywords</label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by student, title, or keywords..." 
+                    value={searchNotes}
+                    maxLength={50}
+                    onChange={(e) => setSearchNotes(e.target.value)}
+                    className={`w-full pl-12 pr-12 h-12 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition font-medium ${searchNotesError ? 'border-red-300 bg-red-50' : 'border-gray-100 bg-gray-50/50'}`}
+                  />
+                  {searchNotes && (
+                    <button 
+                      onClick={() => setSearchNotes("")}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title="Clear search"
+                    >
+                      <XCircle size={18} />
+                    </button>
+                  )}
+                </div>
                 {searchNotesError && (
-                  <p className="text-red-500 text-[10px] mt-1 absolute left-1 -bottom-4 font-medium uppercase tracking-wider">{searchNotesError}</p>
+                  <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider mt-1 ml-1">{searchNotesError}</p>
                 )}
               </div>
-              <div className="flex gap-4">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 text-gray-400" size={18} />
-                  <input 
-                    type="date" 
-                    value={filterDateNotes}
-                    onChange={(e) => setFilterDateNotes(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <input 
+                      type="date" 
+                      value={filterDateNotes}
+                      onChange={(e) => setFilterDateNotes(e.target.value)}
+                      className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-xs"
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Filter className="absolute left-3 top-3 text-gray-400" size={18} />
-                  <select 
-                    value={filterRiskNotes} 
-                    onChange={(e) => setFilterRiskNotes(e.target.value)}
-                    className="pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none appearance-none bg-white"
-                  >
-                    <option value="">All Risk Levels</option>
-                    <option value="Low">Low Risk</option>
-                    <option value="Medium">Medium Risk</option>
-                    <option value="High">High Risk</option>
-                    <option value="Critical">Critical Risk</option>
-                    <option value="Severe">Severe Risk</option>
-                  </select>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Risk Level</label>
+                  <div className="relative">
+                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <select 
+                      value={filterRiskNotes} 
+                      onChange={(e) => setFilterRiskNotes(e.target.value)}
+                      className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-black text-[10px] uppercase tracking-wider appearance-none"
+                    >
+                      <option value="">All Risk Levels</option>
+                      <option value="Low">Low Risk</option>
+                      <option value="Medium">Medium Risk</option>
+                      <option value="High">High Risk</option>
+                      <option value="Severe">Severe Risk</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 space-y-4">
-              {filteredNotes.map(n => (
-                <div key={n.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-blue-100 transition hover:shadow-md group">
-                  <div className="flex-1 w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0 uppercase">
-                          {(n.studentName || "N A").split(" ").filter(Boolean).map(nn => nn[0]).join("").slice(0, 2)}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors">{n.studentName || "Unknown Student"}</h3>
-                          <p className="text-xs font-semibold text-gray-500 tracking-tight mt-0.5">Student ID: {n.studentId || "STU-" + (n.appointmentId || "").toString().substring(0,5)}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${n.status === 'Completed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {n.status}
-                        </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border ${
-                          n.riskLevel === 'Severe' || n.riskLevel === 'Critical' || n.riskLevel === 'High' ? 'bg-red-50 text-red-700 border-red-200' : 
-                          n.riskLevel === 'Medium' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
-                          'bg-green-50 text-green-700 border-green-200'
-                        }`}>
-                          {n.riskLevel} Risk
-                        </span>
-                      </div>
-                    </div>
+            <div className="grid grid-cols-1 space-y-5">
+              {filteredNotes.map(n => {
+                const safeId = n.studentId || (n.appointmentId ? "STU-" + n.appointmentId.toString().substring(0, 5) : "N/A ID");
+                const safeName = n.studentName || getGuestName(n.appointmentId || n.id || 'default');
+                const initials = safeName ? safeName.split(' ').map(nm => nm[0]).join('').substring(0, 2).toUpperCase() : '??';
+                const profileSrc = n.studentProfile || (n.studentName === "John Smith" ? studentProfilePlaceholder : getGuestPhoto(n.appointmentId || n.id || 'default'));
+
+                return (
+                  <div key={n.id} className="bg-gradient-to-br from-blue-50/50 via-white to-white rounded-3xl shadow-sm border border-blue-100/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-xl hover:shadow-blue-200/20 hover:border-blue-300 group overflow-hidden relative p-6 pl-8 transition-all duration-300">
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500 transition-all duration-300 group-hover:w-2"></div>
                     
-                    <div className="text-sm text-gray-500 mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 font-medium">
-                      <span className="flex items-center gap-1.5"><Calendar size={14} className="text-blue-500"/> {n.sessionDate || "N/A Date"}</span>
-                      <span className="flex items-center gap-1.5"><FileText size={14} className="text-gray-400"/> {(n.appointmentId || "N/A ID").toString().substring(0,10)}</span>
-                    </div>
- 
-                    <div className="mt-5 border-l-4 border-blue-500 pl-4 py-1 bg-gray-50/50 rounded-r-lg group-hover:bg-blue-50/30 transition-colors">
-                      <div className="mb-2">
-                        <span className="text-[11px] font-bold text-blue-700 tracking-tight">Note Title</span>
-                        <h4 className="text-gray-900 font-bold">{n.title}</h4>
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-5">
+                          <div className="relative group/avatar">
+                            <div className={`w-14 h-14 rounded-full ${getAvatarColor(safeName)} flex items-center justify-center border-2 border-white shadow-sm overflow-hidden transition-transform group-hover/avatar:scale-105`}>
+                              {profileSrc ? (
+                                <img 
+                                  src={profileSrc} 
+                                  alt={safeName} 
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-white font-black text-lg">{initials}</span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+                          </div>
+                          <div>
+                            <h3 className="font-black text-gray-900 text-xl leading-tight group-hover:text-blue-600 transition-colors">{safeName}</h3>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mt-1">Student ID: {safeId}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border shadow-sm transition-all duration-300 flex items-center gap-2 ${
+                            (n.status || '') === 'Completed' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200/50' : 'bg-blue-100/50 text-blue-700 border-blue-200/50'
+                          }`}>
+                            <span className={`w-2 h-2 rounded-full animate-pulse ${
+                              (n.status || '') === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
+                            }`}></span>
+                            {n.status || 'Draft'}
+                          </span>
+                          <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border shadow-sm transition-all duration-300 flex items-center gap-2 ${
+                            ['Severe','Critical','High'].includes(n.riskLevel) ? 'bg-rose-100/50 text-rose-700 border-rose-200/50' : 
+                            n.riskLevel === 'Medium' ? 'bg-amber-100/50 text-amber-700 border-amber-200/50' : 
+                            'bg-blue-100/50 text-blue-700 border-blue-200/50'
+                          }`}>
+                            <span className={`w-2 h-2 rounded-full animate-pulse ${
+                              ['Severe','Critical','High'].includes(n.riskLevel) ? 'bg-rose-500' : 
+                              n.riskLevel === 'Medium' ? 'bg-amber-500' : 'bg-blue-500'
+                            }`}></span>
+                            {n.riskLevel || 'Low'} Risk
+                          </span>
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white/80 px-3 py-1 rounded-lg border border-gray-100 group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-100 transition-all">
+                            {n.sessionDate || 'N/A'}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[11px] font-bold text-gray-500 tracking-tight">Summary</span>
-                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{n.notes}</p>
+                      
+                      <div className="mb-6 bg-white/40 p-5 rounded-2xl border border-white/60">
+                        <h4 className="font-black text-gray-900 text-sm mb-2 group-hover:text-blue-700 transition-colors">{n.title || 'Untitled Note'}</h4>
+                        <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2 italic">
+                          "{n.notes || 'No summary available'}"
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100/50 italic font-black text-[10px]">R</div>
+                            <p className="text-[11px] font-black text-gray-600 leading-tight">
+                              <span className="block text-[8px] text-gray-400 uppercase tracking-widest mb-0.5">Recommendation</span>
+                              {n.recommendation || 'No recommendation specified.'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <button onClick={() => openNotesModal("edit", n)} className="flex-1 sm:flex-none p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-sm border border-blue-100/50 flex items-center justify-center gap-2" title="Edit Clinical Note">
+                            <Eye size={18} /> <span className="sm:hidden text-[10px] font-black uppercase">View/Edit</span>
+                          </button>
+                          <button onClick={() => deleteNote(n.id)} className="p-3 bg-white text-rose-500 border border-rose-100 rounded-xl hover:bg-rose-50 transition-all active:scale-95 flex items-center justify-center" title="Delete Note">
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex shrink-0 w-full md:w-auto mt-2 md:mt-0 gap-2">
-                    <button 
-                      onClick={() => openNotesModal("note", n, true)} 
-                      className="flex-1 md:flex-none bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm active:scale-95"
-                      title="View read-only version"
-                    >
-                      <Eye size={18} className="text-blue-500" /> View
-                    </button>
-                    <button 
-                      onClick={() => openNotesModal("note", n, false)} 
-                      className="flex-1 md:flex-none bg-white text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm active:scale-95"
-                      title="Edit this note"
-                    >
-                      <Pencil size={18} /> Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredNotes.length === 0 && (
                 <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
                   <FileText className="mx-auto h-12 w-12 text-gray-300 mb-3" />
@@ -836,7 +1170,7 @@ export default function CounsellorDashboard() {
                     value={selectedBookingId}
                     disabled={isViewOnly}
                     onChange={(e) => { setSelectedBookingId(e.target.value); if(errors.selectedBookingId) setErrors({...errors, selectedBookingId: null}); }}
-                    className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition bg-white disabled:bg-gray-50 disabled:text-gray-400 ${errors.selectedBookingId ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                    className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-teal-600 outline-none transition bg-white disabled:bg-gray-50 disabled:text-gray-400 ${errors.selectedBookingId ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                   >
                     <option value="">-- Choose a past appointment --</option>
                     {completedBookingsForNotes.length > 0 ? (

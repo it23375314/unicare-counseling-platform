@@ -18,9 +18,12 @@ import CounsellorDashboard from "./pages/counsellor/CounsellorDashboard";
 import AppointmentProfile from "./pages/counsellor/AppointmentProfile";
 import ChatUI from "./pages/counsellor/ChatUI";
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <ToastProvider>
+      <Toaster position="top-right" />
       <AuthProvider>
         <CounsellorProvider>
           <BookingProvider>

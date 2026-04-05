@@ -10,8 +10,54 @@ export const BookingProvider = ({ children }) => {
   
   const [bookings, setBookings] = useState(() => {
     try {
-      const saved = localStorage.getItem("unicare_bookings");
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem("unicare_bookings_v2");
+      if (saved) return JSON.parse(saved);
+      
+      // Seed initial data if empty
+      return [
+        {
+          id: "appt-101",
+          counsellor: "Dr. Sarah Jenkins",
+          studentName: "John Smith",
+          studentId: "STD-1774",
+          studentEmail: "john123@gmail.com",
+          studentContact: "+1 (555) 177-4000",
+          studentProfile: "/john_smith.png",
+          date: "2026-03-29",
+          time: "09:00 AM",
+          sessionType: "Initial Assessment",
+          status: "Completed",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "appt-102",
+          counsellor: "Dr. Sarah Jenkins",
+          studentName: "Emma Johnson",
+          studentId: "STD-2491",
+          studentEmail: "emma.j@university.edu",
+          studentContact: "+1 (555) 177-2491",
+          studentProfile: "/emma_johnson.png",
+          date: "2026-03-30",
+          time: "11:30 AM",
+          sessionType: "Follow-up Counseling",
+          status: "Confirmed",
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: "appt-103",
+          counsellor: "Dr. Sarah Jenkins",
+          studentName: "Michael Brown",
+          studentId: "STD-8823",
+          studentEmail: "michael.b@university.edu",
+          studentContact: "+1 (555) 177-8823",
+          studentProfile: "/michael_brown.png",
+          date: "2026-03-28",
+          time: "02:00 PM",
+          sessionType: "Crisis Intervention",
+          status: "Pending",
+          createdAt: new Date().toISOString()
+        }
+      ];
     } catch (e) {
       console.error("Booking data corrupted:", e);
       return [];
@@ -19,7 +65,7 @@ export const BookingProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem("unicare_bookings", JSON.stringify(bookings));
+    localStorage.setItem("unicare_bookings_v2", JSON.stringify(bookings));
   }, [bookings]);
 
   // Dynamic slot availability logic

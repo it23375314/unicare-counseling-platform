@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import toast from "react-hot-toast";
+
 function BookingForm() {
   const [form, setForm] = useState({
     name: "",
@@ -10,7 +12,7 @@ function BookingForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(form);
-    alert("Appointment Booked!");
+    toast.success("Appointment Booked!");
   };
 
   return (
