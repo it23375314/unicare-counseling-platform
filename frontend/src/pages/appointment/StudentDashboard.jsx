@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Calendar as CalendarIcon, Clock, Video, FileText, XCircle, AlertCircle, CheckCircle, Edit, Save } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Video, FileText, XCircle, AlertCircle, CheckCircle2, Edit, Save, ArrowRight, User, Sparkles, Heart, Activity } from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
 
-const regularSlots = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM", "05:00 PM"];
+const regularSlots = ["09:00", "11:00", "13:00", "15:00"];
 
 const StudentDashboard = () => {
   const { bookings, cancelBooking, rescheduleBooking, checkIsRefundable, getAvailableSlots } = useBooking();
-  const [filter, setFilter] = useState("All"); // All, Pending, Confirmed, Cancelled
+  const [filter, setFilter] = useState("All"); 
   
-  // Reschedule states
-  const [editingBookingId, setEditingBookingId] = useState(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const [rescheduleError, setRescheduleError] = useState("");
@@ -20,267 +20,341 @@ const StudentDashboard = () => {
     return b.status === filter;
   });
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleOpenReschedule = (booking) => {
-    setEditingBookingId(booking.id);
+    setCurrentBooking(booking);
     setNewDate(booking.date);
     setNewTime("");
     setRescheduleError("");
+    setShowRescheduleModal(true);
   };
 
-  const handleSaveReschedule = (booking) => {
+  const handleSaveReschedule = () => {
     setRescheduleError("");
     if (!newDate || !newTime) {
       setRescheduleError("Please pick both a valid date and time.");
       return;
     }
     try {
-      rescheduleBooking(booking.id, newDate, newTime);
-      setEditingBookingId(null);
+      rescheduleBooking(currentBooking.id, newDate, newTime);
+      setShowRescheduleModal(false);
+      setCurrentBooking(null);
     } catch (err) {
       setRescheduleError(err.message);
     }
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-12 pb-24">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 font-serif">Welcome back, Alex</h1>
-            <p className="text-gray-600">Here is an overview of your mental wellness journey.</p>
-          </div>
-          <Link to="/appointment/counsellors" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition flex items-center justify-center gap-2 max-w-max">
-            <CalendarIcon className="w-5 h-5" /> Book New Session
-          </Link>
-        </div>
+    <div className="bg-slate-50 min-h-screen pb-32">
+      {/* Reschedule Modal */}
+      {showRescheduleModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowRescheduleModal(false)} />
+          <div className="glass-card max-w-2xl w-full p-10 rounded-[3rem] shadow-2xl relative animate-fade-in-up border border-white/20 bg-white/95 overflow-y-auto max-h-[90vh] no-scrollbar">
+             <div className="flex items-center gap-4 mb-10">
+               <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                 <Edit size={28} />
+               </div>
+               <div>
+                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">Modify Session</h2>
+                 <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Reschedule with {currentBooking?.counsellor}</p>
+               </div>
+             </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-gray-100 gap-4">
-                 <h2 className="text-xl font-bold text-gray-900 flex items-center">
-                  Your Appointments
-                  <span className="ml-3 text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{bookings.length}</span>
-                </h2>
+             {rescheduleError && (
+               <div className="mb-8 p-5 bg-rose-50 text-rose-700 flex items-center gap-4 rounded-2xl border border-rose-100 animate-slide-up">
+                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                 <p className="font-black text-[10px] uppercase tracking-widest">{rescheduleError}</p>
+               </div>
+             )}
 
-                <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
-                  {["All", "Pending", "Confirmed", "Cancelled"].map(f => (
-                    <button
-                      key={f}
-                      onClick={() => setFilter(f)}
-                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-                        filter === f ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-900"
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
+             <div className="space-y-10">
+                {/* Date Picker Section */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose New Date</label>
+                  <input 
+                    type="date" 
+                    value={newDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => { setNewDate(e.target.value); setNewTime(""); }}
+                    className="w-full bg-slate-100 border-none text-slate-900 text-sm font-black rounded-3xl focus:ring-2 focus:ring-indigo-500 block p-5 shadow-inner cursor-pointer transition-all"
+                  />
                 </div>
+
+                {/* Slot Selection Section */}
+                {newDate && (
+                  <div className="space-y-4 animate-fade-in">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Available Slots on {newDate}</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {getAvailableSlots(currentBooking?.counsellor, newDate, regularSlots).map((slot, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => !slot.disabled && setNewTime(slot.time)}
+                          disabled={slot.disabled}
+                          className={`py-4 rounded-2xl font-black text-xs transition-all duration-300 border ${
+                            slot.disabled 
+                              ? "bg-slate-50 text-slate-200 border-slate-50 cursor-not-allowed line-through" 
+                              : newTime === slot.time
+                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-600/20 scale-102"
+                                : "bg-white text-slate-600 border-slate-100 hover:border-indigo-400 hover:text-indigo-600 shadow-sm"
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+             </div>
+
+             <div className="grid grid-cols-2 gap-4 mt-12 bg-slate-50 p-4 rounded-[2.5rem]">
+               <button 
+                 onClick={() => { setShowRescheduleModal(false); setCurrentBooking(null); }}
+                 className="py-5 rounded-[2rem] bg-white text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all border border-slate-100"
+               >
+                 Go Back
+               </button>
+               <button 
+                 onClick={handleSaveReschedule}
+                 className="py-5 rounded-[2rem] bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/20"
+               >
+                 Save Update
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dynamic Hero Header */}
+      <div className="bg-white border-b border-slate-200 pt-32 pb-24 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px] -mr-64 -mt-64" />
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                <Sparkles size={12} /> Student Dashboard
+              </div>
+              <h1 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-none italic">
+                Welcome back, <span className="text-blue-600 not-italic">Alex.</span>
+              </h1>
+              <p className="text-lg text-slate-500 font-medium max-w-xl">
+                Ready to continue your wellness journey? Your history and upcoming sessions are organized right here.
+              </p>
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 animate-fade-in-up delay-100">
+              <StatCard icon={<CalendarIcon size={18} />} label="Sessions" value={bookings.length} />
+              <StatCard icon={<Heart size={18} className="text-rose-500" />} label="Mood Avg" value="Good" />
+              <StatCard icon={<Activity size={18} className="text-emerald-500" />} label="Active" value={bookings.filter(b => b.status === "Confirmed").length} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* Main Feed */}
+        <div className="lg:col-span-8 space-y-12">
+          
+          <section className="glass-card p-10 rounded-[2.5rem] animate-fade-in-up delay-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-6 border-b border-slate-50 pb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-xl">
+                  <Clock size={24} />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Timeline</h2>
               </div>
 
-              {filteredBookings.length === 0 ? (
-                <div className="text-center py-10">
-                  <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No {filter !== "All" ? filter.toLowerCase() : ""} sessions found.</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {filteredBookings.map((app) => {
-                    const isRefundable = checkIsRefundable(app.date, app.time);
-                    const isRescheduling = editingBookingId === app.id;
-                    const computedSlots = isRescheduling && newDate ? getAvailableSlots(app.counsellor, newDate, regularSlots) : [];
+              <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
+                {["All", "Pending", "Confirmed", "Cancelled"].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                      filter === f ? "bg-white shadow-lg shadow-slate-200 text-blue-600 border border-slate-100" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                    return (
-                      <div key={app.id} className="border border-gray-100 rounded-2xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-md transition bg-gray-50/30 relative overflow-hidden">
-                        
-                        <div className={`absolute top-0 left-0 w-1.5 h-full ${
-                          app.status === "Confirmed" ? "bg-teal-500" : 
-                          app.status === "Pending" ? "bg-yellow-400" : "bg-red-400"
-                        }`}></div>
+            {filteredBookings.length === 0 ? (
+              <div className="text-center py-20 space-y-4">
+                <CalendarIcon className="w-16 h-16 text-slate-100 mx-auto" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No matching sessions found</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredBookings.map((app, idx) => {
+                  const isRefundable = checkIsRefundable(app.date, app.time);
 
-                        <div className="flex flex-col sm:flex-row gap-6">
-                          <img src={app.counsellorImage} alt={app.counsellor} className="w-20 h-20 rounded-2xl object-cover shrink-0" />
+                  return (
+                    <div 
+                      key={app.id} 
+                      className="group bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-500 relative overflow-hidden flex flex-col md:flex-row gap-8"
+                    >
+                      <div className={`absolute top-0 left-0 w-2 h-full transition-all duration-500 ${
+                        app.status === "Confirmed" ? "bg-emerald-500" : 
+                        app.status === "Pending" ? "bg-blue-400" : "bg-slate-300"
+                      }`} />
+
+                      <div className="shrink-0 relative">
+                        <div className="absolute inset-0 bg-blue-600/10 rounded-2xl scale-110 group-hover:scale-125 transition-transform duration-500" />
+                        <img 
+                          src={app.counsellorImage} 
+                          alt={app.counsellor} 
+                          className="w-24 h-24 rounded-2xl object-cover relative z-10 border-2 border-white shadow-lg" 
+                        />
+                      </div>
+
+                      <div className="flex-grow space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                          <div className="space-y-1">
+                            <h3 className="text-xl font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{app.counsellor}</h3>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{app.specialty}</p>
+                          </div>
                           
-                          <div className="flex-grow">
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-900">{app.counsellor}</h3>
-                                <p className="text-sm text-gray-600 font-medium mb-3">{app.specialty}</p>
-                              </div>
-                              
-                              <div className="flex flex-col gap-2 items-end">
-                                <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide w-max ${
-                                  app.status === "Confirmed" ? "bg-teal-100 text-teal-700" :
-                                  app.status === "Pending" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
-                                }`}>
-                                  {app.status}
-                                </span>
-
-                                {app.status === "Cancelled" && app.refundStatus === "Eligible" && (
-                                  <span className="text-xs font-semibold flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
-                                    <CheckCircle className="w-3 h-3" /> Refunded
-                                  </span>
-                                )}
-                                {app.status === "Cancelled" && app.refundStatus === "Not Eligible" && (
-                                  <span className="text-xs font-semibold flex items-center gap-1 text-gray-500 bg-gray-100 px-2 py-1 rounded border border-gray-200">
-                                    <AlertCircle className="w-3 h-3" /> No Refund (&lt; 2hrs)
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {!isRescheduling && (
-                              <div className="flex flex-wrap gap-4 text-sm text-gray-700 mb-6 bg-white p-3 rounded-xl border border-gray-100 inline-flex">
-                                <span className="flex items-center font-medium"><CalendarIcon className="w-4 h-4 mr-1.5 text-blue-500" /> {app.date}</span>
-                                <span className="flex items-center font-medium"><Clock className="w-4 h-4 mr-1.5 text-blue-500" /> {app.time}</span>
-                                <span className="flex items-center"><Video className="w-4 h-4 mr-1.5 text-gray-400" /> {app.type}</span>
-                              </div>
-                            )}
-
-                            {!isRescheduling && (
-                              <div className="flex flex-wrap gap-3">
-                                {app.status === "Pending" && (
-                                  <Link to="/appointment/payment" state={{ bookingId: app.id, counsellor: { name: app.counsellor, image: app.counsellorImage, specialty: app.specialty }, date: app.date, time: app.time, price: app.price }} className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm">
-                                    Pay Now to Confirm
-                                  </Link>
-                                )}
-
-                                {app.status === "Confirmed" && (
-                                  <button className="bg-teal-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-teal-700 transition flex items-center gap-2 shadow-sm">
-                                    <Video className="w-4 h-4" /> Join Session
-                                  </button>
-                                )}
-
-                                {app.status === "Pending" && (
-                                  <button 
-                                    onClick={() => handleOpenReschedule(app)}
-                                    disabled={!isRefundable}
-                                    title={!isRefundable ? "Cannot reschedule less than 2 hours before session" : ""}
-                                    className={`px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition ${
-                                      !isRefundable 
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200" 
-                                        : "bg-white border text-blue-600 border-blue-200 hover:bg-blue-50"
-                                    }`}
-                                  >
-                                    <Edit className="w-4 h-4" /> Reschedule
-                                  </button>
-                                )}
-                                
-                                {(app.status === "Pending" || app.status === "Confirmed") && (
-                                  <button 
-                                    onClick={() => cancelBooking(app.id)}
-                                    disabled={!isRefundable && app.status === "Confirmed"}
-                                    title={!isRefundable && app.status === "Confirmed" ? "Cannot cancel directly less than 2 hours before session" : ""}
-                                    className={`px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition ${
-                                      !isRefundable && app.status === "Confirmed" 
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200" 
-                                        : "bg-white border border-red-200 text-red-600 hover:bg-red-50"
-                                    }`}
-                                  >
-                                    <XCircle className="w-4 h-4" /> Cancel
-                                  </button>
-                                )}
-                              </div>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-sm ${
+                              app.status === "Confirmed" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
+                              app.status === "Pending" ? "bg-blue-50 text-blue-600 border border-blue-100" : 
+                              "bg-slate-50 text-slate-400 border border-slate-100"
+                            }`}>
+                              {app.status}
+                            </span>
+                            {app.status === "Cancelled" && (
+                              <span className="text-[9px] font-black uppercase tracking-tighter text-slate-300">
+                                {app.refundStatus === "Eligible" ? "✓ Fully Refunded" : "✗ Non-Refundable"}
+                              </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Inline Rescheduling UI */}
-                        {isRescheduling && (
-                          <div className="mt-4 pt-6 border-t border-gray-200 animate-slide-up">
-                            <h4 className="text-gray-900 font-bold mb-4 flex items-center"><Edit className="w-4 h-4 mr-2" /> Select New Time</h4>
-                            
-                            {rescheduleError && (
-                              <div className="mb-4 text-xs font-semibold text-red-600 bg-red-50 p-2 rounded">
-                                {rescheduleError}
-                              </div>
-                            )}
+                        <div className="flex flex-wrap gap-4 items-center">
+                          <SessionInfo icon={<CalendarIcon size={14} />} text={app.date} />
+                          <SessionInfo icon={<Clock size={14} />} text={app.time} />
+                          <SessionInfo icon={<Video size={14} />} text={app.type} />
+                        </div>
 
-                            <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                              <input 
-                                type="date" 
-                                value={newDate}
-                                min={new Date().toISOString().split("T")[0]}
-                                onChange={(e) => { setNewDate(e.target.value); setNewTime(""); }}
-                                className="border border-gray-300 rounded-lg p-2 text-sm"
-                              />
-                            </div>
-                            
-                            {newDate && (
-                              <div className="flex flex-wrap gap-2 mb-6">
-                                {computedSlots.filter(s => !s.disabled).length === 0 ? (
-                                  <span className="text-sm text-red-500">No open slots. Pick another date.</span>
-                                ) : (
-                                  computedSlots.map((slot, idx) => (
-                                    <button
-                                      key={idx}
-                                      onClick={() => !slot.disabled && setNewTime(slot.time)}
-                                      disabled={slot.disabled}
-                                      className={`px-3 py-1.5 rounded-md text-xs font-bold transition ${
-                                        slot.disabled 
-                                          ? "bg-gray-100 text-gray-400 line-through cursor-not-allowed" 
-                                          : newTime === slot.time
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-white border border-gray-300 text-gray-700 hover:border-blue-500"
-                                      }`}
-                                    >
-                                      {slot.time}
-                                    </button>
-                                  ))
-                                )}
-                              </div>
-                            )}
+                        <div className="flex flex-wrap gap-3 pt-2">
+                          {app.status === "Pending" && (
+                            <Link to="/appointment/payment" state={{ bookingId: app.id, counsellor: { name: app.counsellor, image: app.counsellorImage, specialty: app.specialty }, date: app.date, time: app.time, price: app.price }} className="btn-primary-sm">
+                              Pay Now
+                            </Link>
+                          )}
 
-                            <div className="flex gap-3">
-                              <button 
-                                onClick={() => handleSaveReschedule(app)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center"
-                              >
-                                <Save className="w-4 h-4 mr-2" /> Confirm New Time
-                              </button>
-                              <button 
-                                onClick={() => setEditingBookingId(null)}
-                                className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-semibold"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                          {app.status === "Confirmed" && (
+                            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20">
+                              <Video className="w-4 h-4" /> Start Session
+                            </button>
+                          )}
 
+                          {app.status === "Pending" && (
+                            <button 
+                              onClick={() => handleOpenReschedule(app)}
+                              disabled={!isRefundable}
+                              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
+                                !isRefundable 
+                                  ? "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" 
+                                  : "bg-white border border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600"
+                              }`}
+                            >
+                              <Edit className="w-4 h-4" /> Reschedule
+                            </button>
+                          )}
+                          
+                          {(app.status === "Pending" || app.status === "Confirmed") && (
+                            <button 
+                              onClick={() => cancelBooking(app.id)}
+                              disabled={!isRefundable && app.status === "Confirmed"}
+                              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
+                                !isRefundable && app.status === "Confirmed" 
+                                  ? "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" 
+                                  : "bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200"
+                              }`}
+                            >
+                              <XCircle className="w-4 h-4" /> Cancel
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Sidebar Insights */}
+        <div className="lg:col-span-4 space-y-8">
+          
+          <div className="glass-card p-10 rounded-[3rem] bg-slate-900 text-white shadow-2xl shadow-slate-900/40 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl -mr-24 -mt-24 transition-transform duration-700 group-hover:scale-110" />
+            <h3 className="text-xl font-black mb-4 relative z-10">How have <br /> you been?</h3>
+            <p className="text-slate-400 text-sm font-medium mb-10 relative z-10 leading-relaxed">Regular mood logging unlocks tailored wellness insights in your portal.</p>
+            <button className="w-full py-5 rounded-[2rem] bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-slate-900 transition-all duration-500 shadow-xl shadow-blue-600/20 relative z-10 group/btn">
+              Log Your Session <ArrowRight className="inline-block ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </button>
           </div>
 
-          <div className="space-y-8">
-            <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-              <div className="absolute right-0 bottom-0 opacity-10">
-                <FileText className="w-40 h-40 -mr-10 -mb-10" />
-              </div>
-              <h2 className="text-xl font-bold mb-2 relative z-10">How are you feeling today?</h2>
-              <p className="text-teal-100 mb-6 text-sm relative z-10">Log your mood to get personalized resource recommendations.</p>
-              <button className="bg-white text-teal-700 font-bold px-6 py-3 rounded-xl w-full hover:bg-teal-50 transition shadow-md relative z-10">
-                Log Mood
-              </button>
+          <div className="glass-card p-10 rounded-[3rem] space-y-10 border border-white shadow-2xl shadow-blue-900/5">
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+              <Sparkles size={20} className="text-blue-600" /> Resource Hub
+            </h3>
+            <div className="space-y-6">
+              <ResourceItem title="Managing Academic Stress" category="Reading" min="5" />
+              <ResourceItem title="Sleep Hygiene Guide" category="Audio" min="12" />
+              <ResourceItem title="Building Relationships" category="Session" min="45" />
             </div>
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Recommended Resources</h2>
-              <button className="mt-4 text-sm font-medium text-blue-600 hover:underline w-full text-center">
-                View all resources
-              </button>
-            </div>
+            <button className="w-full text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline pt-4 transition-all">
+              Explore Academic Library
+            </button>
           </div>
 
         </div>
+
       </div>
     </div>
   );
 };
+
+const StatCard = ({ icon, label, value }) => (
+  <div className="glass-card px-6 py-5 rounded-3xl border border-slate-100 flex items-center gap-4 group hover:bg-slate-900 hover:text-white transition-all duration-500">
+    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+      {icon}
+    </div>
+    <div>
+      <p className="text-2xl font-black leading-none mb-1 tracking-tight">{value}</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-500">{label}</p>
+    </div>
+  </div>
+);
+
+const SessionInfo = ({ icon, text }) => (
+  <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 truncate bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl uppercase tracking-widest">
+    <span className="text-blue-500">{icon}</span>
+    {text}
+  </div>
+);
+
+const ResourceItem = ({ title, category, min }) => (
+  <div className="group cursor-pointer">
+    <div className="flex justify-between items-start mb-1">
+      <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{title}</h4>
+      <ArrowRight size={14} className="text-slate-300 group-hover:text-blue-600 transition-all group-hover:translate-x-1" />
+    </div>
+    <div className="flex gap-3">
+      <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{category}</span>
+      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{min} Min</span>
+    </div>
+  </div>
+);
 
 export default StudentDashboard;

@@ -5,79 +5,48 @@ const BookingContext = createContext();
 
 export const useBooking = () => useContext(BookingContext);
 
+// Backend API Base URL
+const API_BASE = "http://localhost:5000/api/appointments";
+
 export const BookingProvider = ({ children }) => {
   const { addToast } = useToast();
-  
-  const [bookings, setBookings] = useState(() => {
-    try {
-      const saved = localStorage.getItem("unicare_bookings_v2");
-      if (saved) return JSON.parse(saved);
-      
-      // Seed initial data if empty
-      return [
-        {
-          id: "appt-101",
-          counsellor: "Dr. Sarah Jenkins",
-          studentName: "John Smith",
-          studentId: "STD-1774",
-          studentEmail: "john123@gmail.com",
-          studentContact: "+1 (555) 177-4000",
-          studentProfile: "/john_smith.png",
-          date: "2026-03-29",
-          time: "09:00 AM",
-          sessionType: "Initial Assessment",
-          status: "Completed",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "appt-102",
-          counsellor: "Dr. Sarah Jenkins",
-          studentName: "Emma Johnson",
-          studentId: "STD-2491",
-          studentEmail: "emma.j@university.edu",
-          studentContact: "+1 (555) 177-2491",
-          studentProfile: "/emma_johnson.png",
-          date: "2026-03-30",
-          time: "11:30 AM",
-          sessionType: "Follow-up Counseling",
-          status: "Confirmed",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "appt-103",
-          counsellor: "Dr. Sarah Jenkins",
-          studentName: "Michael Brown",
-          studentId: "STD-8823",
-          studentEmail: "michael.b@university.edu",
-          studentContact: "+1 (555) 177-8823",
-          studentProfile: "/michael_brown.png",
-          date: "2026-03-28",
-          time: "02:00 PM",
-          sessionType: "Crisis Intervention",
-          status: "Pending",
-          createdAt: new Date().toISOString()
-        }
-      ];
-    } catch (e) {
-      console.error("Booking data corrupted:", e);
-      return [];
-    }
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load all bookings on mount
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  // Data Normalization Helper
+  const normalizeBooking = (b) => ({
+    ...b,
+    id: b._id || b.id,
+    counsellor: b.counsellorName || b.counsellor // Maintain BC for UI components
   });
 
-  useEffect(() => {
-    localStorage.setItem("unicare_bookings_v2", JSON.stringify(bookings));
-  }, [bookings]);
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(API_BASE);
+      if (!response.ok) throw new Error("Failed to load records");
+      const data = await response.json();
+      setBookings(data.map(normalizeBooking));
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      addToast("Connection to server failed. Using offline data.", "warning");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Dynamic slot availability logic
   const getAvailableSlots = (counsellorName, date, allSlots) => {
-    // 1. Find all active bookings for this doctor on this day
     const bookedTimes = bookings
-      .filter(b => b.counsellor === counsellorName && b.date === date && b.status !== "Cancelled")
+      .filter(b => (b.counsellorName === counsellorName || b.counsellor === counsellorName) && b.date === date && b.status !== "Cancelled")
       .map(b => b.time);
     
-    // 2. Map all slots against booked times to see what's open
     return allSlots.map(time => {
-      // Basic check: has time already passed today?
       const isPast = !checkIsFutureTime(date, time);
       const isBooked = bookedTimes.includes(time);
       return {
@@ -88,173 +57,134 @@ export const BookingProvider = ({ children }) => {
     });
   };
 
-  const addBooking = (bookingData) => {
-    const isDuplicate = bookings.some(
-      (b) =>
-        b.counsellor === bookingData.counsellor &&
-        b.date === bookingData.date &&
-        b.time === bookingData.time &&
-        b.status !== "Cancelled"
-    );
+  const addBooking = async (bookingData) => {
+    try {
+      const response = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...bookingData,
+          counsellorName: bookingData.counsellor // Map frontend field to backend
+        })
+      });
 
-    if (isDuplicate) {
-      throw new Error("This slot was just booked! Please select another time.");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Booking failed");
+      }
+
+      const newBooking = await response.json();
+      const normalized = normalizeBooking(newBooking);
+      setBookings((prev) => [normalized, ...prev]);
+      addToast("Session intake successfully recorded!", "success");
+      return normalized.id;
+    } catch (err) {
+      addToast(err.message, "error");
+      throw err;
     }
-
-    const newBooking = {
-      ...bookingData,
-      id: Date.now().toString(),
-      status: "Pending", // Default = Pending
-      createdAt: new Date().toISOString()
-    };
-    
-    setBookings((prev) => [...prev, newBooking]);
-    return newBooking.id;
   };
 
-  const confirmPayment = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId ? { ...b, status: "Confirmed", paymentStatus: "Paid" } : b
-      )
-    );
-    addToast("Payment Successful! Booking Confirmed.", "success");
-  };
+  const confirmPayment = async (bookingId) => {
+    try {
+      const response = await fetch(`${API_BASE}/${bookingId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Confirmed", paymentStatus: "Paid" })
+      });
 
-  const cancelBooking = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id !== bookingId) return b;
-        
-        // Calculate refund logic
-        const isRefundable = checkIsRefundable(b.date, b.time);
+      if (!response.ok) throw new Error("Payment server sync failed");
 
-        if (isRefundable) {
-          addToast("✅ Refund will be processed. Cancelled successfully.", "success");
-        } else {
-          addToast("❌ Refund not eligible (< 2hrs). Cancelled successfully.", "warning");
-        }
-
-        return {
-          ...b,
-          status: "Cancelled",
-          paymentStatus: isRefundable ? "Refunded" : b.paymentStatus,
-          refundStatus: isRefundable ? "Eligible" : "Not Eligible"
-        };
-      })
-    );
-  };
-
-  const rescheduleBooking = (bookingId, newDate, newTime) => {
-    // Check duplicate
-    const targetBooking = bookings.find(b => b.id === bookingId);
-    
-    const isDuplicate = bookings.some(
-      (b) =>
-        b.id !== bookingId &&
-        b.counsellor === targetBooking.counsellor &&
-        b.date === newDate &&
-        b.time === newTime &&
-        b.status !== "Cancelled"
-    );
-
-    if (isDuplicate) {
-      throw new Error("That slot is already booked. Please choose another.");
+      const updated = await response.json();
+      const normalized = normalizeBooking(updated);
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? normalized : b)));
+      addToast("Payment Successful! Booking Confirmed.", "success");
+    } catch (err) {
+      addToast(err.message, "error");
     }
-
-    setBookings((prev) =>
-      prev.map((b) => {
-        if (b.id !== bookingId) return b;
-        return {
-          ...b,
-          date: newDate,
-          time: newTime
-        };
-      })
-    );
-    addToast("Appointment Rescheduled Successfully!", "success");
   };
 
-  const acceptBooking = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "Accepted" } : b))
-    );
-    addToast("Booking Accepted! Student will be notified.", "success");
+  const cancelBooking = async (bookingId) => {
+    try {
+      const b = bookings.find(x => x.id === bookingId);
+      const isRefundable = checkIsRefundable(b.date, b.time);
+
+      const response = await fetch(`${API_BASE}/${bookingId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: "Cancelled", 
+          paymentStatus: isRefundable ? "Refunded" : b.paymentStatus 
+        })
+      });
+
+      if (!response.ok) throw new Error("Cancellation sync failed");
+
+      const updated = await response.json();
+      const normalized = normalizeBooking(updated);
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? normalized : b)));
+      
+      if (isRefundable) {
+        addToast("✅ Refund processed. Session cancelled.", "success");
+      } else {
+        addToast("❌ No refund (< 2hrs). Session cancelled.", "warning");
+      }
+    } catch (err) {
+      addToast(err.message, "error");
+    }
   };
 
-  const rejectBooking = (bookingId, reason) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "Rejected", rejectReason: reason } : b))
-    );
-    addToast("Booking Rejected.", "warning");
-  };
+  const rescheduleBooking = async (bookingId, newDate, newTime) => {
+    try {
+      const response = await fetch(`${API_BASE}/${bookingId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: newDate, time: newTime })
+      });
 
-  const completeBooking = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "Completed" } : b))
-    );
-    addToast("Session marked as Completed.", "success");
-  };
+      if (!response.ok) throw new Error("Reschedule sync failed");
 
-  const confirmBookingByCounsellor = (bookingId) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "Confirmed" } : b))
-    );
-    addToast("Booking Confirmed! Student will be notified.", "success");
-  };
-
-  const cancelBookingByCounsellor = (bookingId, reason) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, status: "Cancelled", rejectReason: reason } : b))
-    );
-    addToast("Booking Cancelled.", "warning");
-  };
-
-  const addSessionNotes = (bookingId, notes) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, notes } : b))
-    );
-    addToast("Session notes saved.", "success");
+      const updated = await response.json();
+      const normalized = normalizeBooking(updated);
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? normalized : b)));
+      addToast("Appointment Rescheduled Successfully!", "success");
+    } catch (err) {
+      addToast(err.message, "error");
+    }
   };
 
   // Helper function to check if booking is > 2 hours away
   const checkIsRefundable = (dateStr, timeStr) => {
     const appointmentDate = parseDateTime(dateStr, timeStr);
     if (!appointmentDate) return false;
-    
     const now = new Date();
     const diffHours = (appointmentDate - now) / (1000 * 60 * 60);
-
     return diffHours >= 2;
   };
 
   const checkIsFutureTime = (dateStr, timeStr) => {
      const requestedDate = parseDateTime(dateStr, timeStr);
-     if(!requestedDate) return false;
-     return requestedDate > new Date();
+     return requestedDate && requestedDate > new Date();
   }
 
   const parseDateTime = (dateStr, timeStr) => {
-    // Try 12-hour AM/PM format
-    const match12 = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
-    if (match12) {
-      let [_, hours, minutes, modifier] = match12;
-      hours = parseInt(hours, 10);
-      if (hours === 12) {
-        hours = modifier.toUpperCase() === "AM" ? 0 : 12;
-      } else if (modifier.toUpperCase() === "PM") {
-        hours += 12;
+    if (!dateStr || !timeStr) return null;
+    try {
+      const match12 = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
+      if (match12) {
+        let [_, hours, minutes, modifier] = match12;
+        hours = parseInt(hours, 10);
+        if (hours === 12) hours = modifier.toUpperCase() === "AM" ? 0 : 12;
+        else if (modifier.toUpperCase() === "PM") hours += 12;
+        return new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes}:00`);
       }
-      return new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes}:00`);
+      const match24 = timeStr.match(/(\d+):(\d+)/);
+      if (match24) {
+        let [_, hours, minutes] = match24;
+        return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`);
+      }
+    } catch (e) {
+      return null;
     }
-
-    // Try 24-hour format
-    const match24 = timeStr.match(/(\d+):(\d+)/);
-    if (match24) {
-      let [_, hours, minutes] = match24;
-      return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`);
-    }
-
     return null;
   }
 
@@ -262,18 +192,14 @@ export const BookingProvider = ({ children }) => {
     <BookingContext.Provider
       value={{
         bookings,
+        loading,
         addBooking,
         confirmPayment,
         cancelBooking,
         rescheduleBooking,
         getAvailableSlots,
         checkIsRefundable,
-        acceptBooking,
-        rejectBooking,
-        confirmBookingByCounsellor,
-        cancelBookingByCounsellor,
-        completeBooking,
-        addSessionNotes
+        fetchBookings
       }}
     >
       {children}

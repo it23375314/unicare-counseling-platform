@@ -9,19 +9,27 @@ export const useCounsellorContext = () => useContext(CounsellorContext);
 const initialCounsellors = [
   {
     id: "1",
-    name: "Dr. Sarah Jenkins",
-    email: "sarah.jenkins@unicare.edu",
-    specialization: "Anxiety & Academic Stress",
-    experience: "10 years",
-    availability: [], // Array of { date: 'YYYY-MM-DD', slots: ['09:00 AM', '11:00 AM'] }
+    name: "Dr. Silva",
+    email: "silva@unicare.edu",
+    specialization: "Anxiety Specialist",
+    experience: "12 years",
+    image: "https://images.unsplash.com/photo-1559839734-2b71f1536750?q=80&w=600&auto=format&fit=crop",
+    price: 3500,
+    availability: [
+      { date: new Date().toISOString().split('T')[0], slots: ["09:00", "11:00", "13:00", "15:00"] }
+    ],
   },
   {
     id: "2",
-    name: "Dr. Ahmed Rahman",
-    email: "ahmed.rahman@unicare.edu",
-    specialization: "Depression & Career Counseling",
+    name: "Dr. Perera",
+    email: "perera@unicare.edu",
+    specialization: "Academic Stress Expert",
     experience: "8 years",
-    availability: [],
+    image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=600&auto=format&fit=crop",
+    price: 3000,
+    availability: [
+      { date: new Date().toISOString().split('T')[0], slots: ["09:00", "11:00", "13:00", "15:00"] }
+    ],
   }
 ];
 

@@ -4,6 +4,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
+const counsellorRoutes = require('./routes/counsellorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 const app = express();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/session-notes', sessionNoteRoutes);
+app.use('/api/counsellors', counsellorRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;
