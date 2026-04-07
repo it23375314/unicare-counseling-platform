@@ -1,13 +1,13 @@
-import { createContext, useContext, useState, useEffect } from "react";
+﻿import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const BookingContext = createContext();
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5001/api";
 
 export const useBooking = () => useContext(BookingContext);
 
 // Backend API Base URL
-const API_BASE = "http://localhost:5000/api/appointments";
+const API_BASE = "http://localhost:5001/api/appointments";
 
 export const BookingProvider = ({ children }) => {
   const { addToast } = useToast();
@@ -103,7 +103,7 @@ export const BookingProvider = ({ children }) => {
         status: "Cancelled", 
         paymentStatus: isRefundable ? "Refunded" : b.paymentStatus,
         refundStatus: isRefundable ? "Eligible" : "Not Eligible"
-    }, isRefundable ? "✅ Refund will be processed. Cancelled successfully." : "❌ Refund not eligible (< 2hrs). Cancelled successfully.");
+    }, isRefundable ? "âœ… Refund will be processed. Cancelled successfully." : "âŒ Refund not eligible (< 2hrs). Cancelled successfully.");
   };
 
   const rescheduleBooking = (bookingId, newDate, newTime) => {
