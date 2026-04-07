@@ -11,6 +11,16 @@ exports.createNote = async (req, res) => {
   }
 };
 
+// 1.5 Get all notes
+exports.getAllNotes = async (req, res) => {
+  try {
+    const notes = await SessionNote.find();
+    res.status(200).json({ success: true, data: notes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // 2. Get all notes for a specific counsellor
 exports.getNotesByCounsellor = async (req, res) => {
   try {
