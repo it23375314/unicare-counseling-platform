@@ -1,16 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
-<<<<<<< HEAD
 const authRoutes = require('./routes/authRoutes');
 const counsellorRoutes = require('./routes/counsellorRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
-=======
-const counsellorRoutes = require('./routes/counsellorRoutes');
-const appointmentRoutes = require('./routes/appointmentRoutes');
->>>>>>> 4ccf38913c13d612b5f36df71f8c1efaa2b43708
 
 const app = express();
 
@@ -23,12 +19,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/counsellors', counsellorRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/session-notes', sessionNoteRoutes);
-app.use('/api/counsellors', counsellorRoutes);
-app.use('/api/appointments', appointmentRoutes);
 
-// Server Connection (Mock DB mode)
+// Server Connection
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Backend API Server running on port ${PORT} (Using In-Memory Mock Data)`);
-});
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+      console.log('🚀 MongoDB Connected Successfully');
+      app.listen(PORT, () => {
+          console.log(`Backend API Server running on port ${PORT}`);
+      });
+  })
+  .catch((err) => {
+      console.error('❌ MongoDB Connection Error:', err.message);
+  });
