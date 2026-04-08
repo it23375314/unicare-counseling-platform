@@ -28,6 +28,7 @@ import CounsellorDashboard from './pages/counsellor/CounsellorDashboard';
 import AppointmentProfile from './pages/counsellor/AppointmentProfile';
 import ChatUI from './pages/counsellor/ChatUI';
 import SavedAvailability from './pages/counsellor/SavedAvailability';
+import AppointmentHistory from './pages/counsellor/AppointmentHistory';
 
 // ─── Auth Pages (from Wellness module) ────────────────────────────────────────
 import Login from './pages/Login';
@@ -85,6 +86,7 @@ function App() {
                     <Route path="counsellor/history" element={<CounsellorDashboard />} />
                     <Route path="counsellor/notes" element={<CounsellorDashboard />} />
                     <Route path="chat" element={<ChatUI />} />
+                    <Route path="history" element={<AppointmentHistory />} />
 
                     {/* ── Wellness Module ── */}
                     <Route path="wellness-dashboard" element={<WellnessDashboard />} />

@@ -72,7 +72,6 @@ export default function CounsellorDashboard() {
   const path = location.pathname;
   let activeTab = "availability";
   if (path.includes("appointments")) activeTab = "appointments";
-  else if (path.includes("history")) activeTab = "history";
   else if (path.includes("notes")) activeTab = "session notes";
 
   // Re-fetch bookings on navigating to appointments
@@ -950,131 +949,6 @@ export default function CounsellorDashboard() {
                   <Calendar className="mx-auto h-16 w-16 text-gray-100 mb-6" />
                   <h3 className="text-lg font-black text-gray-900 tracking-tight">No appointments found</h3>
                   <p className="text-gray-400 text-sm font-medium mt-1">Try adjusting your filters or search term.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* History Tab */}
-        {activeTab === "history" && (
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1 w-full space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Past Student Name</label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Search past appointments..." 
-                    value={searchHistory}
-                    onChange={(e) => setSearchHistory(e.target.value)}
-                    className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium"
-                  />
-                </div>
-              </div>
-              <div className="w-full md:w-64 space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Filter by Date</label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                  <input 
-                    type="date" 
-                    value={filterDateHistory}
-                    onChange={(e) => setFilterDateHistory(e.target.value)}
-                    className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-xs shadow-sm shadow-gray-100/50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              {historyBookings.length > 0 ? (
-                historyBookings.map(b => {
-                  if (!b) return null;
-                  const note = getNoteByBookingId(b.id);
-                  const safeID = (b.id || "").toString();
-                  const studentDispName = b.studentName || b.name || "N/A Student";
-                  const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
-                  const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
-                  
-                  return (
-                    <div key={b.id || Math.random()} className={`rounded-3xl shadow-sm border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 group overflow-hidden relative p-8 ${
-                      b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed'
-                        ? 'border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-white'
-                        : 'border-blue-100/80 bg-gradient-to-br from-blue-50/40 via-white to-white'
-                    }`}>
-                      <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2 ${
-                        b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-400' : 'bg-blue-400/50'
-                      }`}></div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-5">
-                          <div className="relative group/avatar shrink-0">
-                            <div className={`w-14 h-14 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-2 border-white shadow-md overflow-hidden transition-all duration-500 group-hover/avatar:rotate-3 group-hover/avatar:scale-110`}>
-                              {profileSrc ? (
-                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-white font-black text-lg">{initials}</span>
-                              )}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
-                          </div>
-                          <div>
-                            <h3 className="font-black text-gray-900 text-2xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{studentDispName}</h3>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className={`text-[10px] items-center gap-2 px-3 py-1 rounded-xl font-black uppercase tracking-[0.15em] border shadow-sm transition-all duration-300 flex ${
-                                b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200/50' : 'bg-blue-100/50 text-blue-700 border-blue-200/50'
-                              }`}>
-                                <span className={`w-2 h-2 rounded-full animate-pulse ${
-                                  b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
-                                }`}></span>
-                                {b.status || "N/A"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100/50 flex items-center justify-center text-emerald-600 shadow-sm group-hover/item:scale-110 transition-transform"><Calendar size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.date || "N/A"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm group-hover/item:scale-110 transition-transform"><Clock size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Time</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.time || "N/A"}</span>
-                            </div>
-                          </div>
-                          {safeID && (
-                            <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/30 transition-all">
-                              <div className="w-10 h-10 rounded-xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm group-hover/item:scale-110 transition-transform"><FileText size={18}/></div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ID</span>
-                                <span className="text-xs font-bold text-gray-800 uppercase leading-none mt-0.5">{safeID.substring(0,8)}</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {b.rejectReason && <p className="text-xs text-rose-600 mt-4 font-black uppercase tracking-wider bg-rose-50 inline-block px-4 py-1.5 rounded-full border border-rose-100">Reason: {b.rejectReason}</p>}
-                      </div>
-                      
-                      {(b.status === "Accepted" || b.status === "Confirmed" || b.status === "Completed") && (
-                        <button onClick={() => openNotesModal("booking", b)} className={`h-11 px-8 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] flex items-center gap-3 transition-all shadow-sm active:scale-95 border ${
-                          note ? 'bg-white text-blue-700 border-blue-100 hover:bg-gray-50' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700 shadow-lg shadow-blue-100'
-                        }`}>
-                          <FileText size={18} /> {note ? "View Note" : "Add Note"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                  <Activity className="mx-auto h-16 w-16 text-gray-100 mb-6" />
-                  <h3 className="text-lg font-black text-gray-900 tracking-tight">No history records found</h3>
-                  <p className="text-gray-400 text-sm font-medium mt-1">Visit your appointments tab to manage current sessions.</p>
                 </div>
               )}
             </div>
