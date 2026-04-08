@@ -39,7 +39,7 @@ export default function SavedResources() {
   const fetchSavedResources = async () => {
     try {
       const cleanUserId = userId ? userId.replace(/['"]+/g, '') : '';
-      const res = await axios.get(`http://localhost:5001/api/resources/bookmarks/${cleanUserId}`);
+      const res = await axios.get(`http://localhost:5000/api/resources/bookmarks/${cleanUserId}`);
       
       setSavedItems(res.data.reverse());
       setLoading(false);
@@ -53,7 +53,7 @@ export default function SavedResources() {
     e.stopPropagation(); 
     try {
       const cleanUserId = userId ? userId.replace(/['"]+/g, '') : '';
-      await axios.post(`http://localhost:5001/api/resources/bookmark/${resourceId}`, { userId: cleanUserId });
+      await axios.post(`http://localhost:5000/api/resources/bookmark/${resourceId}`, { userId: cleanUserId });
       setSavedItems(savedItems.filter(item => item._id !== resourceId));
     } catch (err) {
       alert("Error removing bookmark");
@@ -62,7 +62,7 @@ export default function SavedResources() {
 
   const handleView = async (id) => {
     try {
-      await axios.post(`http://localhost:5001/api/resources/view/${id}`, { itNumber });
+      await axios.post(`http://localhost:5000/api/resources/view/${id}`, { itNumber });
     } catch (err) {
       console.error("Error recording view analytics", err);
     }
@@ -146,7 +146,7 @@ export default function SavedResources() {
                               onChange={(e) => setSearch(e.target.value)}
                           />
                           {search && (
-                              <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">âœ–</button>
+                              <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">✖</button>
                           )}
                       </div>
                   </div>
@@ -242,8 +242,15 @@ export default function SavedResources() {
                     </main>
                 </div>
             </div>
-        </>
-    );
+          </div>
+          <div style={styles.footerBottom}>
+            © 2026 UniCare Platform. All rights reserved.
+          </div>
+        </footer>
+
+      </div>
+    </>
+  );
 }
 
 const styles = {

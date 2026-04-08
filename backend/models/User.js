@@ -39,6 +39,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // Approval status for counsellor registrations
+  approvalStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'approved' // students & admins auto-approved; counsellors set to 'pending' on register
+  },
   // Bookmarked resource IDs (for Wellness Resource Library)
   bookmarks: [{
     type: mongoose.Schema.Types.ObjectId,

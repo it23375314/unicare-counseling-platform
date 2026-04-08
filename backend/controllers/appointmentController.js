@@ -51,10 +51,11 @@ exports.createAppointment = async (req, res) => {
     });
 
     const newAppointment = await appointment.save();
-    res.status(201).json(newAppointment);
+    console.log("✅ Appointment Created Successfully:", newAppointment._id);
+    res.status(201).json({ success: true, data: newAppointment });
   } catch (err) {
-    console.error("Booking Error:", err);
-    res.status(400).json({ message: err.message });
+    console.error("❌ CREATE Appointment Error:", err);
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
@@ -63,9 +64,11 @@ exports.getStudentAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find({ studentEmail: req.params.email })
       .sort({ date: -1, time: -1 });
-    res.json(appointments);
+    console.log(`🔍 Fetched ${appointments.length} appointments for student: ${req.params.email}`);
+    res.json({ success: true, data: appointments });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ GET Student Appointments Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -74,9 +77,11 @@ exports.getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .sort({ date: -1, time: -1 });
-    res.json(appointments);
+    console.log(`📋 Fetched all (${appointments.length}) appointments (Admin/Counsellor view)`);
+    res.json({ success: true, data: appointments });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("❌ GET All Appointments Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 

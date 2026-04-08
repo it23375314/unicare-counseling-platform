@@ -56,7 +56,7 @@ export default function WellnessCenter() {
 
   const fetchGoals = async () => {
     try {
-      const res = await axios.get(`http://localhost:5001/api/goals/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/goals/${userId}`);
       setGoals(res.data);
     } catch (err) {
       console.error("Error fetching goals", err);
@@ -127,7 +127,7 @@ export default function WellnessCenter() {
       targetValue: (formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') ? Number(formData.targetValue || 0) : 0
     };
     
-    try { await axios.post('http://localhost:5001/api/goals', payload); closeModal(); fetchGoals(); } 
+    try { await axios.post('http://localhost:5000/api/goals', payload); closeModal(); fetchGoals(); } 
     catch (err) { alert(err.response?.data?.msg || "Error adding goal"); }
   };
 
@@ -135,13 +135,13 @@ export default function WellnessCenter() {
 
   const confirmCompletion = async () => {
     if (!goalToComplete) return;
-    try { await axios.put(`http://localhost:5001/api/goals/complete/${goalToComplete._id}`, { mood: completionMood }); fetchGoals(); setCompleteModalOpen(false); setGoalToComplete(null); } 
+    try { await axios.put(`http://localhost:5000/api/goals/complete/${goalToComplete._id}`, { mood: completionMood }); fetchGoals(); setCompleteModalOpen(false); setGoalToComplete(null); } 
     catch (err) { alert("Error marking as complete"); }
   };
 
   const deleteGoal = async (goalId) => {
     if (!window.confirm("Delete this milestone?")) return;
-    try { await axios.delete(`http://localhost:5001/api/goals/${goalId}`); fetchGoals(); } 
+    try { await axios.delete(`http://localhost:5000/api/goals/${goalId}`); fetchGoals(); } 
     catch (err) { alert("Error deleting goal"); }
   };
 
@@ -246,7 +246,7 @@ export default function WellnessCenter() {
               </div>
               <div style={{ ...styles.statsGrid, gridTemplateColumns: isMobile ? "1fr" : "1.5fr 1fr 1fr 1fr" }}>
                 <div style={styles.heroStatCard}>
-                  <div><p style={styles.heroLabel}>Completion Rate</p><h2 style={styles.heroValue}>{progressPercentage}%</h2><p style={styles.heroSubtext}>{completedGoals} completed â€¢ {activeGoals} active</p></div>
+                  <div><p style={styles.heroLabel}>Completion Rate</p><h2 style={styles.heroValue}>{progressPercentage}%</h2><p style={styles.heroSubtext}>{completedGoals} completed • {activeGoals} active</p></div>
                   <div style={styles.ringWrap}>
                     <svg width="92" height="92" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="10" />
@@ -327,7 +327,7 @@ export default function WellnessCenter() {
                                 <button onClick={(e) => { e.stopPropagation(); deleteGoal(goal._id); }} style={styles.deleteBtn} title="Delete">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 </button>
-                                <span style={{ ...styles.chevron, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>â–¼</span>
+                                <span style={{ ...styles.chevron, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                             </div>
                           </div>
                         </div>
@@ -358,6 +358,36 @@ export default function WellnessCenter() {
           </main>
         </div>
 
+        {/* --- FOOTER --- */}
+        <footer style={styles.footer}>
+          <div style={styles.footerGrid}>
+            <div>
+              <h3 style={styles.footerHeading}>UniCare</h3>
+              <p style={styles.footerText}>Empowering university students with accessible, secure, and private mental health counseling.</p>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Links</h3>
+              <Link to="/" className="footer-link" style={styles.footerLink}>Home</Link>
+              <Link to="/about" className="footer-link" style={styles.footerLink}>About Us</Link>
+              <Link to="/counsellors" className="footer-link" style={styles.footerLink}>Find a Counsellor</Link>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Support</h3>
+              <Link to="/faq" className="footer-link" style={styles.footerLink}>FAQ</Link>
+              <Link to="/privacy" className="footer-link" style={styles.footerLink}>Privacy Policy</Link>
+              <Link to="/terms" className="footer-link" style={styles.footerLink}>Terms of Service</Link>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Contact</h3>
+              <a href="mailto:support@unicare.edu" className="footer-link" style={styles.footerLink}>support@unicare.edu</a>
+              <p style={{...styles.footerLink, cursor: 'default'}}>1-800-UNICARE</p>
+            </div>
+          </div>
+          <div style={styles.footerBottom}>
+            © 2026 UniCare Platform. All rights reserved.
+          </div>
+        </footer>
+
         {isModalOpen && (
           <div style={styles.modalOverlay} onClick={closeModal}>
             <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
@@ -384,7 +414,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Goal Name <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="title" style={errors.title ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.title} onChange={handleFormChange} />
-                        {errors.title && <span style={styles.errorText}>âš ï¸ {errors.title}</span>}
+                        {errors.title && <span style={styles.errorText}>⚠️ {errors.title}</span>}
                     </div>
                     
                     <div style={styles.inputGroup}>
@@ -395,7 +425,7 @@ export default function WellnessCenter() {
                             value={formData.description} 
                             onChange={handleFormChange} 
                         />
-                        {errors.description && <span style={styles.errorText}>âš ï¸ {errors.description}</span>}
+                        {errors.description && <span style={styles.errorText}>⚠️ {errors.description}</span>}
                     </div>
                     
                     <div style={styles.inputGroup}>
@@ -447,7 +477,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Deadline <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="targetDate" style={errors.targetDate ? { ...styles.input, ...styles.inputError } : styles.input} type="date" value={formData.targetDate} min={todayStr} onChange={handleFormChange} />
-                        {errors.targetDate && <span style={styles.errorText}>âš ï¸ {errors.targetDate}</span>}
+                        {errors.targetDate && <span style={styles.errorText}>⚠️ {errors.targetDate}</span>}
                     </div>
                     
                     <button type="button" onClick={() => setActiveTab(1)} style={styles.nextBtn}>
@@ -471,9 +501,9 @@ export default function WellnessCenter() {
                             })}
                         </div>
                     </div>
-                    {formData.frequency === 'Custom' && (<div style={styles.inputGroup}><label style={styles.label}>Times per week</label><input name="customFrequency" type="number" min="1" max="7" style={errors.customFrequency ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.customFrequency} onChange={handleFormChange} />{errors.customFrequency && <span style={styles.errorText}>âš ï¸ {errors.customFrequency}</span>}</div>)}
+                    {formData.frequency === 'Custom' && (<div style={styles.inputGroup}><label style={styles.label}>Times per week</label><input name="customFrequency" type="number" min="1" max="7" style={errors.customFrequency ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.customFrequency} onChange={handleFormChange} />{errors.customFrequency && <span style={styles.errorText}>⚠️ {errors.customFrequency}</span>}</div>)}
                     <div style={styles.inputGroup}><label style={styles.label}>Progress Type</label><div style={{ display: 'flex', gap: '8px' }}>{[{ v: 'Binary', l: 'Yes/No' }, { v: 'Numeric', l: 'Count' }, { v: 'Timer-based', l: 'Timer' }].map(pt => (<button type="button" key={pt.v} onClick={() => setFormData(p => ({ ...p, progressType: pt.v }))} style={{ ...styles.priorityBtn, background: formData.progressType === pt.v ? '#eff6ff' : '#fff', borderColor: formData.progressType === pt.v ? '#2563eb' : '#e5e7eb', color: formData.progressType === pt.v ? '#1d4ed8' : '#6b7280' }}>{pt.l}</button>))}</div></div>
-                    {(formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') && (<div style={styles.inputGroup}><label style={styles.label}>Target {formData.progressType === 'Numeric' ? 'Value' : 'Mins'}</label><input name="targetValue" type="number" min="1" style={errors.targetValue ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.targetValue} onChange={handleFormChange} />{errors.targetValue && <span style={styles.errorText}>âš ï¸ {errors.targetValue}</span>}</div>)}
+                    {(formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') && (<div style={styles.inputGroup}><label style={styles.label}>Target {formData.progressType === 'Numeric' ? 'Value' : 'Mins'}</label><input name="targetValue" type="number" min="1" style={errors.targetValue ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.targetValue} onChange={handleFormChange} />{errors.targetValue && <span style={styles.errorText}>⚠️ {errors.targetValue}</span>}</div>)}
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button type="button" onClick={() => setActiveTab(0)} style={styles.backBtn}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:'6px', verticalAlign:'text-bottom'}}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -493,7 +523,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Reward <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="reward" style={errors.reward ? { ...styles.input, ...styles.inputError } : styles.input} placeholder="Treat yourself..." value={formData.reward} onChange={handleFormChange} />
-                        {errors.reward && <span style={styles.errorText}>âš ï¸ {errors.reward}</span>}
+                        {errors.reward && <span style={styles.errorText}>⚠️ {errors.reward}</span>}
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button type="button" onClick={() => setActiveTab(1)} style={styles.backBtn}>
@@ -517,7 +547,7 @@ export default function WellnessCenter() {
             <div style={{ ...styles.modalContent, maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
               <h2 style={{ margin: '0 0 10px 0', color: '#111827', fontSize: '24px', fontWeight: '800' }}>Goal Completed?</h2>
               <p style={{color: '#6b7280', fontSize: '14px', marginBottom: '24px'}}>Marking this complete will archive it and update your stats.</p>
-              <div style={{ display: 'flex', gap: '15px' }}><button onClick={() => setCompleteModalOpen(false)} style={styles.cancelBtn}>Not Yet</button><button onClick={confirmCompletion} style={styles.confirmBtn}>Verify âœ“</button></div>
+              <div style={{ display: 'flex', gap: '15px' }}><button onClick={() => setCompleteModalOpen(false)} style={styles.cancelBtn}>Not Yet</button><button onClick={confirmCompletion} style={styles.confirmBtn}>Verify ✓</button></div>
             </div>
           </div>
         )}

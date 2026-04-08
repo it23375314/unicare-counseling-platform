@@ -113,7 +113,7 @@ export default function MoodSupportAssistant() {
     return (
       <div style={styles.deniedContainer}>
         <div style={styles.deniedCard}>
-          <div style={styles.deniedIconWrap}>ðŸš«</div>
+          <div style={styles.deniedIconWrap}>🚫</div>
           <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>Access Denied</h2>
           <button onClick={() => window.location.href = '/login'} style={styles.deniedBtn}>Return to Login</button>
         </div>
@@ -124,7 +124,7 @@ export default function MoodSupportAssistant() {
   const fetchHistory = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(`http://localhost:5001/api/moods/${userId}?limit=10`);
+      const res = await axios.get(`http://localhost:5000/api/moods/${userId}?limit=10`);
       const entries = res.data || [];
       setHistory(entries);
       setHasTodayEntry(entries.some(entry => entry.entryDate === getTodayStr()));
@@ -161,7 +161,7 @@ export default function MoodSupportAssistant() {
     const resources = RESOURCES[response.tone] || RESOURCES.medium;
 
     try {
-      const aiRes = await axios.post('http://localhost:5001/api/chat', {
+      const aiRes = await axios.post('http://localhost:5000/api/chat', {
         message: currentText,
         history: messages.filter(msg => !msg.type || msg.type === 'text').map(msg => ({
             role: msg.role === 'bot' ? 'assistant' : 'user',
@@ -176,7 +176,7 @@ export default function MoodSupportAssistant() {
           aiResponse: aiReply, suggestedResources: resources.map(r => r.title), counselingRecommended: counselingFlag, displayName 
       };
       
-      await axios.post('http://localhost:5001/api/moods', payload);
+      await axios.post('http://localhost:5000/api/moods', payload);
       
       setTimeout(() => {
           const botReplies = [{ id: Date.now().toString() + '_1', role: 'bot', type: 'text', content: aiReply }];
@@ -190,7 +190,7 @@ export default function MoodSupportAssistant() {
           if (counselingFlag) {
             botReplies.push({
                 id: Date.now().toString() + '_3', role: 'bot', type: 'counseling', 
-                content: "Youâ€™ve reported feeling overwhelmed recently. We strongly encourage you to connect with a professional for support."
+                content: "You’ve reported feeling overwhelmed recently. We strongly encourage you to connect with a professional for support."
             });
           }
 
@@ -225,7 +225,7 @@ export default function MoodSupportAssistant() {
             
             <div style={styles.headerSection}>
               <div>
-                <div style={styles.sessionBadge}>PRIVATE CHECK-IN â€¢ {displayName}</div>
+                <div style={styles.sessionBadge}>PRIVATE CHECK-IN • {displayName}</div>
                 <h1 style={styles.mainTitle}>Mood Support Assistant</h1>
               </div>
               <div style={styles.headerButtons}>
@@ -272,7 +272,7 @@ export default function MoodSupportAssistant() {
                                         <div style={styles.resourceList}>
                                             {msg.content.map((res, i) => (
                                                 <div key={i} style={styles.resourceItem}>
-                                                    <div style={styles.bulletIcon}>â€¢</div>
+                                                    <div style={styles.bulletIcon}>•</div>
                                                     <div>
                                                         <div style={{fontWeight: '700', color: '#1e3a8a', marginBottom: '2px'}}>{res.title}</div>
                                                         <div style={{color: '#475569', fontSize: '14px', lineHeight: '1.5'}}>{res.desc}</div>
@@ -292,7 +292,7 @@ export default function MoodSupportAssistant() {
                                         <div>
                                             <p style={{margin: '0 0 6px 0', fontSize: '15px', color: '#7f1d1d', fontWeight: '700'}}>Professional Support Recommended</p>
                                             <p style={{margin: 0, fontSize: '14px', color: '#991b1b', lineHeight: '1.5'}}>{msg.content}</p>
-                                            <Link to="/counsellors" style={styles.bookBtn}>Find a Counsellor â†’</Link>
+                                            <Link to="/counsellors" style={styles.bookBtn}>Find a Counsellor →</Link>
                                         </div>
                                     </div>
                                 )}
@@ -312,7 +312,7 @@ export default function MoodSupportAssistant() {
 
                 <div style={styles.inputArea}>
                     <p style={styles.inputPromptText}>How are you feeling today? <span style={{color: '#ef4444'}}>*</span></p>
-                  {hasTodayEntry && <div style={styles.dailyLimitNotice}>âœ… You already submitted todayâ€™s mood check-in.</div>}
+                  {hasTodayEntry && <div style={styles.dailyLimitNotice}>✅ You already submitted today’s mood check-in.</div>}
                     
                     <input 
                         type="text" 

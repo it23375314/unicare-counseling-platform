@@ -1,50 +1,58 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Counsellor = require('../models/Counsellor');
 
 /**
  * POST /api/auth/register
- * Register a new user (student, counsellor, or admin)
  */
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, itNumber } = req.body;
+    const { name, email, password, role, itNumber, specialization } = req.body;
 
-    // Validate required fields
     if (!name || !email || !password || !itNumber) {
       return res.status(400).json({ success: false, msg: 'All fields are required' });
     }
 
-    // Validate IT number format (e.g., IT23375314)
     const itNumberRegex = /^[A-Z]{2}[0-9]{4}[0-9]{4}$/;
     if (!itNumberRegex.test(itNumber)) {
       return res.status(400).json({ success: false, msg: 'Invalid IT number format. Expected: IT23XXXXXX' });
     }
 
-    // Validate role
     const allowedRoles = ['student', 'counsellor', 'admin'];
     const userRole = role && allowedRoles.includes(role) ? role : 'student';
 
-    // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { itNumber }] });
     if (existingUser) {
       return res.status(400).json({ success: false, msg: 'User with this email or IT number already exists' });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Counsellors must wait for admin approval
+    const approvalStatus = userRole === 'counsellor' ? 'pending' : 'approved';
+
     const user = new User({
       name,
       email,
       password: hashedPassword,
       role: userRole,
-      itNumber
+      itNumber,
+      specialization: specialization || '',
+      approvalStatus,
     });
     await user.save();
 
-    console.log(`✅ New user registered: ${email} (${userRole})`);
+    console.log(`✅ New user registered: ${email} (${userRole}) — status: ${approvalStatus}`);
+
+    if (userRole === 'counsellor') {
+      return res.status(201).json({
+        success: true,
+        pending: true,
+        msg: 'Registration submitted! Your account is pending admin approval. You will be able to log in once approved.'
+      });
+    }
+
     res.status(201).json({ success: true, msg: 'User registered successfully!' });
   } catch (error) {
     console.error('Registration Error:', error.message);
@@ -54,7 +62,6 @@ exports.register = async (req, res) => {
 
 /**
  * POST /api/auth/login
- * Authenticate user with email + password
  */
 exports.login = async (req, res) => {
   try {
@@ -64,16 +71,22 @@ exports.login = async (req, res) => {
       return res.status(400).json({ success: false, msg: 'Email and password are required' });
     }
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ success: false, msg: 'Invalid credentials' });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, msg: 'Invalid credentials' });
+    }
+
+    // Block pending/rejected counsellors
+    if (user.role === 'counsellor' && user.approvalStatus !== 'approved') {
+      const msg = user.approvalStatus === 'rejected'
+        ? 'Your registration was rejected by the admin. Please contact support.'
+        : 'Your account is pending admin approval. Please wait for confirmation.';
+      return res.status(403).json({ success: false, pending: true, msg });
     }
 
     console.log(`✅ Login successful: ${user.name} (${user.role})`);
@@ -85,7 +98,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        itNumber: user.itNumber
+        itNumber: user.itNumber,
+        approvalStatus: user.approvalStatus,
       }
     });
   } catch (error) {
@@ -96,7 +110,6 @@ exports.login = async (req, res) => {
 
 /**
  * GET /api/auth/me?id=<userId>
- * Fetch the current user by ID (used by UniCare frontend on load)
  */
 exports.getMe = async (req, res) => {
   try {
@@ -116,11 +129,14 @@ exports.getMe = async (req, res) => {
 
 /**
  * GET /api/auth/users
- * Fetch all users (admin only)
+ * Optional query: ?role=counsellor&status=pending
  */
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const filter = {};
+    if (req.query.role) filter.role = req.query.role;
+    if (req.query.status) filter.approvalStatus = req.query.status;
+    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     console.error('GetAllUsers Error:', error.message);
@@ -130,18 +146,62 @@ exports.getAllUsers = async (req, res) => {
 
 /**
  * DELETE /api/auth/users/:id
- * Delete a user by ID (admin only)
  */
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).json({ success: false, msg: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
     console.log(`✅ User deleted: ${user.email}`);
     res.status(200).json({ success: true, msg: 'User deleted successfully' });
   } catch (error) {
     console.error('DeleteUser Error:', error.message);
     res.status(500).json({ success: false, msg: 'Server error during deletion' });
+  }
+};
+
+/**
+ * PATCH /api/auth/users/:id/approve
+ * Admin approves or rejects a counsellor registration.
+ * body: { action: 'approve' | 'reject' }
+ */
+exports.approveUser = async (req, res) => {
+  try {
+    const { action } = req.body; // 'approve' or 'reject'
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
+    if (user.role !== 'counsellor') return res.status(400).json({ success: false, msg: 'Only counsellor accounts require approval' });
+
+    if (action === 'approve') {
+      user.approvalStatus = 'approved';
+      await user.save();
+
+      // Create Counsellor profile so they appear on the website
+      const existing = await Counsellor.findOne({ email: user.email });
+      if (!existing) {
+        await Counsellor.create({
+          name: user.name,
+          email: user.email,
+          specialization: user.specialization || 'General Counselling',
+          experience: '1',
+          bio: '',
+          image: '',
+          price: 40,
+        });
+      }
+
+      console.log(`✅ Counsellor approved: ${user.email}`);
+      res.json({ success: true, msg: `${user.name} has been approved and can now log in.` });
+
+    } else if (action === 'reject') {
+      user.approvalStatus = 'rejected';
+      await user.save();
+      console.log(`❌ Counsellor rejected: ${user.email}`);
+      res.json({ success: true, msg: `${user.name}'s registration has been rejected.` });
+    } else {
+      res.status(400).json({ success: false, msg: 'Invalid action. Use "approve" or "reject".' });
+    }
+  } catch (error) {
+    console.error('ApproveUser Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Server error during approval' });
   }
 };

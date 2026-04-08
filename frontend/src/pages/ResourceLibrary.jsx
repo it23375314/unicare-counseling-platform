@@ -28,7 +28,7 @@ export default function ResourceLibrary() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5001/api/resources/all`);
+            const res = await axios.get(`http://localhost:5000/api/resources/all`);
             setResources(res.data);
         } catch (err) { 
             console.error(err);
@@ -38,7 +38,7 @@ export default function ResourceLibrary() {
 
     const handleView = async (item) => {
         try {
-            await axios.post(`http://localhost:5001/api/resources/view/${item._id}`, { itNumber });
+            await axios.post(`http://localhost:5000/api/resources/view/${item._id}`, { itNumber });
         } catch (err) { 
             console.error("Tracking error", err); 
         }
@@ -114,7 +114,7 @@ export default function ResourceLibrary() {
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                                 {search && (
-                                    <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">âœ–</button>
+                                    <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">✖</button>
                                 )}
                             </div>
                         </div>
@@ -190,6 +190,37 @@ export default function ResourceLibrary() {
                         )}
                     </main>
                 </div>
+
+                {/* --- FOOTER --- */}
+                <footer style={styles.footer}>
+                  <div style={styles.footerGrid}>
+                    <div>
+                      <h3 style={styles.footerHeading}>UniCare</h3>
+                      <p style={styles.footerText}>Empowering university students with accessible, secure, and private mental health counseling.</p>
+                    </div>
+                    <div>
+                      <h3 style={styles.footerHeading}>Links</h3>
+                      <Link to="/" className="footer-link" style={styles.footerLink}>Home</Link>
+                      <Link to="/about" className="footer-link" style={styles.footerLink}>About Us</Link>
+                      <Link to="/counsellors" className="footer-link" style={styles.footerLink}>Find a Counsellor</Link>
+                    </div>
+                    <div>
+                      <h3 style={styles.footerHeading}>Support</h3>
+                      <Link to="/faq" className="footer-link" style={styles.footerLink}>FAQ</Link>
+                      <Link to="/privacy" className="footer-link" style={styles.footerLink}>Privacy Policy</Link>
+                      <Link to="/terms" className="footer-link" style={styles.footerLink}>Terms of Service</Link>
+                    </div>
+                    <div>
+                      <h3 style={styles.footerHeading}>Contact</h3>
+                      <a href="mailto:support@unicare.edu" className="footer-link" style={styles.footerLink}>support@unicare.edu</a>
+                      <p style={{...styles.footerLink, cursor: 'default'}}>1-800-UNICARE</p>
+                    </div>
+                  </div>
+                  <div style={styles.footerBottom}>
+                    © 2026 UniCare Platform. All rights reserved.
+                  </div>
+                </footer>
+
             </div>
         </>
     );

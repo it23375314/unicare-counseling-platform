@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
@@ -12,7 +12,7 @@ export default function AdminStats() {
         document.body.style.margin = "0";
         document.body.style.padding = "0";
 
-        axios.get('http://localhost:5001/api/resources/all')
+        axios.get('http://localhost:5000/api/resources/all')
             .then(res => {
                 // Sort by highest views first for better UX
                 const sortedData = res.data.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
@@ -53,7 +53,7 @@ export default function AdminStats() {
                         <div style={styles.navDivider}></div>
                         
                         <div style={styles.adminProfile}>
-                            <span style={{fontSize: '14px'}}>ðŸ‘‘</span> 
+                            <span style={{fontSize: '14px'}}>👑</span> 
                             <span style={{fontWeight: '900', fontSize: '11px', color: '#1e293b', textTransform: 'uppercase'}}>
                                 {userName?.split(' ')[0] || "Admin"}
                             </span>

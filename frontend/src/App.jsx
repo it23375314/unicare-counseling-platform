@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
 import { CounsellorProvider } from './context/CounsellorContext';
 import { SessionNoteProvider } from './context/SessionNoteContext';
+import { ChatProvider } from './context/ChatContext';
 
 // ─── Config (axios interceptor for unified API port) ──────────────────────────
 import './config/api';
@@ -26,6 +27,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CounsellorDashboard from './pages/counsellor/CounsellorDashboard';
 import AppointmentProfile from './pages/counsellor/AppointmentProfile';
 import ChatUI from './pages/counsellor/ChatUI';
+import SavedAvailability from './pages/counsellor/SavedAvailability';
+import AppointmentHistory from './pages/counsellor/AppointmentHistory';
 
 // ─── Auth Pages (from Wellness module) ────────────────────────────────────────
 import Login from './pages/Login';
@@ -57,9 +60,10 @@ function App() {
         <CounsellorProvider>
           <BookingProvider>
             <SessionNoteProvider>
-              <Router>
-                <ScrollToTop />
-                <Routes>
+              <ChatProvider>
+                <Router>
+                  <ScrollToTop />
+                  <Routes>
 
                   {/* ── Main Layout (Navbar + Footer) ── */}
                   <Route path="/" element={<Layout />}>
@@ -95,6 +99,8 @@ function App() {
 
                     {/* ── Counsellor Portal ── */}
                     <Route path="counsellor/dashboard" element={<Navigate to="/counsellor/availability" replace />} />
+                    <Route path="counsellor/my-availability" element={<SavedAvailability />} />
+                    <Route path="history" element={<AppointmentHistory />} />
                     <Route path="counsellor/availability" element={
                       <ProtectedRoute allowedRoles={['counsellor']}>
                         <CounsellorDashboard />
@@ -192,7 +198,8 @@ function App() {
 
                 </Routes>
               </Router>
-            </SessionNoteProvider>
+            </ChatProvider>
+          </SessionNoteProvider>
           </BookingProvider>
         </CounsellorProvider>
       </AuthProvider>

@@ -3,13 +3,14 @@ import axios from 'axios';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -32,10 +33,10 @@ export default function Login() {
 
       if (!data.success) {
         setError(data.msg || 'Login failed');
+        setIsPending(!!data.pending);
         return;
       }
 
-      // Update AuthContext with full user data
       login(data.data);
 
       // Redirect logic: Priority to 'from' state, then role-based defaults
@@ -49,7 +50,9 @@ export default function Login() {
         navigate('/', { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.msg || 'Login failed. Please try again.');
+      const errData = err.response?.data;
+      setError(errData?.msg || 'Login failed. Please try again.');
+      setIsPending(!!errData?.pending);
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,17 @@ export default function Login() {
             <p style={styles.formSubText}>Enter your credentials to access your dashboard.</p>
           </div>
 
-          {error && <div style={styles.errorBox}>{error}</div>}
+          {error && (
+            <div style={isPending ? {
+              backgroundColor: '#fffbeb', border: '1px solid #fcd34d', color: '#92400e',
+              borderRadius: '10px', padding: '14px 16px', marginBottom: '16px', fontSize: '14px', lineHeight: '1.5'
+            } : {
+              backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', fontSize: '14px'
+            }}>
+              {isPending ? '⏳ ' : '⚠️ '}{error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} style={styles.formStack}>
             <div style={styles.inputWrapper}>

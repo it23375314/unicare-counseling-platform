@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -25,8 +25,8 @@ const SimpleEditor = ({ value, onChange, minHeight = "80px" }) => {
                 <button type="button" onClick={() => exec('italic')} style={styles.tbBtn}><i>I</i></button>
                 <button type="button" onClick={() => exec('underline')} style={styles.tbBtn}><u>U</u></button>
                 <button type="button" onClick={() => exec('formatBlock', 'H3')} style={styles.tbBtn}>H3</button>
-                <button type="button" onClick={() => exec('insertUnorderedList')} style={styles.tbBtn}>â€¢ List</button>
-                <button type="button" onClick={() => exec('removeFormat')} style={styles.tbBtn}>ðŸ§¹ Clear</button>
+                <button type="button" onClick={() => exec('insertUnorderedList')} style={styles.tbBtn}>• List</button>
+                <button type="button" onClick={() => exec('removeFormat')} style={styles.tbBtn}>🧹 Clear</button>
             </div>
             <div
                 ref={editorRef}
@@ -65,7 +65,7 @@ export default function AdminEditResource() {
 
         const fetchResource = async () => {
             try {
-                const res = await axios.get(`http://localhost:5001/api/resources/admin/all`);
+                const res = await axios.get(`http://localhost:5000/api/resources/admin/all`);
                 const resource = res.data.find(r => r._id === id);
                 if (resource) setFormData(resource);
             } catch (err) {
@@ -125,7 +125,7 @@ export default function AdminEditResource() {
         e.preventDefault();
 
         if (!validateForm()) {
-            setNotification({ type: 'error', message: 'âš ï¸ Please fix the highlighted errors below before saving.' });
+            setNotification({ type: 'error', message: '⚠️ Please fix the highlighted errors below before saving.' });
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
@@ -150,11 +150,11 @@ export default function AdminEditResource() {
         data.append('status', formData.status);
 
         try {
-            await axios.put(`http://localhost:5001/api/resources/edit/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-            setNotification({ type: 'success', message: 'âœ… Resource Updated Successfully! Redirecting...' });
+            await axios.put(`http://localhost:5000/api/resources/edit/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+            setNotification({ type: 'success', message: '✅ Resource Updated Successfully! Redirecting...' });
             setTimeout(() => navigate('/admin/resources'), 1500);
         } catch (err) {
-            setNotification({ type: 'error', message: 'âŒ Update failed: ' + (err.response?.data?.msg || err.message) });
+            setNotification({ type: 'error', message: '❌ Update failed: ' + (err.response?.data?.msg || err.message) });
         } finally {
             setSaving(false);
         }
@@ -190,16 +190,16 @@ export default function AdminEditResource() {
                         UniCare Admin
                     </h2>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 1, margin: 0 }}>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>ðŸ›¡ï¸ Control Panel</li>
-                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>ðŸ“š Resource Library</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>ðŸ“Š System Analytics</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>ðŸ‘¥ User Management</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>ðŸ“ Platform Logs</li>
-                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>âš™ï¸ System Config</li>
-                        <li className="sidebar-item" onClick={() => navigate('/settings')}>âš™ï¸ Settings</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>🛡️ Control Panel</li>
+                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>📚 Resource Library</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>👥 User Management</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
+                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>⚙️ System Config</li>
+                        <li className="sidebar-item" onClick={() => navigate('/settings')}>⚙️ Settings</li>
                     </ul>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 0, margin: 0 }}>
-                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>ðŸšª Logout</li>
+                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>🚪 Logout</li>
                     </ul>
                 </div>
 
@@ -237,7 +237,7 @@ export default function AdminEditResource() {
                                         <div style={errors.title ? {border: '1px solid #ef4444', borderRadius: '12px'} : {}}>
                                             <SimpleEditor value={formData.title} onChange={(val) => setFormData({...formData, title: val})} minHeight="50px" />
                                         </div>
-                                        {errors.title && <span style={styles.errorText}>âš ï¸ {errors.title}</span>}
+                                        {errors.title && <span style={styles.errorText}>⚠️ {errors.title}</span>}
                                     </div>
                                     
                                     <div style={styles.inputGroup}>
@@ -245,7 +245,7 @@ export default function AdminEditResource() {
                                         <div style={errors.description ? {border: '1px solid #ef4444', borderRadius: '12px'} : {}}>
                                             <SimpleEditor value={formData.description} onChange={(val) => setFormData({...formData, description: val})} minHeight="100px" />
                                         </div>
-                                        {errors.description && <span style={styles.errorText}>âš ï¸ {errors.description}</span>}
+                                        {errors.description && <span style={styles.errorText}>⚠️ {errors.description}</span>}
                                     </div>
                                     
                                     {formData.resourceType === 'Article' ? (
@@ -254,35 +254,35 @@ export default function AdminEditResource() {
                                             <div style={errors.content ? {border: '1px solid #ef4444', borderRadius: '12px'} : {}}>
                                                 <SimpleEditor value={formData.content} onChange={(val) => setFormData({...formData, content: val})} minHeight="300px" />
                                             </div>
-                                            {errors.content && <span style={styles.errorText}>âš ï¸ {errors.content}</span>}
+                                            {errors.content && <span style={styles.errorText}>⚠️ {errors.content}</span>}
                                         </div>
                                     ) : formData.resourceType === 'PDF' ? (
                                         <div style={styles.inputGroup}>
                                             <label style={styles.inputLabel}>PDF Document <span style={{color: '#ef4444'}}>*</span></label>
                                             <div style={errors.pdf ? {...styles.fileDropzone, ...styles.inputError} : styles.fileDropzone}>
-                                                <span style={{fontSize: '28px', marginBottom: '8px'}}>ðŸ“‘</span>
+                                                <span style={{fontSize: '28px', marginBottom: '8px'}}>📑</span>
                                                 <span style={{fontSize: '14px', fontWeight: '600', color: '#2563eb'}}>Click to upload a new PDF</span>
                                                 <input type="file" accept=".pdf,application/pdf" style={styles.fileInputHidden} onChange={(e) => setPdfFile(e.target.files[0])} />
-                                                {pdfFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>âœ”</span> {pdfFile.name} (New)</div> : <div style={styles.currentFileNotice}><strong>Current File:</strong> {formData.content ? formData.content.split('/').pop() : 'No file linked'}</div>}
+                                                {pdfFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>✔</span> {pdfFile.name} (New)</div> : <div style={styles.currentFileNotice}><strong>Current File:</strong> {formData.content ? formData.content.split('/').pop() : 'No file linked'}</div>}
                                             </div>
-                                            {errors.pdf && <span style={styles.errorText}>âš ï¸ {errors.pdf}</span>}
+                                            {errors.pdf && <span style={styles.errorText}>⚠️ {errors.pdf}</span>}
                                         </div>
                                     ) : formData.resourceType === 'Audio' ? (
                                         <div style={styles.inputGroup}>
                                             <label style={styles.inputLabel}>Audio File <span style={{color: '#ef4444'}}>*</span></label>
                                             <div style={errors.audio ? {...styles.fileDropzone, ...styles.inputError} : styles.fileDropzone}>
-                                                <span style={{fontSize: '28px', marginBottom: '8px'}}>ðŸŽ§</span>
+                                                <span style={{fontSize: '28px', marginBottom: '8px'}}>🎧</span>
                                                 <span style={{fontSize: '14px', fontWeight: '600', color: '#2563eb'}}>Click to upload a new audio file</span>
                                                 <input type="file" accept="audio/*" style={styles.fileInputHidden} onChange={(e) => setAudioFile(e.target.files[0])} />
-                                                {audioFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>âœ”</span> {audioFile.name} (New)</div> : <div style={styles.currentFileNotice}><strong>Current File:</strong> {formData.content ? formData.content.split('/').pop() : 'No file linked'}</div>}
+                                                {audioFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>✔</span> {audioFile.name} (New)</div> : <div style={styles.currentFileNotice}><strong>Current File:</strong> {formData.content ? formData.content.split('/').pop() : 'No file linked'}</div>}
                                             </div>
-                                            {errors.audio && <span style={styles.errorText}>âš ï¸ {errors.audio}</span>}
+                                            {errors.audio && <span style={styles.errorText}>⚠️ {errors.audio}</span>}
                                         </div>
                                     ) : (
                                         <div style={styles.inputGroup}>
                                             <label style={styles.inputLabel}>YouTube Video Link <span style={{color: '#ef4444'}}>*</span></label>
                                             <input type="url" style={errors.content ? {...styles.inputStandard, ...styles.inputError} : styles.inputStandard} value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} />
-                                            {errors.content && <span style={styles.errorText}>âš ï¸ {errors.content}</span>}
+                                            {errors.content && <span style={styles.errorText}>⚠️ {errors.content}</span>}
                                         </div>
                                     )}
                                 </div>
@@ -298,10 +298,10 @@ export default function AdminEditResource() {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.inputLabel}>Resource Type</label>
                                         <select style={styles.selectStandard} value={formData.resourceType} onChange={handleTypeChange}>
-                                            <option value="Article">ðŸ“„ Article</option>
-                                            <option value="Video">ðŸŽ¬ Video</option>
-                                            <option value="PDF">ðŸ“‘ PDF Document</option>
-                                            <option value="Audio">ðŸŽ§ Audio</option>
+                                            <option value="Article">📄 Article</option>
+                                            <option value="Video">🎬 Video</option>
+                                            <option value="PDF">📑 PDF Document</option>
+                                            <option value="Audio">🎧 Audio</option>
                                         </select>
                                     </div>
                                     <div style={styles.inputGroup}>
@@ -341,12 +341,12 @@ export default function AdminEditResource() {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.inputLabel}>Cover Image <span style={{color: '#ef4444'}}>*</span></label>
                                         <div style={errors.image ? {...styles.fileDropzone, ...styles.inputError} : styles.fileDropzone}>
-                                            <span style={{fontSize: '24px', marginBottom: '8px'}}>ðŸ“¸</span>
+                                            <span style={{fontSize: '24px', marginBottom: '8px'}}>📸</span>
                                             <span style={{fontSize: '13px', fontWeight: '600', color: '#2563eb'}}>Upload new cover image</span>
                                             <input type="file" accept="image/*" style={styles.fileInputHidden} onChange={(e) => setImageFile(e.target.files[0])} />
-                                            {imageFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>âœ”</span> {imageFile.name} (New)</div> : formData.imageUrl ? <div style={styles.currentFileNotice}>Current: {formData.imageUrl.split('/').pop()}</div> : null}
+                                            {imageFile ? <div style={styles.fileName}><span style={{color: '#10b981'}}>✔</span> {imageFile.name} (New)</div> : formData.imageUrl ? <div style={styles.currentFileNotice}>Current: {formData.imageUrl.split('/').pop()}</div> : null}
                                         </div>
-                                        {errors.image && <span style={styles.errorText}>âš ï¸ {errors.image}</span>}
+                                        {errors.image && <span style={styles.errorText}>⚠️ {errors.image}</span>}
                                     </div>
                                 </div>
 
@@ -358,13 +358,13 @@ export default function AdminEditResource() {
                                     <div style={styles.inputGroup}>
                                         <label style={styles.inputLabel}>Visibility Status</label>
                                         <select style={styles.selectStandard} value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
-                                            <option value="Published">ðŸŸ¢ Published (Live)</option>
-                                            <option value="Draft">ðŸŸ¡ Draft (Hidden)</option>
-                                            <option value="Archived">âšª Archived</option>
+                                            <option value="Published">🟢 Published (Live)</option>
+                                            <option value="Draft">🟡 Draft (Hidden)</option>
+                                            <option value="Archived">⚪ Archived</option>
                                         </select>
                                     </div>
                                     <button type="submit" disabled={saving} className="submit-btn" style={saving ? {...styles.submitBtn, opacity: 0.7} : styles.submitBtn}>
-                                        {saving ? 'Saving Changes...' : 'Save Changes âž”'}
+                                        {saving ? 'Saving Changes...' : 'Save Changes ➔'}
                                     </button>
                                 </div>
                             </div>
