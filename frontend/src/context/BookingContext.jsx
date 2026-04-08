@@ -12,27 +12,27 @@ export const BookingProvider = ({ children }) => {
   
   const [bookings, setBookings] = useState([]);
 
+  const fetchBookings = async () => {
+      try {
+          console.log("🔄 Fetching appointments from:", API_URL);
+          const res = await fetch(API_URL);
+          if (res.ok) {
+              const json = await res.json();
+              console.log("📦 Received Appointments Data:", json);
+              if(json.success && json.data) {
+                  setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
+              } else if (Array.isArray(json)) {
+                  setBookings(json.map(b => ({ ...b, id: b._id || b.id })));
+              }
+          } else {
+              console.warn("⚠️ Appointments Fetch Status:", res.status);
+          }
+      } catch(e) {
+          console.error("❌ Booking API Failed", e);
+      }
+  };
+
   useEffect(() => {
-    const fetchBookings = async () => {
-        try {
-            console.log("🔄 Fetching appointments from:", API_URL);
-            const res = await fetch(API_URL);
-            if (res.ok) {
-                const json = await res.json();
-                console.log("📦 Received Appointments Data:", json);
-                if(json.success && json.data) {
-                    setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
-                } else if (Array.isArray(json)) {
-                    // Fallback for legacy array response
-                    setBookings(json.map(b => ({ ...b, id: b._id || b.id })));
-                }
-            } else {
-                console.warn("⚠️ Appointments Fetch Status:", res.status);
-            }
-        } catch(e) {
-            console.error("❌ Booking API Failed", e);
-        }
-    };
     fetchBookings();
   }, []);
 
@@ -54,19 +54,23 @@ export const BookingProvider = ({ children }) => {
 
   const syncBookingUpdate = async (id, payload, successMsg, errorMsg) => {
       try {
-          const res = await fetch(`${API_URL}/${id}`, {
-              method: "PUT", headers: { "Content-Type": "application/json" },
+          const res = await fetch(`${API_URL}/${id}/status`, {
+              method: "PATCH", headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
-          const json = await res.json();
-          if (json.success) {
-              setBookings((prev) => prev.map((b) => b.id === id ? { ...b, ...payload } : b));
+          
+          if (res.ok) {
+              setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
               if(successMsg) addToast(successMsg, "success");
+          } else {
+              const json = await res.json();
+              throw new Error(json.message || "Update API returned failure status");
           }
       } catch(e) {
-           // Fallback
-           setBookings((prev) => prev.map((b) => b.id === id ? { ...b, ...payload } : b));
-           if(successMsg) addToast(`Offline: ${successMsg}`, "success");
+           console.error("Booking API Failed:", e);
+           // Optimistic Fallback Update
+           setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
+           if(successMsg) addToast(`Offline Updates Saved Local Only: ${successMsg}`, "success");
       }
   };
 
@@ -163,7 +167,7 @@ export const BookingProvider = ({ children }) => {
     <BookingContext.Provider value={{
         bookings, addBooking, confirmPayment, cancelBooking, rescheduleBooking,
         getAvailableSlots, checkIsRefundable, acceptBooking, rejectBooking,
-        confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking, addSessionNotes
+        confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking, addSessionNotes, fetchBookings
     }}>
       {children}
     </BookingContext.Provider>

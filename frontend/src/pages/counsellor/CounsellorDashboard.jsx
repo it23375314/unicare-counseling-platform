@@ -55,7 +55,7 @@ const getAvatarColor = (name) => {
 export default function CounsellorDashboard() {
   const { user } = useAuth();
   const { counsellors, getCounsellorById, updateAvailability } = useCounsellorContext();
-  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
   const counsellor = getCounsellorById(user?.id) || counsellors?.find(c => c.email === user?.email) || counsellors?.[0] || null;
@@ -74,6 +74,13 @@ export default function CounsellorDashboard() {
   if (path.includes("appointments")) activeTab = "appointments";
   else if (path.includes("history")) activeTab = "history";
   else if (path.includes("notes")) activeTab = "session notes";
+
+  // Re-fetch bookings on navigating to appointments
+  useEffect(() => {
+    if (activeTab === "appointments" && typeof fetchBookings === "function") {
+      fetchBookings();
+    }
+  }, [activeTab, fetchBookings]);
 
   // For Availability
   const [selectedDate, setSelectedDate] = useState("");
@@ -168,7 +175,11 @@ export default function CounsellorDashboard() {
 
   // For Appointments Tab
   const safeBookings = Array.isArray(bookings) ? bookings : [];
-  const myBookings = safeBookings.filter(b => b?.counsellor === counsellor?.name);
+  const myBookings = safeBookings.filter(b => 
+    b?.counsellorId === counsellor?.id || 
+    b?.counsellorName === counsellor?.name || 
+    b?.counsellor === counsellor?.name
+  );
   
   const [searchApptStudent, setSearchApptStudent] = useState("");
   const [filterApptDate, setFilterApptDate] = useState("");
