@@ -1,113 +1,121 @@
-import { createContext, useContext, useState, useEffect } from "react";
+﻿import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const CounsellorContext = createContext();
+const API_URL = "http://localhost:5001/api";
 
 export const useCounsellorContext = () => useContext(CounsellorContext);
 
-// Initial mock data if empty
-const initialCounsellors = [
-  {
-    id: "1",
-    name: "Dr. Sarah Jenkins",
-    email: "sarah.jenkins@unicare.edu",
-    specialization: "Anxiety & Academic Stress",
-    experience: "10 years",
-    availability: [], // Array of { date: 'YYYY-MM-DD', slots: ['09:00 AM', '11:00 AM'] }
-  },
-  {
-    id: "2",
-    name: "Dr. Ahmed Rahman",
-    email: "ahmed.rahman@unicare.edu",
-    specialization: "Depression & Career Counseling",
-    experience: "8 years",
-    availability: [],
-  }
-];
 
 export const CounsellorProvider = ({ children }) => {
   const { addToast } = useToast();
   
-  const [counsellors, setCounsellors] = useState(() => {
-    try {
-      const saved = localStorage.getItem("unicare_counsellors_v2");
-      return saved ? JSON.parse(saved) : initialCounsellors;
-    } catch (e) {
-      console.error("Counsellor data corrupted:", e);
-      return initialCounsellors;
-    }
-  });
+  const [counsellors, setCounsellors] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem("unicare_counsellors_v2", JSON.stringify(counsellors));
-  }, [counsellors]);
+    fetchCounsellors();
+  }, []);
 
-  // CRUD Operations
-  const addCounsellor = (counsellorData) => {
-    const isDuplicate = counsellors.some(
-      (c) => c.email.toLowerCase() === counsellorData.email.toLowerCase()
-    );
-    if (isDuplicate) {
-      throw new Error("A counsellor with this email already exists.");
+  const fetchCounsellors = async () => {
+    try {
+        const res = await fetch(`${API_URL}/counsellors`);
+        if (res.ok) {
+            const json = await res.json();
+            if(json.success) setCounsellors(json.data.map(c => ({...c, id: c._id || c.id})));
+        }
+    } catch(e) {
+        console.error("Failed to fetch counsellors", e);
     }
-
-    const newCounsellor = {
-      ...counsellorData,
-      id: Date.now().toString(),
-      availability: [] // Initialize empty
-    };
-    
-    setCounsellors((prev) => [...prev, newCounsellor]);
-    addToast("Counsellor added successfully!", "success");
-    return newCounsellor.id;
   };
 
-  const editCounsellor = (id, updatedData) => {
-    // Check if email clash with another counsellor
-    const isDuplicate = counsellors.some(
-      (c) => c.id !== id && c.email.toLowerCase() === updatedData.email.toLowerCase()
-    );
-    if (isDuplicate) {
-      throw new Error("Another counsellor with this email already exists.");
-    }
-
-    setCounsellors((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updatedData } : c))
-    );
-    addToast("Counsellor updated successfully!", "success");
-  };
-
-  const deleteCounsellor = (id) => {
-    setCounsellors((prev) => prev.filter((c) => c.id !== id));
-    addToast("Counsellor deleted successfully.", "info");
-  };
-
-  // Availability Management
-  const updateAvailability = (counsellorId, date, timeSlots) => {
-    // timeSlots is array of strings e.g. ["09:00 AM", "11:00 AM"]
-    setCounsellors((prev) =>
-      prev.map((c) => {
-        if (c.id !== counsellorId) return c;
+  const addCounsellor = async (counsellorData) => {
+    try {
+        const res = await fetch(`${API_URL}/counsellors`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({...counsellorData, availability: []})
+        });
+        const json = await res.json();
         
-        let newAvail = [...(c.availability || [])];
+        if (!json.success) {
+            throw new Error(json.message || "Failed to add counsellor");
+        }
+        
+        setCounsellors(prev => [...prev, {...json.data, id: json.data._id}]);
+        addToast("Counsellor added successfully!", "success");
+        return json.data._id;
+    } catch(e) {
+        addToast(e.message || "Error adding counsellor", "error");
+        throw e;
+    }
+  };
+
+  const editCounsellor = async (id, updatedData) => {
+    try {
+        const res = await fetch(`${API_URL}/counsellors/${id}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData)
+        });
+        const json = await res.json();
+        
+        if (!json.success) {
+            throw new Error(json.message || "Failed to modify counsellor");
+        }
+        
+        setCounsellors((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, ...json.data, id: json.data._id } : c))
+        );
+        addToast("Counsellor updated successfully!", "success");
+    } catch(e) {
+        addToast(e.message || "Error updating counsellor", "error");
+        throw e;
+    }
+  };
+
+  const deleteCounsellor = async (id) => {
+    try {
+        const res = await fetch(`${API_URL}/counsellors/${id}`, { method: "DELETE" });
+        const json = await res.json();
+        
+        if(json.success) {
+            setCounsellors((prev) => prev.filter((c) => c.id !== id));
+            addToast("Counsellor deleted successfully.", "info");
+        }
+    } catch(e) {
+        addToast("Error deleting counsellor", "error");
+    }
+  };
+
+  const updateAvailability = async (counsellorId, date, timeSlots) => {
+    try {
+        const counsellor = counsellors.find(c => c.id === counsellorId);
+        if(!counsellor) return;
+
+        let newAvail = [...(counsellor.availability || [])];
         const dateIndex = newAvail.findIndex(a => a.date === date);
         
         if (dateIndex >= 0) {
-          // Replace or delete if empty
           if (timeSlots.length === 0) {
             newAvail.splice(dateIndex, 1);
           } else {
             newAvail[dateIndex].slots = timeSlots;
           }
         } else if (timeSlots.length > 0) {
-          // Add new date
           newAvail.push({ date, slots: timeSlots });
         }
         
-        return { ...c, availability: newAvail };
-      })
-    );
-    addToast("Availability updated!", "success");
+        const res = await fetch(`${API_URL}/counsellors/${counsellorId}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ availability: newAvail })
+        });
+        
+        const json = await res.json();
+        if(json.success) {
+            setCounsellors((prev) => prev.map((c) => c.id === counsellorId ? { ...c, availability: newAvail } : c));
+            addToast("Availability updated!", "success");
+        }
+    } catch(e) {
+        addToast("Error updating availability", "error");
+    }
   };
   
   const getCounsellorById = (id) => {

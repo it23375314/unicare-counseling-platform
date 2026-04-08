@@ -1,28 +1,70 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
+// ─── Route Imports ─────────────────────────────────────────────────────────────
+const authRoutes     = require('./routes/authRoutes');
+const counsellorRoutes = require('./routes/counsellorRoutes');
+const bookingRoutes  = require('./routes/bookingRoutes');
 const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+
+const goalRoutes     = require('./routes/goalRoutes');
+const moodRoutes     = require('./routes/moodRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+const chatRoutes     = require('./routes/chatRoutes');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URLS
+    ? process.env.CLIENT_URLS.split(',').map(url => url.trim())
+    : ['http://localhost:5173', 'http://localhost:5174'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Routes
-app.use('/api/session-notes', sessionNoteRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Database Connection
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/unicare_notes';
-
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB (Session Notes DB)');
-    app.listen(PORT, () => console.log(`Backend API Server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
+// ─── Health Check (works even before DB connects) ──────────────────────────────
+app.get('/api/health', (req, res) => {
+  const dbState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({
+    status: 'ok',
+    db: dbState[mongoose.connection.readyState] || 'unknown',
+    message: 'UniCare API is running'
   });
+});
+
+// ─── API Routes ────────────────────────────────────────────────────────────────
+app.use('/api/auth',          authRoutes);
+app.use('/api/counsellors',   counsellorRoutes);
+app.use('/api/bookings',      bookingRoutes);
+app.use('/api/session-notes', sessionNoteRoutes);
+app.use('/api/appointments',  appointmentRoutes);
+
+app.use('/api/goals',     goalRoutes);
+app.use('/api/moods',     moodRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/chat',      chatRoutes);
+
+// ─── Start Server FIRST, then connect DB ──────────────────────────────────────
+const PORT = process.env.PORT || 5001;
+
+app.listen(PORT, () => {
+  console.log(`🚀 UniCare Backend API running on port ${PORT}`);
+  console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/session-notes`);
+  console.log(`   Wellness: /api/goals | /api/moods | /api/resources | /api/chat`);
+});
+
+// Connect MongoDB after server starts
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 15000,
+  connectTimeoutMS: 15000,
+})
+  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .catch(err => console.error('❌ MongoDB Error:', err.message));

@@ -11,8 +11,16 @@ import student1 from "../../assets/student1.png";
 import student2 from "../../assets/student2.png";
 import student3 from "../../assets/student3.png";
 
-const guestPhotos = [student1, student2, student3];
-const guestNames = ["Alex Johnson", "Taylor Smith", "Jordan Lee", "Morgan Davis", "Casey Wilson", "Riley Taylor", "Quinn Brown", "Avery Miller"];
+const guestProfiles = [
+  { name: "Sithumini Fonseka", photo: student1 },
+  { name: "Kavindu Perera", photo: student2 },
+  { name: "Nadeesha Perera", photo: student3 },
+  { name: "Dilshan Wijesinghe", photo: studentProfilePlaceholder },
+  { name: "Kasun Bandara", photo: student2 },
+  { name: "Tharushi Silva", photo: student1 },
+  { name: "Amandi Fernando", photo: student3 },
+  { name: "Nimesh Jayawardena", photo: studentProfilePlaceholder }
+];
 
 const getDeterministicIndex = (idString, arrayLength) => {
   let hash = 0;
@@ -22,15 +30,13 @@ const getDeterministicIndex = (idString, arrayLength) => {
   return Math.abs(hash) % arrayLength;
 };
 
-const getGuestPhoto = (idString) => {
-  if (!idString) return guestPhotos[0];
-  return guestPhotos[getDeterministicIndex(idString, guestPhotos.length)];
+const getGuestProfile = (idString) => {
+  if (!idString) return guestProfiles[0];
+  return guestProfiles[getDeterministicIndex(idString, guestProfiles.length)];
 };
 
-const getGuestName = (idString) => {
-  if (!idString) return guestNames[0];
-  return guestNames[getDeterministicIndex(idString, guestNames.length)];
-};
+const getGuestPhoto = (idString) => getGuestProfile(idString).photo;
+const getGuestName = (idString) => getGuestProfile(idString).name;
 
 const getAvatarColor = (name) => {
   if (!name) return 'bg-blue-600';
@@ -73,34 +79,78 @@ export default function CounsellorDashboard() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [slotInput, setSlotInput] = useState("");
+  const [availabilityErrors, setAvailabilityErrors] = useState({});
 
-  const handleAddSlot = () => {
-    if (!slotInput) return;
-    if (!selectedSlots.includes(slotInput)) {
-      setSelectedSlots([...selectedSlots, slotInput]);
-    }
-    setSlotInput("");
-  };
-
-  const handleSaveAvailability = () => {
-    if (!selectedDate) {
-      toast.error("Please select a date first.");
-      return;
-    }
-    const today = new Date().toISOString().split('T')[0];
-    if (selectedDate < today) {
-      toast.error("Must choose a future date.");
-      return;
-    }
-    updateAvailability(counsellor?.id, selectedDate, selectedSlots);
-    toast.success("Availability updated efficiently!");
+  const formatSelectedDate = (dateString) => {
+    if (!dateString) return "---";
+    const [y, m, d] = dateString.split("-");
+    return `${d}/${m}/${y}`;
   };
 
   const handleDateChange = (e) => {
     const date = e.target.value;
     setSelectedDate(date);
+    setAvailabilityErrors((prev) => ({ ...prev, date: null }));
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (date && date < today) {
+       setAvailabilityErrors((prev) => ({ ...prev, date: "Please select a future date" }));
+       setSelectedSlots([]);
+       return;
+    }
+
     const existing = counsellor?.availability?.find(a => a.date === date);
     setSelectedSlots(existing ? existing.slots : []);
+  };
+
+  const handleAddSlot = () => {
+    if (!slotInput) {
+       setAvailabilityErrors((prev) => ({ ...prev, slot: "Please select a time" }));
+       return;
+    }
+    if (selectedSlots.includes(slotInput)) {
+       setAvailabilityErrors((prev) => ({ ...prev, slot: "This time slot is already added" }));
+       return;
+    }
+    setSelectedSlots(prev => [...prev, slotInput]);
+    setSlotInput("");
+    setAvailabilityErrors((prev) => ({ ...prev, slot: null, slots: null }));
+  };
+
+  const handleSaveAvailability = async () => {
+    let hasError = false;
+    const errors = {};
+    if (!selectedDate) {
+      errors.date = "Please select a future date";
+      hasError = true;
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      if (selectedDate < today) {
+        errors.date = "Please select a future date";
+        hasError = true;
+      }
+    }
+    
+    if (selectedSlots.length === 0 && !hasError) {
+      errors.slots = "No time slots added yet";
+      hasError = true;
+    }
+
+    if (hasError) {
+       setAvailabilityErrors(errors);
+       return;
+    }
+
+    try {
+      if (typeof updateAvailability === 'function') {
+        const promise = updateAvailability(counsellor?.id, selectedDate, selectedSlots);
+        if (promise instanceof Promise) await promise;
+      }
+      toast.success("Availability saved successfully");
+      setAvailabilityErrors({});
+    } catch (err) {
+      toast.error("Failed to save availability");
+    }
   };
 
   // For Appointments Tab
@@ -504,13 +554,14 @@ export default function CounsellorDashboard() {
                         type="date" 
                         value={selectedDate} 
                         onChange={handleDateChange} 
-                        className="w-full border-2 border-gray-100 rounded-2xl p-4 pl-14 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all hover:border-blue-200 bg-white font-black text-gray-700 shadow-sm" 
+                        className={`w-full border-2 rounded-2xl p-4 pl-14 outline-none transition-all bg-white font-black text-gray-700 shadow-sm ${availabilityErrors.date ? 'border-red-400 focus:ring-4 focus:ring-red-500/10 focus:border-red-500' : 'border-gray-100 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 hover:border-blue-200'}`} 
                         min={new Date().toISOString().split('T')[0]} 
                       />
                     </div>
+                    {availabilityErrors.date && <p className="text-red-500 text-xs font-bold mt-2 ml-1">{availabilityErrors.date}</p>}
                   </div>
                   
-                  {selectedDate && (
+                  {selectedDate && !availabilityErrors.date && (
                     <div className="group animate-in fade-in slide-in-from-top-6 duration-500">
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 transition-colors group-focus-within:text-blue-600 ml-1">Add Time Slot</label>
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -519,24 +570,29 @@ export default function CounsellorDashboard() {
                           <input 
                             type="time" 
                             value={slotInput} 
-                            onChange={e => setSlotInput(e.target.value)} 
-                            className="w-full bg-white border-2 border-gray-100 shadow-sm rounded-2xl pl-14 pr-4 p-4 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-black text-gray-700 hover:border-blue-200"
+                            onChange={e => {
+                                setSlotInput(e.target.value);
+                                if(availabilityErrors.slot) setAvailabilityErrors((prev) => ({...prev, slot: null}));
+                            }} 
+                            className={`w-full bg-white border-2 shadow-sm rounded-2xl pl-14 pr-4 p-4 outline-none transition-all font-black text-gray-700 ${availabilityErrors.slot ? 'border-red-400 focus:ring-4 focus:ring-red-500/10 focus:border-red-500' : 'border-gray-100 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 hover:border-blue-200'}`}
                           />
                         </div>
                         <button 
                           onClick={handleAddSlot} 
-                          className="w-full sm:w-auto bg-blue-50 border-2 border-blue-200 text-blue-700 px-8 py-4 rounded-2xl font-black text-sm hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-3 shadow-md active:scale-95"
+                          disabled={!slotInput}
+                          className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-md transition-all ${!slotInput ? 'bg-gray-100 text-gray-400 border-2 border-gray-100 cursor-not-allowed' : 'bg-blue-50 border-2 border-blue-200 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 active:scale-95'}`}
                         >
                           <Plus size={20} strokeWidth={3} /> Add Slot
                         </button>
                       </div>
+                      {availabilityErrors.slot && <p className="text-red-500 text-xs font-bold mt-2 ml-1">{availabilityErrors.slot}</p>}
                     </div>
                   )}
                 </div>
                 
                 <div className="flex flex-col h-full mt-4 lg:mt-0">
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Planned Slots: <span className="text-blue-600">{selectedDate || "---"}</span></h3>
-                  <div className="flex-grow bg-blue-50/40 border-2 border-blue-100/50 rounded-[1.5rem] p-6 flex flex-wrap gap-4 content-start min-h-[180px] shadow-inner mb-8">
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Planned Slots: <span className="text-blue-600">{formatSelectedDate(selectedDate)}</span></h3>
+                  <div className={`flex-grow bg-blue-50/40 border-2 rounded-[1.5rem] p-6 flex flex-wrap gap-4 content-start min-h-[180px] shadow-inner mb-2 ${availabilityErrors.slots ? 'border-red-400' : 'border-blue-100/50'}`}>
                     {selectedSlots.length > 0 ? selectedSlots.map((slot, idx) => (
                       <button 
                         key={idx}
@@ -550,13 +606,19 @@ export default function CounsellorDashboard() {
                     )) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-center py-8 text-gray-400 opacity-60">
                         <Clock size={40} strokeWidth={2.5} className="mb-4 text-blue-300" />
-                        <p className="text-sm font-black uppercase tracking-widest">No slots added</p>
+                        <p className="text-sm font-black uppercase tracking-widest">No time slots added yet</p>
                       </div>
                     )}
                   </div>
+                  {availabilityErrors.slots && <p className="text-red-500 text-xs font-bold mb-4 ml-1">{availabilityErrors.slots}</p>}
                   <button 
                     onClick={handleSaveAvailability} 
-                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-blue-200 hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                    disabled={!selectedDate || selectedSlots.length === 0}
+                    className={`w-full h-16 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all ${
+                        (!selectedDate || selectedSlots.length === 0) 
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed border-[3px] border-gray-100' 
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-200 hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98]'
+                    }`}
                   >
                     <CheckCircle size={24} strokeWidth={3} /> Save Availability
                   </button>
@@ -680,7 +742,7 @@ export default function CounsellorDashboard() {
                   const safeID = (b.id || "").toString();
                   const studentDispName = b.studentName || b.name || getGuestName(safeID);
                   const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
-                  const profileSrc = b.studentProfile || b.profileImage || (studentDispName === "John Smith" ? studentProfilePlaceholder : getGuestPhoto(safeID || 'default'));
+                  const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
                   return (
                     <div key={b.id || Math.random()} className={`rounded-[2rem] shadow-md border-2 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group overflow-hidden relative ${
                       b.status === 'Cancelled' || b.status === 'Rejected' 
@@ -884,7 +946,7 @@ export default function CounsellorDashboard() {
                   const safeID = (b.id || "").toString();
                   const studentDispName = b.studentName || b.name || "N/A Student";
                   const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
-                  const profileSrc = b.studentProfile || b.profileImage || (studentDispName === "John Smith" ? studentProfilePlaceholder : null);
+                  const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
                   
                   return (
                     <div key={b.id || Math.random()} className={`rounded-3xl shadow-sm border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 group overflow-hidden relative p-8 ${
@@ -1047,7 +1109,7 @@ export default function CounsellorDashboard() {
                 const safeId = n.studentId || (n.appointmentId ? "STU-" + n.appointmentId.toString().substring(0, 5) : "N/A ID");
                 const safeName = n.studentName || getGuestName(n.appointmentId || n.id || 'default');
                 const initials = safeName ? safeName.split(' ').map(nm => nm[0]).join('').substring(0, 2).toUpperCase() : '??';
-                const profileSrc = n.studentProfile || (n.studentName === "John Smith" ? studentProfilePlaceholder : getGuestPhoto(n.appointmentId || n.id || 'default'));
+                const profileSrc = n.studentProfile || getGuestPhoto(n.appointmentId || n.id || 'default');
 
                 return (
                   <div key={n.id} className="bg-gradient-to-br from-blue-50/50 via-white to-white rounded-3xl shadow-sm border border-blue-100/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-xl hover:shadow-blue-200/20 hover:border-blue-300 group overflow-hidden relative p-6 pl-8 transition-all duration-300">

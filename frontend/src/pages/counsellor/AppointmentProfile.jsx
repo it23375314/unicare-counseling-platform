@@ -9,8 +9,16 @@ import student1 from "../../assets/student1.png";
 import student2 from "../../assets/student2.png";
 import student3 from "../../assets/student3.png";
 
-const guestPhotos = [student1, student2, student3];
-const guestNames = ["Alex Johnson", "Taylor Smith", "Jordan Lee", "Morgan Davis", "Casey Wilson", "Riley Taylor", "Quinn Brown", "Avery Miller"];
+const guestProfiles = [
+  { name: "Sithumini Fonseka", photo: student1 },
+  { name: "Kavindu Perera", photo: student2 },
+  { name: "Nadeesha Perera", photo: student3 },
+  { name: "Dilshan Wijesinghe", photo: studentProfile },
+  { name: "Kasun Bandara", photo: student2 },
+  { name: "Tharushi Silva", photo: student1 },
+  { name: "Amandi Fernando", photo: student3 },
+  { name: "Nimesh Jayawardena", photo: studentProfile }
+];
 
 const getDeterministicIndex = (idString, arrayLength) => {
   let hash = 0;
@@ -20,15 +28,13 @@ const getDeterministicIndex = (idString, arrayLength) => {
   return Math.abs(hash) % arrayLength;
 };
 
-const getGuestPhoto = (idString) => {
-  if (!idString) return guestPhotos[0];
-  return guestPhotos[getDeterministicIndex(idString, guestPhotos.length)];
+const getGuestProfile = (idString) => {
+  if (!idString) return guestProfiles[0];
+  return guestProfiles[getDeterministicIndex(idString, guestProfiles.length)];
 };
 
-const getGuestName = (idString) => {
-  if (!idString) return guestNames[0];
-  return guestNames[getDeterministicIndex(idString, guestNames.length)];
-};
+const getGuestPhoto = (idString) => getGuestProfile(idString).photo;
+const getGuestName = (idString) => getGuestProfile(idString).name;
 
 const getAvatarColor = (name) => {
   if (!name) return 'bg-blue-600';
@@ -140,12 +146,6 @@ export default function AppointmentProfile() {
                       { (appointment.studentProfile || appointment.profileImage) ? (
                         <img 
                           src={appointment.studentProfile || appointment.profileImage} 
-                          alt={appointment.studentName || "Student"} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (appointment.studentName || appointment.name) === "John Smith" ? (
-                        <img 
-                          src={studentProfile} 
                           alt={appointment.studentName || "Student"} 
                           className="w-full h-full object-cover"
                         />
