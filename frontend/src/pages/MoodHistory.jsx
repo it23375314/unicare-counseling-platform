@@ -1,4 +1,4 @@
-﻿// Add score details mapping for mood label and meaning
+// Add score details mapping for mood label and meaning
 const SCORE_DETAILS = {
   1: { label: 'Very Low', meaning: 'Feeling overwhelmed or drained; focus on one grounding breath and take it easy.' },
   2: { label: 'Low', meaning: 'You are carrying weight right now; a restful break or gentle movement can help.' },
@@ -67,13 +67,6 @@ export default function MoodHistory() {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.clear();
-      window.location.href = '/login';
-    }
-  };
-
   // --- STAT CALCULATIONS ---
   const scoredEntries = entries.filter(entry => typeof entry.moodScore === 'number');
   const totalEntries = entries.length;
@@ -112,38 +105,6 @@ export default function MoodHistory() {
       `}</style>
 
       <div style={styles.dashboardContainer}>
-        
-        {/* --- TOP NAVBAR --- */}
-        <nav style={styles.navbar}>
-          <div style={styles.navLeft} onClick={() => navigate('/')}>
-            <div style={styles.logoBox}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-              </svg>
-            </div>
-            <span style={styles.logoText}>UniCare</span>
-          </div>
-
-          <div style={styles.navLinks}>
-            <Link to="/" className="nav-link" style={styles.navLink}>Home</Link>
-            <Link to="/about" className="nav-link" style={styles.navLink}>About Us</Link>
-            <Link to="/counsellors" className="nav-link" style={styles.navLink}>Find a Counsellor</Link>
-            <Link to="/dashboard" className="nav-link" style={styles.navLink}>Dashboard</Link>
-            <Link to="/wellness-dashboard" style={styles.navLinkActive}>My Wellness Portal</Link>
-          </div>
-
-          <div style={styles.navRight}>
-            <div style={styles.userPill} onClick={handleLogout}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              {userName} ({userRole})
-            </div>
-          </div>
-        </nav>
-
         <div style={styles.mainWrapper}>
           <main style={styles.mainContent}>
             
@@ -270,37 +231,6 @@ export default function MoodHistory() {
             </section>
           </main>
         </div>
-
-        {/* --- FOOTER --- */}
-        <footer style={styles.footer}>
-          <div style={styles.footerGrid}>
-            <div>
-              <h3 style={styles.footerHeading}>UniCare</h3>
-              <p style={styles.footerText}>Empowering university students with accessible, secure, and private mental health counseling.</p>
-            </div>
-            <div>
-              <h3 style={styles.footerHeading}>Links</h3>
-              <Link to="/" className="footer-link" style={styles.footerLink}>Home</Link>
-              <Link to="/about" className="footer-link" style={styles.footerLink}>About Us</Link>
-              <Link to="/counsellors" className="footer-link" style={styles.footerLink}>Find a Counsellor</Link>
-            </div>
-            <div>
-              <h3 style={styles.footerHeading}>Support</h3>
-              <Link to="/faq" className="footer-link" style={styles.footerLink}>FAQ</Link>
-              <Link to="/privacy" className="footer-link" style={styles.footerLink}>Privacy Policy</Link>
-              <Link to="/terms" className="footer-link" style={styles.footerLink}>Terms of Service</Link>
-            </div>
-            <div>
-              <h3 style={styles.footerHeading}>Contact</h3>
-              <a href="mailto:support@unicare.edu" className="footer-link" style={styles.footerLink}>support@unicare.edu</a>
-              <p style={{...styles.footerLink, cursor: 'default'}}>1-800-UNICARE</p>
-            </div>
-          </div>
-          <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
-          </div>
-        </footer>
-
       </div>
     </>
   );

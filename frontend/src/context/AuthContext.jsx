@@ -1,90 +1,26 @@
-﻿import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useToast } from "./ToastContext";
 
-<<<<<<< HEAD
-const AuthContext = createContext();
-const API_URL = "http://localhost:5001/api";
-=======
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const STORAGE_KEY = 'authUser';
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
-
-const defaultUser = null; // null means not logged in
 
 const AuthContext = createContext({
   user: null,
   login: () => {},
+  loginWithCredentials: () => {},
   logout: () => {},
   isAuthenticated: false,
 });
 
 export const AuthProvider = ({ children }) => {
-<<<<<<< HEAD
   const { addToast } = useToast();
-  
-  const [user, setUser] = useState({ role: "student", id: "student-1", name: "Current Student", email: "student@unicare.edu" });
-
-  useEffect(() => {
-    const fetchUser = async () => {
-        try {
-            const savedId = localStorage.getItem("unicare_user_id");
-            if (savedId) {
-                const res = await fetch(`${API_URL}/auth/me?id=${savedId}`);
-                if (res.ok) {
-                    const json = await res.json();
-                    if(json.success && json.data) {
-                        setUser({ 
-                            role: json.data.role, 
-                            id: json.data._id, 
-                            name: json.data.name,
-                            email: json.data.email
-                        });
-                        return;
-                    }
-                }
-            }
-            
-            // Fallback default
-            setUser({ role: "student", id: "student-1", name: "Current Student", email: "student@unicare.edu" });
-        } catch(e) {
-            console.error("Auth API failed:", e);
-        }
-    };
-    fetchUser();
-  }, []);
-
-  const login = async (role, id, name) => {
-    try {
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role, name })
-        });
-        
-        if (res.ok) {
-            const json = await res.json();
-            if(json.success && json.data) {
-                const u = json.data;
-                setUser({ role: u.role, id: u._id, name: u.name, email: u.email });
-                localStorage.setItem("unicare_user_id", u._id);
-            } else {
-                setUser({ role, id, name, email: "guest@unicare.edu" });
-            }
-        } else {
-             setUser({ role, id, name, email: "guest@unicare.edu" });
-        }
-        addToast(`Logged in as ${name || role}`, "success");
-    } catch(e) {
-        setUser({ role, id, name, email: "guest@unicare.edu" });
-        addToast(`Logged in (Offline Mode)`, "success");
-=======
   const [user, setUser] = useState(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
     }
   });
 
@@ -111,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   /**
-   * login â€” called after a successful POST /api/auth/login response
+   * login — called after a successful POST /api/auth/login response
    * Accepts the full response data object from the server.
    */
   const login = (userData) => {
@@ -123,31 +59,32 @@ export const AuthProvider = ({ children }) => {
       itNumber: userData.itNumber || '',
     };
     setUser(normalized);
+    addToast(`Welcome back, ${userData.name}!`, "success");
   };
 
-<<<<<<< HEAD
-  const logout = () => {
-    localStorage.removeItem("unicare_user_id");
-    setUser({ role: "student", id: "student-1", name: "Current Student", email: "student@unicare.edu" });
-    addToast("Logged out successfully.", "info");
-=======
   /**
-   * loginWithCredentials â€” convenience method that calls the API and logs in
+   * loginWithCredentials — convenience method that calls the API and logs in
    */
   const loginWithCredentials = async (email, password) => {
-    const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-    const data = res.data;
-    if (!data.success) throw new Error(data.msg || 'Login failed');
-    login(data.data);
-    return data.data;
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+      const data = res.data;
+      if (!data.success) throw new Error(data.msg || 'Login failed');
+      login(data.data);
+      return data.data;
+    } catch (err) {
+      const errorMsg = err.response?.data?.msg || err.message || 'Login connection failed';
+      addToast(errorMsg, "error");
+      throw err;
+    }
   };
 
   /**
-   * logout â€” clears user state and all localStorage keys
+   * logout — clears user state and all localStorage keys
    */
   const logout = () => {
     setUser(null);
+    addToast("Signed out successfully.", "info");
   };
 
   const value = useMemo(() => ({

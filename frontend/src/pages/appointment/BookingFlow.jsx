@@ -80,10 +80,16 @@ const BookingFlow = () => {
   const isStep3Valid = selectedDate !== "" && selectedTime !== "";
   const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
 
-  const fixedSlots = ["09:00", "11:00", "13:00", "15:00"];
   const availableSlots = useMemo(() => {
     if (!selectedDate || !activeCounsellor) return [];
-    return getAvailableSlots(activeCounsellor.name, selectedDate, fixedSlots);
+    
+    // Fetch slots defined by this specific counsellor for this date
+    const counsellorDayAvailability = activeCounsellor.availability?.find(a => a.date === selectedDate);
+    const slotsToFilter = counsellorDayAvailability ? counsellorDayAvailability.slots : [];
+    
+    if (slotsToFilter.length === 0) return [];
+    
+    return getAvailableSlots(activeCounsellor.name, selectedDate, slotsToFilter);
   }, [selectedDate, activeCounsellor, getAvailableSlots]);
 
   const handleFinalConfirm = async (status = "Pending") => {
@@ -266,16 +272,30 @@ const BookingFlow = () => {
                       <div className="lg:col-span-5 space-y-6">
                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Available Slots</label>
                         {selectedDate ? (
-                          <div className="grid grid-cols-2 gap-3">
-                            {availableSlots.map(slot => (
-                              <SlotButton 
-                                key={slot.time}
-                                time={slot.time}
-                                active={selectedTime === slot.time}
-                                disabled={slot.disabled}
-                                onClick={() => setSelectedTime(slot.time)}
-                              />
-                            ))}
+                          <div className="space-y-4">
+                            {availableSlots.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-3">
+                                {availableSlots.map(slot => (
+                                  <SlotButton 
+                                    key={slot.time}
+                                    time={slot.time}
+                                    active={selectedTime === slot.time}
+                                    disabled={slot.disabled}
+                                    onClick={() => setSelectedTime(slot.time)}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="p-10 bg-rose-50 rounded-[2.5rem] border-2 border-dashed border-rose-100 flex flex-col items-center justify-center text-center space-y-3">
+                                <AlertCircle className="text-rose-500" size={32} />
+                                <div>
+                                  <p className="text-xs font-black uppercase tracking-widest text-rose-900">No slots available</p>
+                                  <p className="text-[10px] font-bold text-rose-600 leading-tight mt-1">
+                                    The counsellor hasn't set availability for this date.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="h-48 flex items-center justify-center text-slate-300 font-black text-xs uppercase tracking-widest border-2 border-dashed border-slate-100 rounded-[2rem]">

@@ -1,20 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 
-<<<<<<< HEAD
-exports.getMe = async (req, res) => {
-    try {
-        const id = req.query.id; 
-        if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-            return res.status(200).json({ success: true, data: { name: "Guest User", role: "student", email: "guest@unicare.edu", _id: "guest-id" } });
-        }
-        
-        const user = await User.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        res.status(200).json({ success: true, data: user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-=======
 /**
  * POST /api/auth/register
  * Register a new user (student, counsellor, or admin)
@@ -26,7 +12,6 @@ exports.register = async (req, res) => {
     // Validate required fields
     if (!name || !email || !password || !itNumber) {
       return res.status(400).json({ success: false, msg: 'All fields are required' });
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
     }
 
     // Validate IT number format (e.g., IT23375314)
@@ -72,31 +57,11 @@ exports.register = async (req, res) => {
  * Authenticate user with email + password
  */
 exports.login = async (req, res) => {
-<<<<<<< HEAD
-    try {
-        const { role, name } = req.body;
-        // Mock login returning the user 
-        const users = await User.find({ role });
-        let user = users.length > 0 ? users[0] : null;
-        
-        if (!user) {
-           user = new User({ 
-             role, 
-             name: name || "New User", 
-             email: `${(name || "user").toLowerCase().replace(/\s+/g, '.')}@unicare.edu` 
-           });
-           await user.save();
-        }
-        res.status(200).json({ success: true, data: user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-=======
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, msg: 'Email and password are required' });
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
     }
 
     // Find user by email
@@ -137,12 +102,11 @@ exports.getMe = async (req, res) => {
   try {
     const id = req.query.id;
     if (!id) {
-      return res.status(400).json({ success: false, msg: 'User ID is required' });
+       // Return guest for unauthenticated state instead of failing, to support legacy components
+       return res.status(200).json({ success: true, data: { name: "Guest User", role: "student", email: "guest@unicare.edu", _id: "guest-id" } });
     }
     const user = await User.findById(id).select('-password');
-    if (!user) {
-      return res.status(404).json({ success: false, msg: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     console.error('GetMe Error:', error.message);

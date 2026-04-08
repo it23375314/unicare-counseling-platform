@@ -1,11 +1,5 @@
 const mongoose = require('mongoose');
 
-<<<<<<< HEAD
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-=======
 /**
  * Unified User Model for UniCare Counseling Platform
  * Supports roles: student, counsellor, admin
@@ -17,14 +11,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
   },
   email: {
     type: String,
     required: true,
-<<<<<<< HEAD
-    unique: true
-=======
     unique: true,
     lowercase: true,
     trim: true
@@ -32,22 +22,12 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
   },
   role: {
     type: String,
     enum: ['student', 'counsellor', 'admin'],
     default: 'student'
   },
-<<<<<<< HEAD
-  password: {
-    type: String,
-    default: 'password123'
-  }
-}, { timestamps: true });
-
-module.exports = mongoose.model('User', userSchema);
-=======
   itNumber: {
     type: String,
     required: true,
@@ -68,4 +48,3 @@ module.exports = mongoose.model('User', userSchema);
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc

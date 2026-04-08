@@ -34,7 +34,7 @@ const Navbar = () => {
       { name: "Home", path: "/" },
       { name: "About Us", path: "/about" },
       { name: "Find a Counsellor", path: "/appointment/counsellors" },
-      { name: "Wellness Hub", path: "/wellness-dashboard" },
+      { name: "My Wellness Portal", path: "/wellness-dashboard" },
       { name: "Resources", path: "/resources" },
     ];
   }
@@ -103,9 +103,6 @@ const Navbar = () => {
                     </div>
                     {role === 'student' && (
                       <>
-                        <Link to="/wellness-dashboard" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 text-slate-700 rounded-lg">
-                          🧘 Wellness Dashboard
-                        </Link>
                         <Link to="/dashboard" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 text-slate-700 rounded-lg">
                           📅 My Appointments
                         </Link>

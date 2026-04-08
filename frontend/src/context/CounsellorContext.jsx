@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const CounsellorContext = createContext();
@@ -6,10 +6,6 @@ const API_URL = "http://localhost:5001/api";
 
 export const useCounsellorContext = () => useContext(CounsellorContext);
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
 export const CounsellorProvider = ({ children }) => {
   const { addToast } = useToast();
   
@@ -109,6 +105,11 @@ export const CounsellorProvider = ({ children }) => {
     return counsellors.find(c => c.id === id);
   };
 
+  const getCounsellorByEmail = (email) => {
+    if (!email) return null;
+    return counsellors.find(c => c.email?.toLowerCase() === email.toLowerCase());
+  };
+
   return (
     <CounsellorContext.Provider
       value={{
@@ -118,6 +119,7 @@ export const CounsellorProvider = ({ children }) => {
         deleteCounsellor,
         updateAvailability,
         getCounsellorById,
+        getCounsellorByEmail,
         fetchCounsellors
       }}
     >

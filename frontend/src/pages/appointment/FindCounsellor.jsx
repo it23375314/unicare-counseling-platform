@@ -1,14 +1,28 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Search, Filter, Star, Clock, MapPin, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import { useCounsellorContext } from "../../context/CounsellorContext";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 
 const FindCounsellor = () => {
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const { counsellors } = useCounsellorContext();
   const [activeCategory, setActiveCategory] = useState("All");
 
   const categories = ["All", "Stress", "Anxiety", "Academic", "Relationships", "Career"];
+
+  const handleBookClick = (counsellorId) => {
+    if (!isAuthenticated) {
+      addToast("Please sign in to book a counseling session.", "info");
+      navigate("/login", { state: { from: { pathname: `/appointment/book/${counsellorId}` } } });
+      return;
+    }
+    navigate(`/appointment/book/${counsellorId}`);
+  };
 
   const filteredCounsellors = counsellors.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -113,12 +127,12 @@ const FindCounsellor = () => {
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rate</span>
                     <span className="text-xl font-black text-slate-900">Rs. {counsellor.price || "3000"}<span className="text-sm font-medium text-slate-400">/sess</span></span>
                   </div>
-                  <Link 
-                    to={`/appointment/book/${counsellor.id}`}
+                  <button 
+                    onClick={() => handleBookClick(counsellor.id)}
                     className="p-4 rounded-2xl bg-slate-900 text-white hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-blue-600/40 group/btn"
                   >
                     <ArrowRight className="w-6 h-6 group-hover/btn:translate-x-1 transition-transform" />
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
