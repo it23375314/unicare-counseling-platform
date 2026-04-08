@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect } from "react";
+﻿import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const BookingContext = createContext();
+<<<<<<< HEAD
 
 // Backend API Base URL
 const API_BASE = "http://localhost:5001/api/appointments";
@@ -42,6 +43,34 @@ export const BookingProvider = ({ children }) => {
       setLoading(false);
     }
   };
+=======
+const API_URL = "http://localhost:5001/api";
+
+export const useBooking = () => useContext(BookingContext);
+
+// Backend API Base URL
+const API_BASE = "http://localhost:5001/api/appointments";
+
+export const BookingProvider = ({ children }) => {
+  const { addToast } = useToast();
+  
+  const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+        try {
+            const res = await fetch(`${API_URL}/bookings`);
+            if (res.ok) {
+                const json = await res.json();
+                if(json.success) setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
+            }
+        } catch(e) {
+            console.error("Booking API Failed", e);
+        }
+    };
+    fetchBookings();
+  }, []);
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
 
   // Dynamic slot availability logic
   const getAvailableSlots = (counsellorName, date, allSlots) => {
@@ -60,6 +89,7 @@ export const BookingProvider = ({ children }) => {
     });
   };
 
+<<<<<<< HEAD
   const addBooking = async (bookingData) => {
     try {
       const response = await fetch(API_BASE, {
@@ -83,6 +113,34 @@ export const BookingProvider = ({ children }) => {
       throw err;
     }
   };
+=======
+  const syncBookingUpdate = async (id, payload, successMsg, errorMsg) => {
+      try {
+          const res = await fetch(`${API_URL}/bookings/${id}`, {
+              method: "PUT", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (json.success) {
+              setBookings((prev) => prev.map((b) => b.id === id ? { ...b, ...payload } : b));
+              if(successMsg) addToast(successMsg, "success");
+          }
+      } catch(e) {
+           // Fallback
+           setBookings((prev) => prev.map((b) => b.id === id ? { ...b, ...payload } : b));
+           if(successMsg) addToast(`Offline: ${successMsg}`, "success");
+      }
+  };
+
+  const addBooking = async (bookingData) => {
+    const isDuplicate = bookings.some(
+      (b) =>
+        b.counsellor === bookingData.counsellor &&
+        b.date === bookingData.date &&
+        b.time === bookingData.time &&
+        b.status !== "Cancelled"
+    );
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
 
   const syncBookingUpdate = async (id, payload, successMsg) => {
     try {
@@ -113,11 +171,20 @@ export const BookingProvider = ({ children }) => {
     const b = bookings.find(x => x.id === bookingId);
     if (!b) return;
     const isRefundable = checkIsRefundable(b.date, b.time);
+<<<<<<< HEAD
 
     await syncBookingUpdate(bookingId, { 
       status: "Cancelled", 
       paymentStatus: isRefundable ? "Refunded" : b.paymentStatus 
     }, isRefundable ? "✅ Refund processed. Session cancelled." : "❌ No refund (< 2hrs). Session cancelled.");
+=======
+    
+    syncBookingUpdate(bookingId, { 
+        status: "Cancelled", 
+        paymentStatus: isRefundable ? "Refunded" : b.paymentStatus,
+        refundStatus: isRefundable ? "Eligible" : "Not Eligible"
+    }, isRefundable ? "âœ… Refund will be processed. Cancelled successfully." : "âŒ Refund not eligible (< 2hrs). Cancelled successfully.");
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
   };
 
   const rescheduleBooking = async (bookingId, newDate, newTime) => {
@@ -132,12 +199,19 @@ export const BookingProvider = ({ children }) => {
   const cancelBookingByCounsellor = (bookingId, reason) => syncBookingUpdate(bookingId, { status: "Cancelled", rejectReason: reason }, "Booking Cancelled.");
   const addSessionNotes = (bookingId, notes) => syncBookingUpdate(bookingId, { notes }, "Session notes saved.");
 
+<<<<<<< HEAD
   // Helper functions
   const checkIsRefundable = (dateStr, timeStr) => {
     const appointmentDate = parseDateTime(dateStr, timeStr);
     if (!appointmentDate) return false;
     const now = new Date();
     const diffHours = (appointmentDate - now) / (1000 * 60 * 60);
+=======
+  const checkIsRefundable = (dateStr, timeStr) => {
+    const appointmentDate = parseDateTime(dateStr, timeStr);
+    if (!appointmentDate) return false;
+    const diffHours = (appointmentDate - new Date()) / (1000 * 60 * 60);
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
     return diffHours >= 2;
   };
 
@@ -147,6 +221,7 @@ export const BookingProvider = ({ children }) => {
   }
 
   const parseDateTime = (dateStr, timeStr) => {
+<<<<<<< HEAD
     if (!dateStr || !timeStr) return null;
     try {
       const match12 = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
@@ -164,11 +239,27 @@ export const BookingProvider = ({ children }) => {
       }
     } catch (e) {
       return null;
+=======
+    if (!timeStr) return null; // safety
+    const match12 = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
+    if (match12) {
+      let [_, hours, minutes, modifier] = match12;
+      hours = parseInt(hours, 10);
+      if (hours === 12) hours = modifier.toUpperCase() === "AM" ? 0 : 12;
+      else if (modifier.toUpperCase() === "PM") hours += 12;
+      return new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes}:00`);
+    }
+    const match24 = timeStr.match(/(\d+):(\d+)/);
+    if (match24) {
+      let [_, hours, minutes] = match24;
+      return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`);
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
     }
     return null;
   }
 
   return (
+<<<<<<< HEAD
     <BookingContext.Provider
       value={{
         bookings,
@@ -188,6 +279,13 @@ export const BookingProvider = ({ children }) => {
         addSessionNotes
       }}
     >
+=======
+    <BookingContext.Provider value={{
+        bookings, addBooking, confirmPayment, cancelBooking, rescheduleBooking,
+        getAvailableSlots, checkIsRefundable, acceptBooking, rejectBooking,
+        confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking, addSessionNotes
+    }}>
+>>>>>>> 8fb9068df7e128346a2da11006239f32da7d6dcc
       {children}
     </BookingContext.Provider>
   );
