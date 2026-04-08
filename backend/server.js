@@ -1,16 +1,12 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
-<<<<<<< HEAD
 const authRoutes = require('./routes/authRoutes');
 const counsellorRoutes = require('./routes/counsellorRoutes');
-const bookingRoutes = require('./routes/bookingRoutes');
-=======
-const counsellorRoutes = require('./routes/counsellorRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
->>>>>>> 4ccf38913c13d612b5f36df71f8c1efaa2b43708
+const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
 
 const app = express();
 
@@ -21,14 +17,15 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/counsellors', counsellorRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/session-notes', sessionNoteRoutes);
-app.use('/api/counsellors', counsellorRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/session-notes', sessionNoteRoutes);
 
-// Server Connection (Mock DB mode)
-const PORT = process.env.PORT || 5000;
+// Database Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB (UniCare Full Platform)'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-    console.log(`Backend API Server running on port ${PORT} (Using In-Memory Mock Data)`);
+  console.log(`Backend API Server running on port ${PORT}`);
 });

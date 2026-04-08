@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const Counsellor = require('../models/Counsellor');
+const nodemailer = require('nodemailer');
 
 // Create a new appointment
 exports.createAppointment = async (req, res) => {
@@ -16,7 +17,10 @@ exports.createAppointment = async (req, res) => {
       duration,
       notes,
       price, 
-      type 
+      type,
+      studentPhone,
+      emergencyContact,
+      reasonDescription
     } = req.body;
 
     // Verify counsellor exists (optional check for development)
@@ -38,7 +42,11 @@ exports.createAppointment = async (req, res) => {
       issueCategory,
       duration,
       notes: notes || "",
+      emergencyContact,
+      reasonDescription,
       price: Number(price),
+      status: req.body.status || 'Pending',
+      paymentStatus: req.body.paymentStatus || 'Unpaid',
       type: type || 'Video Session'
     });
 
