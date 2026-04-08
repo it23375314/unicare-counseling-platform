@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -40,7 +40,7 @@ export default function AdminResourceList() {
 
     const fetchResources = async () => {
         try {
-            const res = await axios.get('http://localhost:5001/api/resources/admin/all');
+            const res = await axios.get('http://localhost:5000/api/resources/admin/all');
             setResources(res.data);
             setLoading(false);
         } catch (err) {
@@ -53,7 +53,7 @@ export default function AdminResourceList() {
         if (!window.confirm("Are you sure you want to completely delete this resource? This cannot be undone.")) return;
         
         try {
-            await axios.delete(`http://localhost:5001/api/resources/delete/${id}`);
+            await axios.delete(`http://localhost:5000/api/resources/delete/${id}`);
             setResources(resources.filter(r => r._id !== id));
         } catch (err) {
             alert("Error deleting resource");
@@ -122,16 +122,16 @@ export default function AdminResourceList() {
                         UniCare Admin
                     </h2>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 1, margin: 0 }}>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>ðŸ›¡ï¸ Control Panel</li>
-                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>ðŸ“š Resource Library</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>ðŸ“Š System Analytics</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>ðŸ‘¥ User Management</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>ðŸ“ Platform Logs</li>
-                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>âš™ï¸ System Config</li>
-                        <li className="sidebar-item" onClick={() => navigate('/settings')}>âš™ï¸ Settings</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>🛡️ Control Panel</li>
+                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>📚 Resource Library</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>👥 User Management</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
+                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>⚙️ System Config</li>
+                        <li className="sidebar-item" onClick={() => navigate('/settings')}>⚙️ Settings</li>
                     </ul>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 0, margin: 0 }}>
-                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>ðŸšª Logout</li>
+                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>🚪 Logout</li>
                     </ul>
                 </div>
 
@@ -236,7 +236,7 @@ export default function AdminResourceList() {
                                 <div style={styles.loadingState}>Loading directory...</div>
                             ) : resources.length === 0 ? (
                                 <div style={styles.emptyState}>
-                                    <div style={{fontSize: '48px', marginBottom: '16px'}}>ðŸ“­</div>
+                                    <div style={{fontSize: '48px', marginBottom: '16px'}}>📭</div>
                                     <h3 style={{margin: '0 0 8px 0', color: '#111827', fontSize: '20px', fontWeight: '800'}}>Directory is empty</h3>
                                     <p style={{margin: 0, color: '#6b7280', fontSize: '15px'}}>Click "Add New Resource" to start building the library.</p>
                                 </div>

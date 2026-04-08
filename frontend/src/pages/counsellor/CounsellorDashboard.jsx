@@ -54,11 +54,11 @@ const getAvatarColor = (name) => {
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
-  const { getCounsellorById, updateAvailability } = useCounsellorContext();
+  const { counsellors, getCounsellorById, updateAvailability } = useCounsellorContext();
   const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
-  const counsellor = getCounsellorById(user?.id) || null;
+  const counsellor = getCounsellorById(user?.id) || counsellors?.find(c => c.email === user?.email) || counsellors?.[0] || null;
   const counsellorName = counsellor?.name || user?.name || "";
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,6 +80,16 @@ export default function CounsellorDashboard() {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [slotInput, setSlotInput] = useState("");
   const [availabilityErrors, setAvailabilityErrors] = useState({});
+
+  // Handle ?edit=date query param
+  useEffect(() => {
+    const editDate = new URLSearchParams(location.search).get('edit');
+    if (editDate && counsellor) {
+      setSelectedDate(editDate);
+      const existing = counsellor.availability?.find(a => a.date === editDate);
+      setSelectedSlots(existing ? existing.slots : []);
+    }
+  }, [location.search, counsellor]);
 
   const formatSelectedDate = (dateString) => {
     if (!dateString) return "---";
@@ -112,7 +122,7 @@ export default function CounsellorDashboard() {
        setAvailabilityErrors((prev) => ({ ...prev, slot: "This time slot is already added" }));
        return;
     }
-    setSelectedSlots(prev => [...prev, slotInput]);
+    setSelectedSlots(prev => [...prev, slotInput].sort());
     setSlotInput("");
     setAvailabilityErrors((prev) => ({ ...prev, slot: null, slots: null }));
   };
@@ -146,8 +156,11 @@ export default function CounsellorDashboard() {
         const promise = updateAvailability(counsellor?.id, selectedDate, selectedSlots);
         if (promise instanceof Promise) await promise;
       }
-      toast.success("Availability saved successfully");
+      toast.success("Availability saved successfully.");
       setAvailabilityErrors({});
+      setSelectedDate("");
+      setSelectedSlots([]);
+      setSlotInput("");
     } catch (err) {
       toast.error("Failed to save availability");
     }
@@ -511,6 +524,10 @@ export default function CounsellorDashboard() {
     }
   };
 
+  const upcomingAvailability = counsellor?.availability ? [...counsellor.availability]
+      .filter(a => a.date >= new Date().toISOString().split('T')[0])
+      .sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
+
   if (user?.role !== "counsellor") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -541,9 +558,17 @@ export default function CounsellorDashboard() {
           <div className="space-y-8 animate-in fade-in duration-700">
             <div className="bg-gradient-to-br from-blue-50/60 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-blue-100/50 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600"></div>
-              <h2 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
-                <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Set Your Availability
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Set Your Availability
+                </h2>
+                <button 
+                  onClick={() => navigate('/counsellor/my-availability')}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg hover:-translate-y-1"
+                >
+                  <Calendar size={16} /> View Schedule
+                </button>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 gap-10">
                 <div className="space-y-10">
                   <div className="group">
@@ -625,34 +650,47 @@ export default function CounsellorDashboard() {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-gradient-to-br from-indigo-50/50 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-indigo-100/50 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-indigo-500"></div>
-              <h3 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
-                <Activity size={28} strokeWidth={3} className="text-indigo-600" /> Current Weekly Schedule
-              </h3>
-              
-              {(counsellor?.availability?.length || 0) > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {(counsellor?.availability || []).map(avail => (
-                    <div key={avail.date} className="bg-white group hover:shadow-2xl hover:-translate-y-1.5 border-2 border-gray-100 hover:border-indigo-400 rounded-[1.5rem] p-8 transition-all duration-500">
-                      <div className="font-black text-gray-900 flex items-center gap-2.5 mb-6 text-sm border-b-2 border-gray-50 pb-4 group-hover:border-indigo-100 transition-colors">
-                        <Calendar size={20} strokeWidth={2.5} className="text-indigo-500 shrink-0"/> {avail.date}
+
+            {/* Current Weekly Schedule Section */}
+            <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-md border border-gray-100 flex flex-col pt-10">
+              <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-3 tracking-tight border-b-2 border-gray-50 pb-6">
+                <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Current Weekly Schedule
+              </h2>
+              {upcomingAvailability.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {upcomingAvailability.map((avail, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-gray-50 p-6 rounded-[2rem] border border-gray-200/60 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all"
+                    >
+                      <div className="absolute top-0 left-0 bottom-0 w-2 bg-blue-500"></div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mb-1">
+                            {new Date(avail.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                          </p>
+                          <p className="text-xl font-black text-gray-900 tracking-tight">
+                            {formatSelectedDate(avail.date)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-3">
-                        {avail.slots.map(s => (
-                          <div key={s} className="bg-indigo-50/50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border-2 border-indigo-100/50 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shadow-sm">
-                            <Clock size={14} strokeWidth={3} className="shrink-0" /> {s}
-                          </div>
+                      <div className="flex flex-wrap gap-2">
+                        {avail.slots.map((slot, i) => (
+                          <span 
+                            key={i} 
+                            className="bg-blue-100/50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-black"
+                          >
+                            {slot}
+                          </span>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                  <Calendar size={48} className="text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-bold">No sessions scheduled yet.</p>
+                <div className="text-center py-16 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-black uppercase tracking-widest text-sm">No sessions scheduled yet.</p>
                 </div>
               )}
             </div>
@@ -852,7 +890,7 @@ export default function CounsellorDashboard() {
                         {(b.status === "Confirmed" || b.status === "Accepted") && (
                           <>
                             <button 
-                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
                             >
                               <MessageCircle size={20} strokeWidth={3}/> {hasChatHistory(b.studentName || b.name) ? "Chat" : "Start Chat"}
@@ -875,7 +913,7 @@ export default function CounsellorDashboard() {
                         {b.status === "Completed" && (
                           <>
                             <button 
-                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
                             >
                               <MessageCircle size={20} strokeWidth={3}/> Chat

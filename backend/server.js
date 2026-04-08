@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -15,8 +17,16 @@ const goalRoutes     = require('./routes/goalRoutes');
 const moodRoutes     = require('./routes/moodRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const chatRoutes     = require('./routes/chatRoutes');
+const messageRoutes  = require('./routes/messageRoutes');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust for production security
+    methods: ["GET", "POST"]
+  }
+});
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.json());
@@ -51,14 +61,43 @@ app.use('/api/goals',     goalRoutes);
 app.use('/api/moods',     moodRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/chat',      chatRoutes);
+app.use('/api/messages',  messageRoutes);
+
+// ─── Socket.IO Real-time Logic ────────────────────────────────────────────────
+io.on('connection', (socket) => {
+  console.log('🔌 New client connected:', socket.id);
+
+  socket.on('join-chat', (data) => {
+    const { userId } = data;
+    socket.join(userId);
+    console.log(`👤 User joined room: ${userId}`);
+  });
+
+  socket.on('send-message', (data) => {
+    const { receiverId } = data;
+    // Emit to specific receiver's room
+    io.to(receiverId).emit('receive-message', data);
+    console.log('✉️ Message routed to:', receiverId);
+  });
+
+  socket.on('typing', (data) => {
+    const { receiverId, isTyping } = data;
+    io.to(receiverId).emit('display-typing', { ...data, senderId: socket.id });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected');
+  });
+});
 
 // ─── Start Server FIRST, then connect DB ──────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log(`🚀 UniCare Backend API running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 UniCare Backend API & Socket Server running on port ${PORT}`);
   console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/session-notes`);
   console.log(`   Wellness: /api/goals | /api/moods | /api/resources | /api/chat`);
+  console.log(`   Realtime: Socket.IO enabled`);
 });
 
 // Connect MongoDB after server starts

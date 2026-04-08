@@ -1,4 +1,4 @@
-﻿// Add score details mapping for mood label and meaning
+// Add score details mapping for mood label and meaning
 const SCORE_DETAILS = {
   1: { label: 'Very Low', meaning: 'Feeling overwhelmed or drained; focus on one grounding breath and take it easy.' },
   2: { label: 'Low', meaning: 'You are carrying weight right now; a restful break or gentle movement can help.' },
@@ -34,7 +34,7 @@ export default function MoodHistory() {
   const [hoveredEntryId, setHoveredEntryId] = useState(null);
 
   // User-facing expressions are kept as emojis since they act as data points
-  const SCORE_EMOJIS = { 1: 'ðŸ˜”', 2: 'ðŸ™', 3: 'ðŸ˜', 4: 'ðŸ™‚', 5: 'ðŸ˜„' };
+  const SCORE_EMOJIS = { 1: '😔', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' };
 
   useEffect(() => {
     document.body.style.margin = '0';
@@ -58,7 +58,7 @@ export default function MoodHistory() {
     if (!userId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5001/api/moods/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/moods/${userId}`);
       setEntries(res.data || []);
     } catch (err) {
       console.error('Error fetching mood entries', err);
@@ -80,16 +80,16 @@ export default function MoodHistory() {
   
   const averageScore = scoredEntries.length
     ? (scoredEntries.reduce((sum, entry) => sum + entry.moodScore, 0) / scoredEntries.length).toFixed(1)
-    : 'â€”';
+    : '—';
     
-  const lastEntryDate = entries[0]?.entryDate || 'â€”';
+  const lastEntryDate = entries[0]?.entryDate || '—';
   
   const lowCount = scoredEntries.filter(entry => entry.moodScore <= 2).length;
   const neutralCount = scoredEntries.filter(entry => entry.moodScore === 3).length;
   const highCount = scoredEntries.filter(entry => entry.moodScore >= 4).length;
 
   let avgLabel = "No Data";
-  if (averageScore !== 'â€”') {
+  if (averageScore !== '—') {
       const avg = parseFloat(averageScore);
       if (avg < 2.5) {
           avgLabel = <span style={{display: 'flex', alignItems: 'center'}}>Trending Low <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginLeft: '4px'}}><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>;
@@ -236,8 +236,8 @@ export default function MoodHistory() {
                           onMouseEnter={() => setHoveredEntryId(entry._id)}
                           onMouseLeave={() => setHoveredEntryId(null)}
                         >
-                          <span style={styles.scoreEmoji}>{entry.moodScore ? SCORE_EMOJIS[entry.moodScore] : 'â€”'}</span>
-                          {entry.moodScore || 'â€”'}
+                          <span style={styles.scoreEmoji}>{entry.moodScore ? SCORE_EMOJIS[entry.moodScore] : '—'}</span>
+                          {entry.moodScore || '—'}
                         </span>
                         <span style={{ color: '#4b5563' }}>{entry.moodText || <em style={{color: '#9ca3af'}}>No note provided</em>}</span>
                       </div>
@@ -247,7 +247,7 @@ export default function MoodHistory() {
                         <div style={styles.detailsCard}>
                           {entry.moodScore && (
                             <div style={{ marginBottom: entry.aiResponse ? '16px' : '0' }}>
-                              <strong style={{ color: '#111827' }}>Mood Level:</strong> {SCORE_DETAILS[entry.moodScore]?.label || 'â€”'} 
+                              <strong style={{ color: '#111827' }}>Mood Level:</strong> {SCORE_DETAILS[entry.moodScore]?.label || '—'} 
                               <span style={{ color: '#6b7280', marginLeft: '6px' }}>({SCORE_DETAILS[entry.moodScore]?.meaning})</span>
                             </div>
                           )}
@@ -297,7 +297,7 @@ export default function MoodHistory() {
             </div>
           </div>
           <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
+            © 2026 UniCare Platform. All rights reserved.
           </div>
         </footer>
 

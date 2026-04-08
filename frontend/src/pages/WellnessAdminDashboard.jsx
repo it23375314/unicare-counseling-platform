@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -18,11 +18,11 @@ export default function AdminDashboard() {
     document.body.style.padding = "0";
 
     if (role === 'admin') {
-      axios.get('http://localhost:5001/api/auth/users')
+      axios.get('http://localhost:5000/api/auth/users')
         .then(res => setUsers(res.data))
         .catch(err => setError("Failed to fetch users."));
 
-      axios.get('http://localhost:5001/api/resources/admin/all')
+      axios.get('http://localhost:5000/api/resources/admin/all')
         .then(res => setResources(res.data))
         .catch(err => console.log("Resources fetch failed"));
     }
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const deleteUser = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await axios.delete(`http://localhost:5001/api/auth/users/${id}`);
+        await axios.delete(`http://localhost:5000/api/auth/users/${id}`);
         setUsers(users.filter(user => user._id !== id));
       } catch (err) {
         alert("Error deleting user");
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
     return (
       <div style={styles.pageWrapper}>
         <div style={{...styles.glassCard, maxWidth: '400px', margin: '100px auto', textAlign: 'center'}}>
-          <div style={{fontSize: '60px', marginBottom: '20px'}}>ðŸ›‘</div>
+          <div style={{fontSize: '60px', marginBottom: '20px'}}>🛑</div>
           <h2 style={{color: '#1e293b', fontWeight: '900', fontSize: '24px'}}>ACCESS DENIED</h2>
           <p style={{color: '#ef4444', fontWeight: 'bold'}}>Administrator Privileges Required.</p>
           <button onClick={() => window.location.href='/login'} style={styles.deniedBtn}>
@@ -102,31 +102,31 @@ export default function AdminDashboard() {
               style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} 
               onClick={() => navigate('/admin-dashboard')}
             >
-              ðŸ›¡ï¸ Control Panel
+              🛡️ Control Panel
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin/resources')}>
-              ðŸ“š Resource Library
+              📚 Resource Library
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>
-              ðŸ“Š System Analytics
+              📊 System Analytics
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-users')}>
-              ðŸ‘¥ User Management
+              👥 User Management
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>
-              ðŸ“ Platform Logs
+              📝 Platform Logs
             </li>
             <li className="sidebar-item" onClick={() => navigate('/system-config')}>
-              âš™ï¸ System Config
+              ⚙️ System Config
             </li>
             <li className="sidebar-item" onClick={() => navigate('/settings')}>
-              âš™ï¸ Settings
+              ⚙️ Settings
             </li>
           </ul>
           
           <ul style={{ listStyle: 'none', padding: 0, flex: 0, margin: 0 }}>
             <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc3545' }}>
-              ðŸšª Logout
+              🚪 Logout
             </li>
           </ul>
         </div>
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
             </div>
             
             <div style={styles.searchBox}>
-              <span style={styles.searchIcon}>ðŸ”</span>
+              <span style={styles.searchIcon}>🔍</span>
               <input 
                 style={styles.searchInput} 
                 placeholder="Search users by name or email..." 
@@ -190,9 +190,9 @@ export default function AdminDashboard() {
             </div>
             
             <div style={styles.actionCard}>
-              <div style={{fontSize: '30px', marginBottom: '10px'}}>ðŸ› ï¸</div>
+              <div style={{fontSize: '30px', marginBottom: '10px'}}>🛠️</div>
               <h3 style={{color: 'white', margin: '0 0 5px 0', fontSize: '16px'}}>Resource Library</h3>
-              <Link to="/admin/resources" style={styles.actionLink}>Manage Content âž”</Link>
+              <Link to="/admin/resources" style={styles.actionLink}>Manage Content ➔</Link>
             </div>
           </div>
 

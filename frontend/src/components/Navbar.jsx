@@ -26,7 +26,6 @@ const Navbar = () => {
       { name: "Availability", path: "/counsellor/availability" },
       { name: "Appointments", path: "/counsellor/appointments" },
       { name: "Session Notes", path: "/counsellor/notes" },
-      { name: "History", path: "/counsellor/history" },
     ];
   } else {
     // Student or guest

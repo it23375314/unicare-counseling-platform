@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -40,7 +40,7 @@ export default function GoalHistory() {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`http://localhost:5001/api/goals/${userId}`);
+      const res = await axios.get(`http://localhost:5000/api/goals/${userId}`);
       setGoals(res.data);
     } catch (err) {
       console.error("Error fetching history", err);
@@ -245,7 +245,7 @@ export default function GoalHistory() {
                     onChange={e => setSearchQuery(e.target.value)} 
                     />
                   {searchQuery && (
-                    <button type="button" onClick={clearSearch} style={styles.clearSearchBtn} title="Clear search">âœ•</button>
+                    <button type="button" onClick={clearSearch} style={styles.clearSearchBtn} title="Clear search">✕</button>
                   )}
                 </div>
                 
@@ -372,7 +372,7 @@ export default function GoalHistory() {
             </div>
           </div>
           <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
+            © 2026 UniCare Platform. All rights reserved.
           </div>
         </footer>
 

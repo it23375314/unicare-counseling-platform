@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -28,7 +28,7 @@ export default function ResourceLibrary() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5001/api/resources/all`);
+            const res = await axios.get(`http://localhost:5000/api/resources/all`);
             setResources(res.data);
         } catch (err) { 
             console.error(err);
@@ -38,7 +38,7 @@ export default function ResourceLibrary() {
 
     const handleView = async (item) => {
         try {
-            await axios.post(`http://localhost:5001/api/resources/view/${item._id}`, { itNumber });
+            await axios.post(`http://localhost:5000/api/resources/view/${item._id}`, { itNumber });
         } catch (err) { 
             console.error("Tracking error", err); 
         }
@@ -153,7 +153,7 @@ export default function ResourceLibrary() {
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                                 {search && (
-                                    <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">âœ–</button>
+                                    <button onClick={() => setSearch('')} style={styles.clearSearchBtn} title="Clear search">✖</button>
                                 )}
                             </div>
                         </div>
@@ -256,7 +256,7 @@ export default function ResourceLibrary() {
                     </div>
                   </div>
                   <div style={styles.footerBottom}>
-                    Â© 2026 UniCare Platform. All rights reserved.
+                    © 2026 UniCare Platform. All rights reserved.
                   </div>
                 </footer>
 

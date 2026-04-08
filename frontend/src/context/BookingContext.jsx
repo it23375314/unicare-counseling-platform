@@ -1,13 +1,11 @@
-﻿import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const BookingContext = createContext();
-const API_URL = "http://localhost:5001/api";
+const API_URL = "http://localhost:5000/api/appointments";
+const API_BASE = "http://localhost:5000/api";
 
 export const useBooking = () => useContext(BookingContext);
-
-// Backend API Base URL
-const API_BASE = "http://localhost:5001/api/appointments";
 
 export const BookingProvider = ({ children }) => {
   const { addToast } = useToast();
@@ -17,13 +15,22 @@ export const BookingProvider = ({ children }) => {
   useEffect(() => {
     const fetchBookings = async () => {
         try {
-            const res = await fetch(`${API_URL}/bookings`);
+            console.log("🔄 Fetching appointments from:", API_URL);
+            const res = await fetch(API_URL);
             if (res.ok) {
                 const json = await res.json();
-                if(json.success) setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
+                console.log("📦 Received Appointments Data:", json);
+                if(json.success && json.data) {
+                    setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
+                } else if (Array.isArray(json)) {
+                    // Fallback for legacy array response
+                    setBookings(json.map(b => ({ ...b, id: b._id || b.id })));
+                }
+            } else {
+                console.warn("⚠️ Appointments Fetch Status:", res.status);
             }
         } catch(e) {
-            console.error("Booking API Failed", e);
+            console.error("❌ Booking API Failed", e);
         }
     };
     fetchBookings();
@@ -47,7 +54,7 @@ export const BookingProvider = ({ children }) => {
 
   const syncBookingUpdate = async (id, payload, successMsg, errorMsg) => {
       try {
-          const res = await fetch(`${API_URL}/bookings/${id}`, {
+          const res = await fetch(`${API_URL}/${id}`, {
               method: "PUT", headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
           });
@@ -74,7 +81,7 @@ export const BookingProvider = ({ children }) => {
 
     try {
         const payload = { ...bookingData, status: "Pending", createdAt: new Date().toISOString() };
-        const res = await fetch(`${API_URL}/bookings`, {
+        const res = await fetch(API_URL, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
