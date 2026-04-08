@@ -5,27 +5,61 @@ import "../styles/Dashboard.css";
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  // 1. State to hold the feedback from our "database"
+  // 1. State for Live Stats and Feedback
+  const [stats, setStats] = useState({ total: 0, students: 0, counsellors: 0 });
   const [feedbacks, setFeedbacks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 2. Fetch Feedback when the dashboard loads
+  // 2. Fetch Live Data from MongoDB & LocalStorage
   useEffect(() => {
-    const savedFeedback =
-      JSON.parse(localStorage.getItem("systemFeedback")) || [];
-    // Reverse it so the newest feedback shows at the top!
-    setFeedbacks(savedFeedback.reverse());
+    const fetchAdminData = async () => {
+      try {
+        // Fetch Real Users from your Node.js Backend
+        const response = await fetch("http://localhost:5000/api/auth/users");
+        const allUsers = await response.json();
+
+        if (response.ok) {
+          setStats({
+            total: allUsers.length,
+            students: allUsers.filter((u) => u.role === "student").length,
+            counsellors: allUsers.filter((u) => u.role === "counsellor").length,
+          });
+        }
+
+        // Fetch Feedback from LocalStorage
+        const savedFeedback = JSON.parse(localStorage.getItem("systemFeedback")) || [];
+        setFeedbacks(savedFeedback.reverse());
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Admin Data Fetch Error:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchAdminData();
   }, []);
 
-  const handleLogout = () => {
-    // Destroy the wristband!
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
+  // --- UPDATED LOGOUT LOGIC ---
+  const handleLogout = async () => {
+    const sessionId = localStorage.getItem('currentSessionId');
 
-    // Send them back to login
+    if (sessionId) {
+      try {
+        // Delete the session from MongoDB
+        await fetch(`http://localhost:5000/api/auth/sessions/${sessionId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error("Failed to delete session on logout:", err);
+      }
+    }
+
+    // Clear everything and redirect
+    localStorage.clear();
     navigate("/");
   };
 
-  // 3. Delete Feedback function
   const handleDeleteFeedback = (idToRemove) => {
     const updatedFeedback = feedbacks.filter((item) => item.id !== idToRemove);
     setFeedbacks(updatedFeedback);
@@ -34,185 +68,75 @@ const AdminDashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Left Sidebar for Admin */}
+      {/* Sidebar Section */}
       <div className="sidebar">
+        {/* Applied the class that we centered in CSS */}
         <div className="sidebar-brand">UniCare </div>
         <ul>
           {/* Active page gets the blue background */}
-          <li
-            style={{ backgroundColor: "#f0f4ff", color: "#007bff" }}
-            onClick={() => navigate("/admin-dashboard")}
-          >
+          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} onClick={() => navigate('/admin-dashboard')}>
             🛡️ Control Panel
           </li>
-          <li
-            className="sidebar-item"
-            onClick={() => navigate("/admin/resources")}
-          >
-            📚 Resource Library
-          </li>
-          <li onClick={() => navigate("/admin-analytics")}>
-            📊 System Analytics
-          </li>
-          <li onClick={() => navigate("/admin-users")}>👥 User Management</li>
-          <li onClick={() => navigate("/admin-logs")}>📝 Platform Logs</li>
-          <li onClick={() => navigate("/system-config")}>⚙️ System Config</li>
-          <li onClick={() => navigate("/settings")}>⚙️ Settings</li>
+          <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
+          <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
+          <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
+          <li onClick={() => navigate('/system-config')}>⚙️ System Config</li>
+          <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
         </ul>
         <ul style={{ flex: 0 }}>
-          <li onClick={handleLogout} style={{ color: "#dc3545" }}>
-            🚪 Logout
-          </li>
+          <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>
         </ul>
       </div>
 
       {/* Main Content Area */}
       <div className="main-content">
         <div className="welcome-card">
-          <h1 style={{ color: "#333", marginBottom: "10px" }}>
-            Admin Control Panel 🛡️
-          </h1>
-          <p style={{ color: "#666" }}>
-            Monitor platform health, manage user accounts, and review feedback.
-          </p>
+          <h1>Admin Control Panel</h1>
+          <p>Real-time oversight of the UniCare ecosystem and cloud database.</p>
         </div>
 
-        {/* Your Original Stat Boxes */}
+        {/* Live Stat Cards */}
         <div style={{ display: "flex", gap: "20px", marginBottom: "30px" }}>
-          <div
-            style={{
-              flex: 1,
-              padding: "20px",
-              background: "#f3e5f5",
-              borderRadius: "10px",
-            }}
-          >
-            <h3 style={{ color: "#4a148c" }}>Total Users</h3>
-            <h2 style={{ marginTop: "10px", color: "#333" }}>1,204</h2>
-            <p style={{ color: "#777", fontSize: "12px" }}>
-              Students: 1,180 | Counsellors: 24
+          <div className="stat-card" style={{ background: "#f3e5f5", flex: 1, padding: "20px", borderRadius: "12px" }}>
+            <h3 style={{ color: "#4a148c" }}>Total Cloud Users</h3>
+            <h2 style={{ fontSize: "32px" }}>{loading ? "..." : stats.total}</h2>
+            <p style={{ fontSize: "12px", color: "#666" }}>
+              Students: {stats.students} | Counsellors: {stats.counsellors}
             </p>
           </div>
-          <div
-            style={{
-              flex: 1,
-              padding: "20px",
-              background: "#e3f2fd",
-              borderRadius: "10px",
-            }}
-          >
-            <h3 style={{ color: "#0d47a1" }}>System Status</h3>
-            <h2 style={{ marginTop: "10px", color: "#2e7d32" }}>
-              Online & Healthy
-            </h2>
+
+          <div className="stat-card" style={{ background: "#e3f2fd", flex: 1, padding: "20px", borderRadius: "12px" }}>
+            <h3 style={{ color: "#0d47a1" }}>Server Status</h3>
+            <h2 style={{ color: "#2e7d32" }}>Online</h2>
+            <p style={{ fontSize: "12px", color: "#666" }}>Connected to MongoDB Atlas</p>
           </div>
         </div>
 
-        {/* System Feedback Section with Scrollbar */}
-        <div
-          style={{
-            background: "white",
-            padding: "25px",
-            borderRadius: "10px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-          }}
-        >
-          <h3
-            style={{
-              color: "#333",
-              marginBottom: "20px",
-              borderBottom: "2px solid #eee",
-              paddingBottom: "10px",
-            }}
-          >
-            📬 Recent System Feedback
+        {/* Feedback Section */}
+        <div className="feedback-section" style={{ background: "white", padding: "25px", borderRadius: "12px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+          <h3 style={{ marginBottom: "20px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
+            📬 Recent Student Feedback
           </h3>
 
-          {feedbacks.length > 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "15px",
-                maxHeight: "400px" /* Limits the height to show ~4-5 items */,
-                overflowY: "auto" /* Adds the vertical scrollbar */,
-                paddingRight:
-                  "10px" /* Adds breathing room for the scrollbar */,
-              }}
-            >
-              {feedbacks.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: "15px",
-                    background: "#f8f9fa",
-                    borderRadius: "8px",
-                    borderLeft: item.sender.includes("Anonymous")
-                      ? "4px solid #6c757d"
-                      : "4px solid #28a745",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <strong
-                      style={{
-                        color: item.sender.includes("Anonymous")
-                          ? "#6c757d"
-                          : "#28a745",
-                      }}
-                    >
-                      {item.sender}
-                    </strong>
-                    <span style={{ fontSize: "12px", color: "#888" }}>
-                      {item.date}
-                    </span>
-                  </div>
-
-                  <p style={{ margin: 0, color: "#444", lineHeight: "1.5" }}>
-                    {item.text}
-                  </p>
-
-                  <button
+          <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            {feedbacks.length > 0 ? (
+              feedbacks.map((item) => (
+                <div key={item.id} className="feedback-item" style={{ padding: "15px", background: "#f8f9fa", borderRadius: "8px", marginBottom: "10px", position: "relative", borderLeft: "4px solid #007bff" }}>
+                  <strong>{item.sender}</strong>
+                  <p style={{ margin: "5px 0", color: "#444" }}>{item.text}</p>
+                  <span style={{ fontSize: "11px", color: "#999" }}>{item.date}</span>
+                  <button 
                     onClick={() => handleDeleteFeedback(item.id)}
-                    style={{
-                      position: "absolute",
-                      top: "15px",
-                      right: "15px",
-                      background: "transparent",
-                      border: "none",
-                      color: "#dc3545",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                    }}
-                    title="Delete Feedback"
+                    style={{ position: "absolute", right: "15px", top: "15px", background: "none", border: "none", cursor: "pointer" }}
                   >
                     🗑️
                   </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "30px",
-                color: "#777",
-                background: "#f8f9fa",
-                borderRadius: "8px",
-              }}
-            >
-              <p>
-                No new feedback at the moment. The system is running smoothly!
-                ✨
-              </p>
-            </div>
-          )}
+              ))
+            ) : (
+              <p style={{ textAlign: "center", color: "#999" }}>No new feedback found.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

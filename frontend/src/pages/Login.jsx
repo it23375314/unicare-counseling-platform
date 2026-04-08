@@ -8,25 +8,42 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     
-    // 1. Give them the "logged in" wristband
-    localStorage.setItem('isLoggedIn', 'true');
-    
-    // 2. Route them based on their email, and save their role!
-    if (email === 'admin@uni.edu') {
-      localStorage.setItem('userRole', 'admin');
-      navigate('/admin-dashboard');
-    } 
-    else if (email === 'counsellor@uni.edu') {
-      localStorage.setItem('userRole', 'counsellor');
-      navigate('/counsellor-dashboard');
-    } 
-    else {
-      // If it's any other email, treat them as a student
-      localStorage.setItem('userRole', 'student');
-      navigate('/student-dashboard');
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 1. Save session data
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userRole', data.role);
+        localStorage.setItem('userName', data.fullName);
+        localStorage.setItem('userEmail', data.email);
+
+        // 2. Route based on the role returned from MongoDB
+        if (data.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (data.role === 'counsellor') {
+          navigate('/counsellor-dashboard');
+        } else {
+          navigate('/student-dashboard');
+        }
+      } else {
+        // Show the specific error from backend (e.g., "Invalid Password")
+        alert(data.error || "Login failed");
+      }
+    } catch (err) {
+      console.error("❌ Login Error:", err);
+      alert("Connection error. Is your backend server running?");
     }
   };
 

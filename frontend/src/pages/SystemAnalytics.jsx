@@ -1,140 +1,98 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/Dashboard.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/Dashboard.css";
 
 const SystemAnalytics = () => {
   const navigate = useNavigate();
 
+  // Mock data for the review (In a real app, these would come from MongoDB)
+  const topics = [
+    { label: "Academic Stress", value: 45, color: "#ef4444" },
+    { label: "Career Anxiety", value: 30, color: "#f59e0b" },
+    { label: "Personal/Relationships", value: 15, color: "#06b6d4" },
+    { label: "Other", value: 10, color: "#6b7280" },
+  ];
+
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userRole');
-    navigate('/');
+    localStorage.clear();
+    navigate("/");
   };
-
-  // Mock Data for the Bar Chart
-  const monthlyData = [
-    { month: 'Jan', sessions: 45, height: '40%' },
-    { month: 'Feb', sessions: 60, height: '55%' },
-    { month: 'Mar', sessions: 85, height: '80%' },
-    { month: 'Apr', sessions: 50, height: '45%' },
-    { month: 'May', sessions: 110, height: '100%' },
-    { month: 'Jun', sessions: 90, height: '85%' },
-  ];
-
-  // Mock Data for Issue Categories
-  const issueCategories = [
-    { name: 'Academic Stress', percentage: 45, color: '#dc3545' },
-    { name: 'Career Anxiety', percentage: 30, color: '#ffc107' },
-    { name: 'Personal/Relationships', percentage: 15, color: '#17a2b8' },
-    { name: 'Other', percentage: 10, color: '#6c757d' }
-  ];
 
   return (
     <div className="dashboard-container">
-      {/* Left Sidebar for Admin */}
+      {/* Sidebar - Consistent across all Admin pages */}
       <div className="sidebar">
-        {/* Applied the class that we centered in CSS */}
-        <div className="sidebar-brand">UniCare </div>
+        <div className="sidebar-brand">UniCare</div>
         <ul>
-          {/* Active page gets the blue background */}
-          <li style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} onClick={() => navigate('/admin-dashboard')}>
-            🛡️ Control Panel
-          </li>
-          <li onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
-          <li onClick={() => navigate('/admin-users')}>👥 User Management</li>
-          <li onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
-          <li onClick={() => navigate('/system-config')}>⚙️ System Config</li>
-          <li onClick={() => navigate('/settings')}>⚙️ Settings</li>
+          <li onClick={() => navigate("/admin-dashboard")}>🛡️ Control Panel</li>
+          <li className="active" onClick={() => navigate("/admin-analytics")}>📊 System Analytics</li>
+          <li onClick={() => navigate("/admin-users")}>👥 User Management</li>
+          <li onClick={() => navigate("/admin-logs")}>📝 Platform Logs</li>
+          <li onClick={() => navigate("/system-config")}>⚙️ System Config</li>
+          <li onClick={() => navigate("/settings")}>⚙️ Settings</li>
         </ul>
-        <ul style={{ flex: 0 }}>
-          <li onClick={handleLogout} style={{ color: '#dc3545' }}>🚪 Logout</li>
+        <ul style={{ marginTop: "auto" }}>
+          <li onClick={handleLogout} style={{ color: "#d9534f", cursor: "pointer" }}>🚪 Logout</li>
         </ul>
       </div>
 
-      {/* Main Content Area */}
       <div className="main-content">
-        <div className="welcome-card" style={{ borderLeft: '5px solid #ffc107', marginBottom: '30px' }}>
-          <h1 style={{ color: '#333', marginBottom: '10px' }}>System Analytics 📊</h1>
-          <p style={{ color: '#666' }}>Overview of platform usage, appointment trends, and user demographics.</p>
+        <div className="welcome-card">
+          <h1 style={{ borderLeft: "4px solid #3b82f6", paddingLeft: "15px" }}>System Analytics 📊</h1>
+          <p style={{ color: "#888", marginLeft: "19px" }}>Overview of platform usage and student wellbeing trends.</p>
         </div>
 
-        {/* Top KPI Cards */}
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ flex: 1, padding: '20px', background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', borderTop: '4px solid #007bff' }}>
-            <p style={{ margin: 0, color: '#666', fontSize: '14px', fontWeight: 'bold' }}>Total Sessions</p>
-            <h2 style={{ margin: '10px 0 0 0', color: '#333', fontSize: '32px' }}>842</h2>
-            <span style={{ color: '#28a745', fontSize: '12px', fontWeight: 'bold' }}>↑ +12% this month</span>
+        {/* Top Stat Cards */}
+        <div className="stat-grid">
+          <div className="stat-card" style={{ borderTop: "4px solid #3b82f6" }}>
+            <small>Total Sessions</small>
+            <h2>842</h2>
+            <span style={{ color: "#22c55e", fontSize: "12px" }}>↑ +12% this month</span>
           </div>
-          <div style={{ flex: 1, padding: '20px', background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', borderTop: '4px solid #28a745' }}>
-            <p style={{ margin: 0, color: '#666', fontSize: '14px', fontWeight: 'bold' }}>Avg. Satisfaction</p>
-            <h2 style={{ margin: '10px 0 0 0', color: '#333', fontSize: '32px' }}>4.8<span style={{fontSize: '20px', color: '#aaa'}}>/5</span></h2>
-            <span style={{ color: '#28a745', fontSize: '12px', fontWeight: 'bold' }}>↑ +0.2 this month</span>
+          <div className="stat-card" style={{ borderTop: "4px solid #22c55e" }}>
+            <small>Avg. Satisfaction</small>
+            <h2>4.8<span style={{ fontSize: "16px", color: "#999" }}>/5</span></h2>
+            <span style={{ color: "#22c55e", fontSize: "12px" }}>↑ +0.2 this month</span>
           </div>
-          <div style={{ flex: 1, padding: '20px', background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', borderTop: '4px solid #6f42c1' }}>
-            <p style={{ margin: 0, color: '#666', fontSize: '14px', fontWeight: 'bold' }}>Active Counsellors</p>
-            <h2 style={{ margin: '10px 0 0 0', color: '#333', fontSize: '32px' }}>24</h2>
-            <span style={{ color: '#666', fontSize: '12px' }}>Across 5 departments</span>
+          <div className="stat-card" style={{ borderTop: "4px solid #a855f7" }}>
+            <small>Active Counsellors</small>
+            <h2>24</h2>
+            <span style={{ color: "#666", fontSize: "12px" }}>Across 5 departments</span>
           </div>
         </div>
 
-        {/* Charts Row */}
-        <div style={{ display: 'flex', gap: '20px' }}>
-          
-          {/* Custom CSS Bar Chart: Monthly Appointments */}
-          <div style={{ flex: 2, background: 'white', padding: '25px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ marginTop: 0, color: '#333', marginBottom: '30px' }}>Monthly Appointments</h3>
-            
-            {/* Chart Container */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '200px', paddingBottom: '10px', borderBottom: '2px solid #eee' }}>
-              {monthlyData.map((data, index) => (
-                <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '12%' }}>
-                  <span style={{ fontSize: '12px', color: '#007bff', fontWeight: 'bold', marginBottom: '5px' }}>{data.sessions}</span>
-                  <div style={{ 
-                    width: '100%', 
-                    backgroundColor: '#007bff', 
-                    height: data.height, 
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.5s ease-in-out'
-                  }}></div>
-                </div>
-              ))}
-            </div>
-            {/* X-Axis Labels */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-              {monthlyData.map((data, index) => (
-                <div key={index} style={{ width: '12%', textAlign: 'center', fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
-                  {data.month}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Progress Bars: Issue Categories */}
-          <div style={{ flex: 1, background: 'white', padding: '25px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ marginTop: 0, color: '#333', marginBottom: '20px' }}>Primary Topics</h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {issueCategories.map((issue, index) => (
-                <div key={index}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#444' }}>
-                    <span>{issue.name}</span>
-                    <span>{issue.percentage}%</span>
+        <div style={{ display: "flex", gap: "25px" }}>
+          {/* Monthly Appointments Placeholder */}
+          <div style={{ flex: 2, background: "white", padding: "25px", borderRadius: "12px", minHeight: "300px" }}>
+            <h3>Monthly Appointments</h3>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: "200px", paddingTop: "20px" }}>
+              {[45, 60, 85, 50, 110, 90].map((height, i) => (
+                <div key={i} style={{ textAlign: "center", width: "40px" }}>
+                  <div style={{ height: `${height}px`, background: "#eef4ff", borderRadius: "4px", marginBottom: "8px", position: "relative" }}>
+                    <div style={{ position: "absolute", top: "-20px", width: "100%", fontSize: "12px", color: "#3b82f6" }}>{height}</div>
                   </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: '#eee', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: `${issue.percentage}%`, 
-                      height: '100%', 
-                      backgroundColor: issue.color,
-                      borderRadius: '4px'
-                    }}></div>
-                  </div>
+                  <small style={{ color: "#999" }}>{["Jan", "Feb", "Mar", "Apr", "May", "Jun"][i]}</small>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Primary Topics (The Progress Bars) */}
+          <div style={{ flex: 1, background: "white", padding: "25px", borderRadius: "12px" }}>
+            <h3 style={{ marginBottom: "20px" }}>Primary Topics</h3>
+            {topics.map((topic, index) => (
+              <div key={index} style={{ marginBottom: "15px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+                  <small style={{ fontWeight: "bold" }}>{topic.label}</small>
+                  <small style={{ fontWeight: "bold" }}>{topic.value}%</small>
+                </div>
+                <div style={{ width: "100%", height: "8px", background: "#f3f4f6", borderRadius: "10px" }}>
+                  <div style={{ width: `${topic.value}%`, height: "100%", background: topic.color, borderRadius: "10px" }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-
       </div>
     </div>
   );
