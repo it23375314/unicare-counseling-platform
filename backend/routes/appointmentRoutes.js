@@ -14,4 +14,5 @@ router.get('/', appointmentController.getAllAppointments);
 // PATCH appointment status or payment
 router.patch('/:id/status', appointmentController.updateStatus);
 
+
 module.exports = router;

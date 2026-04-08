@@ -3,18 +3,18 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
 // ─── Route Imports ─────────────────────────────────────────────────────────────
-const authRoutes     = require('./routes/authRoutes');
+const authRoutes = require('./routes/authRoutes');
 const counsellorRoutes = require('./routes/counsellorRoutes');
-const bookingRoutes  = require('./routes/bookingRoutes');
-const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
-
-const goalRoutes     = require('./routes/goalRoutes');
-const moodRoutes     = require('./routes/moodRoutes');
+const sessionNoteRoutes = require('./routes/sessionNoteRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const goalRoutes = require('./routes/goalRoutes');
+const moodRoutes = require('./routes/moodRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const chatRoutes     = require('./routes/chatRoutes');
 const messageRoutes  = require('./routes/messageRoutes');
@@ -33,14 +33,14 @@ app.use(express.json());
 app.use(cors({
   origin: process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(',').map(url => url.trim())
-    : ['http://localhost:5173', 'http://localhost:5174'],
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── Health Check (works even before DB connects) ──────────────────────────────
+// ─── Health Check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   const dbState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
   res.json({
@@ -51,14 +51,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── API Routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',          authRoutes);
-app.use('/api/counsellors',   counsellorRoutes);
-app.use('/api/bookings',      bookingRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/counsellors', counsellorRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/appointments', appointmentRoutes);
 app.use('/api/session-notes', sessionNoteRoutes);
-app.use('/api/appointments',  appointmentRoutes);
-
-app.use('/api/goals',     goalRoutes);
-app.use('/api/moods',     moodRoutes);
+app.use('/api/goals', goalRoutes);
+app.use('/api/moods', moodRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/chat',      chatRoutes);
 app.use('/api/messages',  messageRoutes);
@@ -90,20 +89,20 @@ io.on('connection', (socket) => {
   });
 });
 
-// ─── Start Server FIRST, then connect DB ──────────────────────────────────────
+// ─── Start Server ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-server.listen(PORT, () => {
-  console.log(`🚀 UniCare Backend API & Socket Server running on port ${PORT}`);
-  console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/session-notes`);
+app.listen(PORT, () => {
+  console.log(`🚀 UniCare Backend API running on port ${PORT}`);
+  console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/appointments`);
   console.log(`   Wellness: /api/goals | /api/moods | /api/resources | /api/chat`);
   console.log(`   Realtime: Socket.IO enabled`);
 });
 
-// Connect MongoDB after server starts
+// Database Connection
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 15000,
   connectTimeoutMS: 15000,
 })
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
-  .catch(err => console.error('❌ MongoDB Error:', err.message));
+  .then(() => console.log('✅ MongoDB Connected (UniCare Full Platform)'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err.message));

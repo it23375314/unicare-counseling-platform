@@ -7,10 +7,22 @@ const appointmentSchema = new mongoose.Schema({
   },
   studentEmail: {
     type: String,
-    required: true
+    required: false
   },
   studentId: {
     type: String,
+  },
+  studentPhone: {
+    type: String,
+    required: false
+  },
+  emergencyContact: {
+    type: String, // Name + Relation
+    required: false
+  },
+  reasonDescription: {
+    type: String,
+    required: false
   },
   counsellorId: {
     type: String, // Changed from ObjectId to support universal seeding

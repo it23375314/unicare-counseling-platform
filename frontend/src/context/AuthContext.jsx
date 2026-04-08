@@ -1,19 +1,20 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useToast } from "./ToastContext";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const STORAGE_KEY = 'authUser';
 
-const defaultUser = null; // null means not logged in
-
 const AuthContext = createContext({
   user: null,
   login: () => {},
+  loginWithCredentials: () => {},
   logout: () => {},
   isAuthenticated: false,
 });
 
 export const AuthProvider = ({ children }) => {
+  const { addToast } = useToast();
   const [user, setUser] = useState(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   /**
-   * login â€” called after a successful POST /api/auth/login response
+   * login — called after a successful POST /api/auth/login response
    * Accepts the full response data object from the server.
    */
   const login = (userData) => {
@@ -58,24 +59,32 @@ export const AuthProvider = ({ children }) => {
       itNumber: userData.itNumber || '',
     };
     setUser(normalized);
+    addToast(`Welcome back, ${userData.name}!`, "success");
   };
 
   /**
-   * loginWithCredentials â€” convenience method that calls the API and logs in
+   * loginWithCredentials — convenience method that calls the API and logs in
    */
   const loginWithCredentials = async (email, password) => {
-    const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-    const data = res.data;
-    if (!data.success) throw new Error(data.msg || 'Login failed');
-    login(data.data);
-    return data.data;
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+      const data = res.data;
+      if (!data.success) throw new Error(data.msg || 'Login failed');
+      login(data.data);
+      return data.data;
+    } catch (err) {
+      const errorMsg = err.response?.data?.msg || err.message || 'Login connection failed';
+      addToast(errorMsg, "error");
+      throw err;
+    }
   };
 
   /**
-   * logout â€” clears user state and all localStorage keys
+   * logout — clears user state and all localStorage keys
    */
   const logout = () => {
     setUser(null);
+    addToast("Signed out successfully.", "info");
   };
 
   const value = useMemo(() => ({

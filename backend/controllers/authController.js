@@ -114,7 +114,10 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const id = req.query.id;
-    if (!id) return res.status(400).json({ success: false, msg: 'User ID is required' });
+    if (!id) {
+       // Return guest for unauthenticated state instead of failing, to support legacy components
+       return res.status(200).json({ success: true, data: { name: "Guest User", role: "student", email: "guest@unicare.edu", _id: "guest-id" } });
+    }
     const user = await User.findById(id).select('-password');
     if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
     res.status(200).json({ success: true, data: user });

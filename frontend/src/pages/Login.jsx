@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -12,7 +12,11 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  // Get requested destination or default to home/dashboards
+  const from = location.state?.from?.pathname || null;
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -34,8 +38,12 @@ export default function Login() {
       }
 
       login(data.data);
-      if (data.data.role === 'admin') {
-        navigate('/admin/counsellors', { replace: true });
+
+      // Redirect logic: Priority to 'from' state, then role-based defaults
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (data.data.role === 'admin') {
+        navigate('/admin/resources', { replace: true });
       } else if (data.data.role === 'counsellor') {
         navigate('/counsellor/availability', { replace: true });
       } else {

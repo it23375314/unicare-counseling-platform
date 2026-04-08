@@ -54,11 +54,11 @@ const getAvatarColor = (name) => {
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
-  const { counsellors, getCounsellorById, updateAvailability } = useCounsellorContext();
-  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
+  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
-  const counsellor = getCounsellorById(user?.id) || counsellors?.find(c => c.email === user?.email) || counsellors?.[0] || null;
+  const counsellor = getCounsellorById(user?.id) || getCounsellorByEmail(user?.email) || null;
   const counsellorName = counsellor?.name || user?.name || "";
   const location = useLocation();
   const navigate = useNavigate();
