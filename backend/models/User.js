@@ -1,56 +1,50 @@
-// MOCK DATABASE MODEL - Ready to be replaced by Mongoose
-class User {
-    constructor(data) {
-        Object.assign(this, data);
-        if (!this._id) this._id = Date.now().toString();
-        this.id = this._id;
-    }
+const mongoose = require('mongoose');
 
-    async save() {
-        User.data.push(this);
-        return this;
-    }
+/**
+ * Unified User Model for UniCare Counseling Platform
+ * Supports roles: student, counsellor, admin
+ * Includes bcrypt-ready password field, IT number validation,
+ * and resource bookmarks from the Wellness module.
+ */
+const UserSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  role: {
+    type: String,
+    enum: ['student', 'counsellor', 'admin'],
+    default: 'student'
+  },
+  itNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^[A-Z]{2}[0-9]{4}[0-9]{4}$/, 'IT number must be in format: IT23XXXXXX']
+  },
+  // Counsellor-specific fields (populated if role === 'counsellor')
+  specialization: {
+    type: String,
+    default: ''
+  },
+  // Bookmarked resource IDs (for Wellness Resource Library)
+  bookmarks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Resource',
+    default: []
+  }]
+}, { timestamps: true });
 
-    static async find(query = {}) {
-        let results = [...User.data];
-        for (let key in query) {
-            results = results.filter(item => item[key] === query[key]);
-        }
-        results.sort = () => results;
-        return results;
-    }
-
-    static async findOne(query = {}) {
-        const results = await this.find(query);
-        return results[0] || null;
-    }
-
-    static async findById(id) {
-        return User.data.find(d => d._id === id || d.id === id);
-    }
-
-    static async findByIdAndUpdate(id, body) {
-        const item = User.data.find(d => d._id === id || d.id === id);
-        if (item) {
-            Object.assign(item, body);
-            return item;
-        }
-        return null;
-    }
-
-    static async findByIdAndDelete(id) {
-        const index = User.data.findIndex(d => d._id === id || d.id === id);
-        if (index > -1) {
-            return User.data.splice(index, 1)[0];
-        }
-        return null;
-    }
-}
-
-// Initial Mock Data
-User.data = [
-    new User({ _id: "student-1", role: "student", name: "Current Student", email: "student@unicare.edu" }),
-    new User({ _id: "1", role: "counsellor", name: "Dr. Sarah Jenkins", email: "sarah.jenkins@unicare.edu" })
-];
-
-module.exports = User;
+module.exports = mongoose.model('User', UserSchema);
