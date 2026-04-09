@@ -50,6 +50,13 @@ import AdminResourceList from './pages/AdminResourceList';
 import AdminAddResource from './pages/AdminAddResource';
 import AdminEditResource from './pages/AdminEditResource';
 
+// ─── New Admin & Settings Pages (Merged from auth-module) ────────────────────
+import UserManagement from './pages/admin/UserManagement';
+import PlatformLogs from './pages/admin/PlatformLogs';
+import SystemAnalytics from './pages/admin/SystemAnalytics';
+import SystemConfig from './pages/admin/SystemConfig';
+import Settings from './pages/Settings';
+
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -187,6 +194,30 @@ function App() {
                         <AdminEditResource />
                       </ProtectedRoute>
                     } />
+
+                    {/* ── New Admin & Settings (Merged) ── */}
+                    <Route path="admin-users" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <UserManagement />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin-logs" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <PlatformLogs />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin-analytics" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <SystemAnalytics />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="system-config" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <SystemConfig />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="settings" element={<Settings />} />
+
                   </Route>
 
                   {/* ── Standalone Auth Pages (no Layout) ── */}

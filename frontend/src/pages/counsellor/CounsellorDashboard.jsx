@@ -6,6 +6,7 @@ import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
 import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
+import FeedbackForm from "../../components/FeedbackForm";
 import studentProfilePlaceholder from "../../assets/student_profile_john_smith.png";
 import student1 from "../../assets/student1.png";
 import student2 from "../../assets/student2.png";
@@ -1328,6 +1329,11 @@ export default function CounsellorDashboard() {
           </div>
         </div>
       )}
+
+      {/* Global Feedback Form placed below tabs */}
+      <div className="max-w-7xl mx-auto mt-6">
+        <FeedbackForm />
+      </div>
 
     </div>
   );
