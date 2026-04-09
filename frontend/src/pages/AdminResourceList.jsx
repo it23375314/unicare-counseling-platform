@@ -323,7 +323,7 @@ export default function AdminResourceList() {
 
 const styles = {
     dashboardContainer: { display: 'flex', minHeight: '100vh', width: '100%', fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: '#f9fafb' },
-    sidebar: { width: '250px', backgroundColor: '#ffffff', padding: '20px', boxShadow: '2px 0 10px rgba(0, 0, 0, 0.05)', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, boxSizing: 'border-box', zIndex: 1000 },
+    sidebar: { width: '250px', backgroundColor: '#ffffff', padding: '20px', boxShadow: '2px 0 10px rgba(0, 0, 0, 0.05)', display: 'flex', flexDirection: 'column', position: 'fixed', top: '80px', left: 0, bottom: 0, boxSizing: 'border-box', zIndex: 40 },
     mainContent: { flex: 1, marginLeft: '250px', padding: '48px 40px', boxSizing: 'border-box' },
     contentMaxWidth: { maxWidth: '1100px', margin: '0 auto' },
     

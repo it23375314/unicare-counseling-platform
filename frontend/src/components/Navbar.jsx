@@ -111,6 +111,9 @@ const Navbar = () => {
                       </>
                     )}
                     <div className="h-px bg-slate-100 my-1" />
+                    <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors">
+                      ⚙️ My Profile / Settings
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-lg"

@@ -1,4 +1,7 @@
 const bcrypt = require('bcryptjs');
+const Log = require('../models/Log');
+const Config = require('../models/Config');
+const SystemSession = require('../models/SystemSession');
 const User = require('../models/User');
 const Counsellor = require('../models/Counsellor');
 
@@ -56,7 +59,7 @@ exports.register = async (req, res) => {
     res.status(201).json({ success: true, msg: 'User registered successfully!' });
   } catch (error) {
     console.error('Registration Error:', error.message);
-    res.status(500).json({ success: false, msg: 'Server error during registration' });
+    res.status(500).json({ success: false, msg: 'Server error during registration', details: error.message, stack: error.stack });
   }
 };
 
@@ -206,5 +209,133 @@ exports.approveUser = async (req, res) => {
   } catch (error) {
     console.error('ApproveUser Error:', error.message);
     res.status(500).json({ success: false, msg: 'Server error during approval' });
+  }
+};
+
+// ─── Profile & Password ────────────────────────────────────────────────────────
+
+/**
+ * PUT /api/auth/update-profile
+ * body: { email, name }
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email || !name) return res.status(400).json({ success: false, msg: 'Email and name are required' });
+    const updated = await User.findOneAndUpdate({ email }, { name }, { new: true }).select('-password');
+    if (!updated) return res.status(404).json({ success: false, msg: 'User not found' });
+    res.json({ success: true, msg: 'Profile updated', data: updated });
+  } catch (error) {
+    console.error('UpdateProfile Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Server error during profile update' });
+  }
+};
+
+/**
+ * PUT /api/auth/update-password
+ * body: { email, currentPassword, newPassword }
+ */
+exports.updatePassword = async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) return res.status(400).json({ success: false, msg: 'All fields are required' });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ success: false, msg: 'User not found' });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, msg: 'Current password is incorrect' });
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    res.json({ success: true, msg: 'Password updated successfully' });
+  } catch (error) {
+    console.error('UpdatePassword Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Server error during password update' });
+  }
+};
+
+// ─── Platform Logs ─────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/logs
+ */
+exports.getLogs = async (req, res) => {
+  try {
+    const logs = await Log.find().sort({ createdAt: -1 }).limit(200);
+    res.json({ success: true, data: logs });
+  } catch (error) {
+    console.error('GetLogs Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Could not fetch logs' });
+  }
+};
+
+/**
+ * DELETE /api/auth/logs/purge
+ */
+exports.purgeLogs = async (req, res) => {
+  try {
+    await Log.deleteMany({});
+    res.json({ success: true, msg: 'All logs purged successfully' });
+  } catch (error) {
+    console.error('PurgeLogs Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Error purging logs' });
+  }
+};
+
+// ─── System Config ─────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/config
+ */
+exports.getConfig = async (req, res) => {
+  try {
+    let config = await Config.findOne();
+    if (!config) { config = new Config(); await config.save(); }
+    res.json({ success: true, data: config });
+  } catch (error) {
+    console.error('GetConfig Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Could not load config' });
+  }
+};
+
+/**
+ * PUT /api/auth/config
+ */
+exports.updateConfig = async (req, res) => {
+  try {
+    const updated = await Config.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    res.json({ success: true, msg: 'System config saved', data: updated });
+  } catch (error) {
+    console.error('UpdateConfig Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Could not save config' });
+  }
+};
+
+// ─── Device Sessions ───────────────────────────────────────────────────────────
+
+/**
+ * GET /api/auth/sessions/:email
+ */
+exports.getSessions = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.json({ success: true, data: [] });
+    const sessions = await SystemSession.find({ userId: user._id }).sort({ lastSeen: -1 });
+    res.json({ success: true, data: sessions });
+  } catch (error) {
+    console.error('GetSessions Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Error fetching sessions' });
+  }
+};
+
+/**
+ * DELETE /api/auth/sessions/:id
+ */
+exports.deleteSession = async (req, res) => {
+  try {
+    await SystemSession.findByIdAndDelete(req.params.id);
+    res.json({ success: true, msg: 'Session removed' });
+  } catch (error) {
+    console.error('DeleteSession Error:', error.message);
+    res.status(500).json({ success: false, msg: 'Error removing session' });
   }
 };

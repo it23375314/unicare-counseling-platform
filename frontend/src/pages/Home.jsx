@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, HeartPulse, Sparkles, CalendarCheck, CheckCircle2, Users, Award, Shield } from "lucide-react";
 import heroBg from "../assets/hero_campus_bg.png";
+import FeedbackForm from "../components/FeedbackForm";
 
 const Home = () => {
   return (
@@ -158,6 +159,13 @@ const Home = () => {
               desc="Connect securely from anywhere. Your healing journey officially begins." 
             />
           </div>
+        </div>
+      </section>
+
+      {/* Feedback Section */}
+      <section className="bg-slate-50 py-12 lg:py-20 border-t border-slate-200">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8">
+          <FeedbackForm />
         </div>
       </section>
 

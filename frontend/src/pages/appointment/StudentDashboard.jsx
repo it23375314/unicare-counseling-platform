@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Calendar as CalendarIcon, Clock, Video, FileText, XCircle, AlertCircle, CheckCircle2, Edit, Save, ArrowRight, User, Sparkles, Heart, Activity } from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
+import FeedbackForm from "../../components/FeedbackForm";
 
 const regularSlots = ["09:00", "11:00", "13:00", "15:00"];
 
@@ -413,6 +414,11 @@ const StudentDashboard = () => {
         </div>
 
       </div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-12">
+        <FeedbackForm />
+      </div>
+
     </div>
   );
 };
