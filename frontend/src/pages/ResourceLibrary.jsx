@@ -28,7 +28,7 @@ export default function ResourceLibrary() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/resources/all`);
+            const res = await axios.get(`http://localhost:5001/api/resources/all`);
             setResources(res.data);
         } catch (err) { 
             console.error(err);
@@ -38,7 +38,7 @@ export default function ResourceLibrary() {
 
     const handleView = async (item) => {
         try {
-            await axios.post(`http://localhost:5000/api/resources/view/${item._id}`, { itNumber });
+            await axios.post(`http://localhost:5001/api/resources/view/${item._id}`, { itNumber });
         } catch (err) { 
             console.error("Tracking error", err); 
         }

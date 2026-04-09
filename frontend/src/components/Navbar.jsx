@@ -35,7 +35,6 @@ const Navbar = () => {
       { name: "About Us", path: "/about" },
       { name: "Find a Counsellor", path: "/appointment/counsellors" },
       { name: "My Wellness Portal", path: "/wellness-dashboard" },
-      { name: "Resources", path: "/resources" },
     ];
   }
 

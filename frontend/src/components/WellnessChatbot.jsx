@@ -42,7 +42,7 @@ export default function WellnessChatbot({ isOpen: controlledOpen, onOpen, onClos
             }));
 
             // Send to your backend API
-            const res = await axios.post('http://localhost:5000/api/chat', {
+            const res = await axios.post('http://localhost:5001/api/chat', {
                 message: userMsg.content,
                 history: history
             });

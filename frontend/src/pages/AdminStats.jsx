@@ -12,7 +12,7 @@ export default function AdminStats() {
         document.body.style.margin = "0";
         document.body.style.padding = "0";
 
-        axios.get('http://localhost:5000/api/resources/all')
+        axios.get('http://localhost:5001/api/resources/all')
             .then(res => {
                 // Sort by highest views first for better UX
                 const sortedData = res.data.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));

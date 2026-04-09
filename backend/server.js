@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
@@ -92,17 +91,38 @@ io.on('connection', (socket) => {
 // ─── Start Server ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 UniCare Backend API running on port ${PORT}`);
   console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/appointments`);
   console.log(`   Wellness: /api/goals | /api/moods | /api/resources | /api/chat`);
   console.log(`   Realtime: Socket.IO enabled`);
 });
 
-// Database Connection
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 15000,
-  connectTimeoutMS: 15000,
-})
-  .then(() => console.log('✅ MongoDB Connected (UniCare Full Platform)'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err.message));
+// Database Connection with Resilience
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000, // Wait 30s before failing
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 10000,
+    });
+    console.log('✅ MongoDB Connected (UniCare Full Platform)');
+  } catch (err) {
+    console.error('❌ initial MongoDB Connection Error:', err.message);
+    // don't exit process, let it try to reconnect if configured
+  }
+};
+
+mongoose.connection.on('error', err => {
+  console.error('🔴 MongoDB Runtime Error:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('🟠 MongoDB Disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('connected', () => {
+  console.log('🟢 MongoDB Connection Established');
+});
+
+connectDB();

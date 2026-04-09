@@ -18,11 +18,11 @@ export default function AdminDashboard() {
     document.body.style.padding = "0";
 
     if (role === 'admin') {
-      axios.get('http://localhost:5000/api/auth/users')
+      axios.get('http://localhost:5001/api/auth/users')
         .then(res => setUsers(res.data))
         .catch(err => setError("Failed to fetch users."));
 
-      axios.get('http://localhost:5000/api/resources/admin/all')
+      axios.get('http://localhost:5001/api/resources/admin/all')
         .then(res => setResources(res.data))
         .catch(err => console.log("Resources fetch failed"));
     }
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const deleteUser = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/auth/users/${id}`);
+        await axios.delete(`http://localhost:5001/api/auth/users/${id}`);
         setUsers(users.filter(user => user._id !== id));
       } catch (err) {
         alert("Error deleting user");

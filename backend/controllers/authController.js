@@ -104,6 +104,9 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login Error:', error.message);
+    if (error.message.includes('timeout') || error.message.includes('topology') || error.message.includes('connect')) {
+      return res.status(503).json({ success: false, msg: 'Database connection timeout. Please check Atlas network whitelist or try again later.' });
+    }
     res.status(500).json({ success: false, msg: 'Server error during login' });
   }
 };

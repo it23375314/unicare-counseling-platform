@@ -40,7 +40,7 @@ export default function AdminResourceList() {
 
     const fetchResources = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/resources/admin/all');
+            const res = await axios.get('http://localhost:5001/api/resources/admin/all');
             setResources(res.data);
             setLoading(false);
         } catch (err) {
@@ -53,7 +53,7 @@ export default function AdminResourceList() {
         if (!window.confirm("Are you sure you want to completely delete this resource? This cannot be undone.")) return;
         
         try {
-            await axios.delete(`http://localhost:5000/api/resources/delete/${id}`);
+            await axios.delete(`http://localhost:5001/api/resources/delete/${id}`);
             setResources(resources.filter(r => r._id !== id));
         } catch (err) {
             alert("Error deleting resource");

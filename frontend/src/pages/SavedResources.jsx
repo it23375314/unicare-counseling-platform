@@ -39,7 +39,7 @@ export default function SavedResources() {
   const fetchSavedResources = async () => {
     try {
       const cleanUserId = userId ? userId.replace(/['"]+/g, '') : '';
-      const res = await axios.get(`http://localhost:5000/api/resources/bookmarks/${cleanUserId}`);
+      const res = await axios.get(`http://localhost:5001/api/resources/bookmarks/${cleanUserId}`);
       
       setSavedItems(res.data.reverse());
       setLoading(false);
@@ -53,7 +53,7 @@ export default function SavedResources() {
     e.stopPropagation(); 
     try {
       const cleanUserId = userId ? userId.replace(/['"]+/g, '') : '';
-      await axios.post(`http://localhost:5000/api/resources/bookmark/${resourceId}`, { userId: cleanUserId });
+      await axios.post(`http://localhost:5001/api/resources/bookmark/${resourceId}`, { userId: cleanUserId });
       setSavedItems(savedItems.filter(item => item._id !== resourceId));
     } catch (err) {
       alert("Error removing bookmark");
@@ -62,7 +62,7 @@ export default function SavedResources() {
 
   const handleView = async (id) => {
     try {
-      await axios.post(`http://localhost:5000/api/resources/view/${id}`, { itNumber });
+      await axios.post(`http://localhost:5001/api/resources/view/${id}`, { itNumber });
     } catch (err) {
       console.error("Error recording view analytics", err);
     }
@@ -239,8 +239,32 @@ export default function SavedResources() {
                   </div>
               </>
             )}
-                    </main>
-                </div>
+          </main>
+        </div>
+
+        {/* --- FOOTER --- */}
+        <footer style={styles.footer}>
+          <div style={styles.footerGrid}>
+            <div>
+              <h3 style={styles.footerHeading}>UniCare</h3>
+              <p style={styles.footerText}>Empowering university students with accessible, secure, and private mental health counseling.</p>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Links</h3>
+              <Link to="/" className="footer-link" style={styles.footerLink}>Home</Link>
+              <Link to="/about" className="footer-link" style={styles.footerLink}>About Us</Link>
+              <Link to="/counsellors" className="footer-link" style={styles.footerLink}>Find a Counsellor</Link>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Support</h3>
+              <Link to="/faq" className="footer-link" style={styles.footerLink}>FAQ</Link>
+              <Link to="/privacy" className="footer-link" style={styles.footerLink}>Privacy Policy</Link>
+              <Link to="/terms" className="footer-link" style={styles.footerLink}>Terms of Service</Link>
+            </div>
+            <div>
+              <h3 style={styles.footerHeading}>Contact</h3>
+              <a href="mailto:support@unicare.edu" className="footer-link" style={styles.footerLink}>support@unicare.edu</a>
+              <p style={{...styles.footerLink, cursor: 'default'}}>1-800-UNICARE</p>
             </div>
           </div>
           <div style={styles.footerBottom}>

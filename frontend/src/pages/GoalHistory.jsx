@@ -33,7 +33,7 @@ export default function GoalHistory() {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/goals/${userId}`);
+      const res = await axios.get(`http://localhost:5001/api/goals/${userId}`);
       setGoals(res.data);
     } catch (err) {
       console.error("Error fetching history", err);

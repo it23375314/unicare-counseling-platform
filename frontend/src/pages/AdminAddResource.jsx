@@ -128,7 +128,7 @@ export default function AdminAddResource() {
         data.append('status', formData.status);
 
         try {
-            await axios.post('http://localhost:5000/api/resources/add', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await axios.post('http://localhost:5001/api/resources/add', data, { headers: { 'Content-Type': 'multipart/form-data' } });
             setNotification({ type: 'success', message: '✅ Resource Published Successfully! Redirecting...' });
             setTimeout(() => navigate('/admin/resources'), 1500);
         } catch (err) {

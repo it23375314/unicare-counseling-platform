@@ -3,7 +3,7 @@ import { useCounsellorContext } from "../../context/CounsellorContext";
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, Clock, Users, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function AdminDashboard() {
   const { counsellors, addCounsellor, editCounsellor, deleteCounsellor } = useCounsellorContext();

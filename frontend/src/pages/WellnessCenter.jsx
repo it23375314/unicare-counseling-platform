@@ -56,7 +56,7 @@ export default function WellnessCenter() {
 
   const fetchGoals = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/goals/${userId}`);
+      const res = await axios.get(`http://localhost:5001/api/goals/${userId}`);
       setGoals(res.data);
     } catch (err) {
       console.error("Error fetching goals", err);
@@ -127,7 +127,7 @@ export default function WellnessCenter() {
       targetValue: (formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') ? Number(formData.targetValue || 0) : 0
     };
     
-    try { await axios.post('http://localhost:5000/api/goals', payload); closeModal(); fetchGoals(); } 
+    try { await axios.post('http://localhost:5001/api/goals', payload); closeModal(); fetchGoals(); } 
     catch (err) { alert(err.response?.data?.msg || "Error adding goal"); }
   };
 
@@ -135,13 +135,13 @@ export default function WellnessCenter() {
 
   const confirmCompletion = async () => {
     if (!goalToComplete) return;
-    try { await axios.put(`http://localhost:5000/api/goals/complete/${goalToComplete._id}`, { mood: completionMood }); fetchGoals(); setCompleteModalOpen(false); setGoalToComplete(null); } 
+    try { await axios.put(`http://localhost:5001/api/goals/complete/${goalToComplete._id}`, { mood: completionMood }); fetchGoals(); setCompleteModalOpen(false); setGoalToComplete(null); } 
     catch (err) { alert("Error marking as complete"); }
   };
 
   const deleteGoal = async (goalId) => {
     if (!window.confirm("Delete this milestone?")) return;
-    try { await axios.delete(`http://localhost:5000/api/goals/${goalId}`); fetchGoals(); } 
+    try { await axios.delete(`http://localhost:5001/api/goals/${goalId}`); fetchGoals(); } 
     catch (err) { alert("Error deleting goal"); }
   };
 

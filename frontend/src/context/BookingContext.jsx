@@ -13,30 +13,6 @@ export const BookingProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchBookings = async () => {
-      try {
-          console.log("🔄 Fetching appointments from:", API_URL);
-          const res = await fetch(API_URL);
-          if (res.ok) {
-              const json = await res.json();
-              console.log("📦 Received Appointments Data:", json);
-              if(json.success && json.data) {
-                  setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
-              } else if (Array.isArray(json)) {
-                  setBookings(json.map(b => ({ ...b, id: b._id || b.id })));
-              }
-          } else {
-              console.warn("⚠️ Appointments Fetch Status:", res.status);
-          }
-      } catch(e) {
-          console.error("❌ Booking API Failed", e);
-      }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
   // Data Normalization Helper
   const normalizeBooking = (b) => ({
     ...b,
@@ -47,11 +23,12 @@ export const BookingProvider = ({ children }) => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
+      console.log("🔄 Fetching appointments from:", API_BASE);
       const response = await fetch(API_BASE);
       if (!response.ok) throw new Error("Failed to load records");
       const data = await response.json();
-      // Ensure data is an array
-      const bookingsArray = Array.isArray(data) ? data : (data.data || []);
+      
+      const bookingsArray = data.success ? data.data : (Array.isArray(data) ? data : []);
       setBookings(bookingsArray.map(normalizeBooking));
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -59,6 +36,10 @@ export const BookingProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
   // Dynamic slot availability logic
   const getAvailableSlots = (counsellorName, date, allSlots) => {
@@ -77,25 +58,32 @@ export const BookingProvider = ({ children }) => {
     });
   };
 
-  const syncBookingUpdate = async (id, payload, successMsg, errorMsg) => {
-      try {
-          const res = await fetch(`${API_URL}/${id}/status`, {
-              method: "PATCH", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-          });
-          
-          if (res.ok) {
-              setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
-              if(successMsg) addToast(successMsg, "success");
-          } else {
-              const json = await res.json();
-              throw new Error(json.message || "Update API returned failure status");
-          }
-      } catch(e) {
-           console.error("Booking API Failed:", e);
-           // Optimistic Fallback Update
-           setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
-           if(successMsg) addToast(`Offline Updates Saved Local Only: ${successMsg}`, "success");
+  const syncBookingUpdate = async (id, payload, successMsg) => {
+    try {
+      const response = await fetch(`${API_BASE}/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Server sync failed");
+      }
+
+      const resJson = await response.json();
+      const updated = resJson.data || resJson;
+      const normalized = normalizeBooking(updated);
+      setBookings((prev) => prev.map((b) => (String(b.id) === String(id) ? normalized : b)));
+      if (successMsg) addToast(successMsg, "success");
+      return normalized;
+    } catch (err) {
+      console.error("Booking Update Failed:", err);
+      addToast(err.message, "error");
+      throw err;
+    }
+  };
+
   const addBooking = async (bookingData) => {
     try {
       const response = await fetch(API_BASE, {
@@ -114,42 +102,6 @@ export const BookingProvider = ({ children }) => {
       setBookings((prev) => [normalized, ...prev]);
       addToast("Session intake successfully recorded!", "success");
       return normalized.id;
-    } catch (err) {
-      addToast(err.message, "error");
-      throw err;
-    }
-  };
-
-  const syncBookingUpdate = async (id, payload, successMsg) => {
-    try {
-        const payload = { ...bookingData, status: "Pending", createdAt: new Date().toISOString() };
-        const res = await fetch(API_URL, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if(json.success && json.data) {
-            setBookings((prev) => [...prev, { ...json.data, id: json.data._id }]);
-            return json.data._id;
-        }
-    } catch(e) {
-        const fallbackId = Date.now().toString();
-        setBookings((prev) => [...prev, { ...bookingData, status: "Pending", id: fallbackId }]);
-        return fallbackId;
-      const response = await fetch(`${API_BASE}/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) throw new Error("Server sync failed");
-
-      const resJson = await response.json();
-      const updated = resJson.data || resJson;
-      const normalized = normalizeBooking(updated);
-      setBookings((prev) => prev.map((b) => (b.id === id ? normalized : b)));
-      if (successMsg) addToast(successMsg, "success");
-      return normalized;
     } catch (err) {
       addToast(err.message, "error");
       throw err;

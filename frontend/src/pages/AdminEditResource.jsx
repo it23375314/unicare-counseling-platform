@@ -65,7 +65,7 @@ export default function AdminEditResource() {
 
         const fetchResource = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/resources/admin/all`);
+                const res = await axios.get(`http://localhost:5001/api/resources/admin/all`);
                 const resource = res.data.find(r => r._id === id);
                 if (resource) setFormData(resource);
             } catch (err) {
@@ -150,7 +150,7 @@ export default function AdminEditResource() {
         data.append('status', formData.status);
 
         try {
-            await axios.put(`http://localhost:5000/api/resources/edit/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await axios.put(`http://localhost:5001/api/resources/edit/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
             setNotification({ type: 'success', message: '✅ Resource Updated Successfully! Redirecting...' });
             setTimeout(() => navigate('/admin/resources'), 1500);
         } catch (err) {

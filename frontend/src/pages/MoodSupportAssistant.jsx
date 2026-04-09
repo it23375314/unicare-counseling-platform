@@ -124,7 +124,7 @@ export default function MoodSupportAssistant() {
   const fetchHistory = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/moods/${userId}?limit=10`);
+      const res = await axios.get(`http://localhost:5001/api/moods/${userId}?limit=10`);
       const entries = res.data || [];
       setHistory(entries);
       setHasTodayEntry(entries.some(entry => entry.entryDate === getTodayStr()));
@@ -161,7 +161,7 @@ export default function MoodSupportAssistant() {
     const resources = RESOURCES[response.tone] || RESOURCES.medium;
 
     try {
-      const aiRes = await axios.post('http://localhost:5000/api/chat', {
+      const aiRes = await axios.post('http://localhost:5001/api/chat', {
         message: currentText,
         history: messages.filter(msg => !msg.type || msg.type === 'text').map(msg => ({
             role: msg.role === 'bot' ? 'assistant' : 'user',
@@ -176,7 +176,7 @@ export default function MoodSupportAssistant() {
           aiResponse: aiReply, suggestedResources: resources.map(r => r.title), counselingRecommended: counselingFlag, displayName 
       };
       
-      await axios.post('http://localhost:5000/api/moods', payload);
+      await axios.post('http://localhost:5001/api/moods', payload);
       
       setTimeout(() => {
           const botReplies = [{ id: Date.now().toString() + '_1', role: 'bot', type: 'text', content: aiReply }];
