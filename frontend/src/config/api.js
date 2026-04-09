@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Unified API base URL — both UniCare core and Wellness module run on port 5000
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 // Intercept all axios requests and route /api/* paths to the unified backend
 axios.interceptors.request.use((config) => {

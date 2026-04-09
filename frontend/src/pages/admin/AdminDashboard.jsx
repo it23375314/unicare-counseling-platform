@@ -3,7 +3,7 @@ import { useCounsellorContext } from "../../context/CounsellorContext";
 import { Plus, Edit2, Trash2, CheckCircle, XCircle, Clock, Users, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
 export default function AdminDashboard() {
   const { counsellors, addCounsellor, editCounsellor, deleteCounsellor } = useCounsellorContext();
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
   return (
     <div className="bg-gray-50 min-h-screen pt-12 pb-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{field} *</label>
                   <input type={field === "email" ? "email" : "text"} value={formData[field]}
-                    onChange={e => { setFormData({...formData, [field]: e.target.value}); if(errors[field]) setErrors({...errors, [field]: null}); }}
+                    onChange={e => { setFormData({ ...formData, [field]: e.target.value }); if (errors[field]) setErrors({ ...errors, [field]: null }); }}
                     className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition ${errors[field] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                   />
                   {errors[field] && <p className="text-red-600 text-xs mt-1 font-medium">{errors[field]}</p>}
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Experience (years) *</label>
                 <input type="text" placeholder="e.g. 5" value={formData.experience}
-                  onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ""); setFormData({...formData, experience: val}); if(errors.experience) setErrors({...errors, experience: null}); }}
+                  onChange={e => { const val = e.target.value.replace(/[^0-9]/g, ""); setFormData({ ...formData, experience: val }); if (errors.experience) setErrors({ ...errors, experience: null }); }}
                   className={`w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition ${errors.experience ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                 />
                 {errors.experience && <p className="text-red-600 text-xs mt-1 font-medium">{errors.experience}</p>}

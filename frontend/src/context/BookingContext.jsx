@@ -13,35 +13,11 @@ export const BookingProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchBookings = async () => {
-      try {
-          console.log("🔄 Fetching appointments from:", API_URL);
-          const res = await fetch(API_URL);
-          if (res.ok) {
-              const json = await res.json();
-              console.log("📦 Received Appointments Data:", json);
-              if(json.success && json.data) {
-                  setBookings(json.data.map(b => ({ ...b, id: b._id || b.id })));
-              } else if (Array.isArray(json)) {
-                  setBookings(json.map(b => ({ ...b, id: b._id || b.id })));
-              }
-          } else {
-              console.warn("⚠️ Appointments Fetch Status:", res.status);
-          }
-      } catch(e) {
-          console.error("❌ Booking API Failed", e);
-      }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
   // Data Normalization Helper
   const normalizeBooking = (b) => ({
     ...b,
     id: b._id || b.id,
-    counsellor: b.counsellorName || b.counsellor // Maintain BC for UI components
+    counsellor: b.counsellorName || b.counsellor // Maintain compatibility with UI
   });
 
   const fetchBookings = async () => {
@@ -50,7 +26,7 @@ export const BookingProvider = ({ children }) => {
       const response = await fetch(API_BASE);
       if (!response.ok) throw new Error("Failed to load records");
       const data = await response.json();
-      // Ensure data is an array
+      
       const bookingsArray = Array.isArray(data) ? data : (data.data || []);
       setBookings(bookingsArray.map(normalizeBooking));
     } catch (err) {
@@ -60,42 +36,10 @@ export const BookingProvider = ({ children }) => {
     }
   };
 
-  // Dynamic slot availability logic
-  const getAvailableSlots = (counsellorName, date, allSlots) => {
-    const bookedTimes = bookings
-      .filter(b => (b.counsellorName === counsellorName || b.counsellor === counsellorName) && b.date === date && b.status !== "Cancelled")
-      .map(b => b.time);
-    
-    return allSlots.map(time => {
-      const isPast = !checkIsFutureTime(date, time);
-      const isBooked = bookedTimes.includes(time);
-      return {
-        time,
-        disabled: isPast || isBooked,
-        reason: isBooked ? "Already booked" : (isPast ? "Time passed" : "")
-      };
-    });
-  };
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
-  const syncBookingUpdate = async (id, payload, successMsg, errorMsg) => {
-      try {
-          const res = await fetch(`${API_URL}/${id}/status`, {
-              method: "PATCH", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-          });
-          
-          if (res.ok) {
-              setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
-              if(successMsg) addToast(successMsg, "success");
-          } else {
-              const json = await res.json();
-              throw new Error(json.message || "Update API returned failure status");
-          }
-      } catch(e) {
-           console.error("Booking API Failed:", e);
-           // Optimistic Fallback Update
-           setBookings((prev) => prev.map((b) => String(b.id) === String(id) || String(b._id) === String(id) ? { ...b, ...payload } : b));
-           if(successMsg) addToast(`Offline Updates Saved Local Only: ${successMsg}`, "success");
   const addBooking = async (bookingData) => {
     try {
       const response = await fetch(API_BASE, {
@@ -122,20 +66,6 @@ export const BookingProvider = ({ children }) => {
 
   const syncBookingUpdate = async (id, payload, successMsg) => {
     try {
-        const payload = { ...bookingData, status: "Pending", createdAt: new Date().toISOString() };
-        const res = await fetch(API_URL, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if(json.success && json.data) {
-            setBookings((prev) => [...prev, { ...json.data, id: json.data._id }]);
-            return json.data._id;
-        }
-    } catch(e) {
-        const fallbackId = Date.now().toString();
-        setBookings((prev) => [...prev, { ...bookingData, status: "Pending", id: fallbackId }]);
-        return fallbackId;
       const response = await fetch(`${API_BASE}/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -192,11 +122,6 @@ export const BookingProvider = ({ children }) => {
     return diffHours >= 2;
   };
 
-  const checkIsFutureTime = (dateStr, timeStr) => {
-     const requestedDate = parseDateTime(dateStr, timeStr);
-     return requestedDate && requestedDate > new Date();
-  }
-
   const parseDateTime = (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return null;
     try {
@@ -218,6 +143,23 @@ export const BookingProvider = ({ children }) => {
     }
     return null;
   }
+
+  const getAvailableSlots = (counsellorName, date, allSlots) => {
+    const bookedTimes = bookings
+      .filter(b => (b.counsellorName === counsellorName || b.counsellor === counsellorName) && b.date === date && b.status !== "Cancelled")
+      .map(b => b.time);
+    
+    return allSlots.map(time => {
+      const requestedDate = parseDateTime(date, time);
+      const isPast = requestedDate && requestedDate < new Date();
+      const isBooked = bookedTimes.includes(time);
+      return {
+        time,
+        disabled: isPast || isBooked,
+        reason: isBooked ? "Already booked" : (isPast ? "Time passed" : "")
+      };
+    });
+  };
 
   return (
     <BookingContext.Provider

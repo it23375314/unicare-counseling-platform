@@ -3,7 +3,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
@@ -92,7 +91,7 @@ io.on('connection', (socket) => {
 // ─── Start Server ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 UniCare Backend API running on port ${PORT}`);
   console.log(`   Core:     /api/auth | /api/counsellors | /api/bookings | /api/appointments`);
   console.log(`   Wellness: /api/goals | /api/moods | /api/resources | /api/chat`);

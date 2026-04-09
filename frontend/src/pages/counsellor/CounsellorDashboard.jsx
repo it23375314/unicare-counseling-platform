@@ -54,9 +54,9 @@ const getAvatarColor = (name) => {
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
-  const { getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
-  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
-  const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
+  const { fetchCounsellors, getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
+  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { notes, fetchNotes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
   const counsellor = getCounsellorById(user?.id) || getCounsellorByEmail(user?.email) || null;
   const counsellorName = counsellor?.name || user?.name || "";
@@ -74,12 +74,18 @@ export default function CounsellorDashboard() {
   if (path.includes("appointments")) activeTab = "appointments";
   else if (path.includes("notes")) activeTab = "session notes";
 
-  // Re-fetch bookings on navigating to appointments
+  // Re-fetch data on navigating to specific tabs
   useEffect(() => {
     if (activeTab === "appointments" && typeof fetchBookings === "function") {
       fetchBookings();
     }
-  }, [activeTab, fetchBookings]);
+    if (activeTab === "session notes" && typeof fetchNotes === "function") {
+      fetchNotes();
+    }
+    if (typeof fetchCounsellors === "function") {
+      fetchCounsellors();
+    }
+  }, [activeTab, fetchBookings, fetchNotes, fetchCounsellors]);
 
   // For Availability
   const [selectedDate, setSelectedDate] = useState("");

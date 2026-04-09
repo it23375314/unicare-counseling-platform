@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const SessionNoteContext = createContext();
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5001/api";
 
 export const useSessionNotes = () => useContext(SessionNoteContext);
 
@@ -10,23 +10,26 @@ export const SessionNoteProvider = ({ children }) => {
   const { addToast } = useToast();
   
   const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotes = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/session-notes`);
+      const json = await res.json();
+      if (json.success) {
+        setNotes((json.data || []).map(n => ({ ...n, id: n._id })));
+      }
+    } catch (e) {
+      console.error("Failed to fetch notes:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchNotes();
   }, []);
-
-  const fetchNotes = async () => {
-    try {
-        const res = await fetch(`${API_URL}/session-notes`); // wait, the controller requires checking per counsellor, let's just fetch all mock ones natively 
-        // Our mock find() currently returns all if no query is passed, wait, getNotesByCounsellor required counsellorId as param. 
-        // Let's modify frontend to fetch them when needed or just fetch all for now since it's a mock platform.
-        // Actually, the api controller `getNotesByCounsellor` expects a param `/:counsellorId`, wait I didn't verify the routes for sessionNotes.
-        // I will just use fetch if available. If route fails, it just leaves it empty.
-        
-        // Wait, the API doesn't have a GET all route for session notes, it only has `/api/session-notes/:counsellorId`.
-        // Let's just fetch what we can, or keep a local array state sync for the methods.
-    } catch(e) { }
-  };
 
   const addNote = async (noteData) => {
     try {
@@ -93,12 +96,14 @@ export const SessionNoteProvider = ({ children }) => {
     <SessionNoteContext.Provider
       value={{
         notes,
+        loading,
+        fetchNotes,
         addNote,
         updateNote,
         deleteNote,
         getNotesByCounsellor,
         getNoteByBookingId,
-        setNotes // expose for external manual syncing if needed
+        setNotes
       }}
     >
       {children}
