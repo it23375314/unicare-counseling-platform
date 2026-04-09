@@ -1,5 +1,6 @@
 import { Users, Target, Shield, Sparkles, Heart, Globe, ArrowRight, Zap } from "lucide-react";
 import { useEffect } from "react";
+import aboutUsBg from "../assets/about_us_bg.png";
 
 const AboutUs = () => {
   useEffect(() => {
@@ -8,17 +9,29 @@ const AboutUs = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-32">
-      {/* Dynamic Hero Header */}
-      <div className="bg-white border-b border-slate-200 pt-32 pb-24 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] -ml-64 -mt-64" />
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100 animate-fade-in-up">
-            <Sparkles size={12} /> The UniCare Promise
+      {/* Dynamic Hero Header with Immersive Background */}
+      <div className="relative pt-32 pb-40 lg:pt-48 lg:pb-64 overflow-hidden">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={aboutUsBg} 
+            alt="Collaborative Environment" 
+            className="w-full h-full object-cover"
+          />
+          {/* Layered Overlay for Text Clarity & Depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/60 to-slate-50/100" />
+          <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10 text-center space-y-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 backdrop-blur-md text-blue-300 text-[11px] font-black uppercase tracking-widest border border-blue-400/20 shadow-xl shadow-blue-500/10 animate-fade-in-up">
+            <Sparkles size={14} className="animate-pulse" /> The UniCare Promise
           </div>
-          <h1 className="text-5xl lg:text-8xl font-black text-slate-900 tracking-tight leading-none italic animate-fade-in-up delay-100">
-            About <span className="text-blue-600 not-italic">UniCare.</span>
+          <h1 className="text-6xl lg:text-9xl font-black text-white tracking-tight leading-none italic animate-fade-in-up delay-100 drop-shadow-2xl">
+            About <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 not-italic">UniCare.</span>
           </h1>
-          <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto animate-fade-in-up delay-200 leading-relaxed">
+          <p className="text-xl lg:text-2xl text-slate-200 font-medium max-w-2xl mx-auto animate-fade-in-up delay-200 leading-relaxed drop-shadow-md">
             We are dedicated to providing accessible, secure, and professional mental health support specifically tailored for the university ecosystem.
           </p>
         </div>

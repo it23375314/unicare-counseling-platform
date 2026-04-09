@@ -55,7 +55,7 @@ const getAvatarColor = (name) => {
 export default function CounsellorDashboard() {
   const { user } = useAuth();
   const { getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
-  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
   const counsellor = getCounsellorById(user?.id) || getCounsellorByEmail(user?.email) || null;
