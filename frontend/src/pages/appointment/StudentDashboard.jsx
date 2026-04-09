@@ -10,10 +10,12 @@ const StudentDashboard = () => {
   const [filter, setFilter] = useState("All"); 
   
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [currentBooking, setCurrentBooking] = useState(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const [rescheduleError, setRescheduleError] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
 
   const filteredBookings = [...bookings].reverse().filter(b => {
     if (filter === "All") return true;
@@ -47,6 +49,24 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleOpenCancel = (booking) => {
+    if (booking.paymentStatus !== "Paid") {
+      if (window.confirm("Are you sure you want to cancel this session?")) {
+        cancelBooking(booking.id);
+      }
+      return;
+    }
+    setCurrentBooking(booking);
+    setCancelReason("");
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = () => {
+    cancelBooking(currentBooking.id);
+    setShowCancelModal(false);
+    setCurrentBooking(null);
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen pb-32">
       {/* Reschedule Modal */}
@@ -72,7 +92,6 @@ const StudentDashboard = () => {
              )}
 
              <div className="space-y-10">
-                {/* Date Picker Section */}
                 <div className="space-y-4">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose New Date</label>
                   <input 
@@ -84,7 +103,6 @@ const StudentDashboard = () => {
                   />
                 </div>
 
-                {/* Slot Selection Section */}
                 {newDate && (
                   <div className="space-y-4 animate-fade-in">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Available Slots on {newDate}</label>
@@ -122,6 +140,72 @@ const StudentDashboard = () => {
                  className="py-5 rounded-[2rem] bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/20"
                >
                  Save Update
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation & Refund Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowCancelModal(false)} />
+          <div className="glass-card max-w-xl w-full p-10 rounded-[3rem] shadow-2xl relative animate-fade-in-up border border-white/20 bg-white/95">
+             <div className="flex items-center gap-4 mb-8">
+               <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/10">
+                 <XCircle size={28} />
+               </div>
+               <div>
+                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">Cancel Session</h2>
+                 <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Refunding for {currentBooking?.counsellor}</p>
+               </div>
+             </div>
+
+             <div className="space-y-8">
+                {/* Refund Inquiry Policy Box */}
+                <div className={`p-6 rounded-3xl border ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"}`}>
+                   <div className="flex items-start gap-4">
+                     {checkIsRefundable(currentBooking?.date, currentBooking?.time) ? (
+                        <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-1" />
+                     ) : (
+                        <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-1" />
+                     )}
+                     <div className="space-y-2">
+                        <h4 className={`text-lg font-black ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "text-emerald-900" : "text-rose-900"}`}>
+                          {checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "Full Refund Eligible" : "Non-Refundable Window"}
+                        </h4>
+                        <p className={`text-xs font-medium leading-relaxed ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "text-emerald-700" : "text-rose-700"}`}>
+                          {checkIsRefundable(currentBooking?.date, currentBooking?.time) 
+                            ? "Since you are cancelling more than 2 hours in advance, you will receive a 100% refund (Rs. 3000) to your account." 
+                            : "Cancellations made within 2 hours of the session start time are not eligible for a refund per university policy."}
+                        </p>
+                     </div>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Why are you cancelling? (Optional)</label>
+                  <textarea 
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="e.g., Change of plans, academic conflict..."
+                    className="w-full bg-slate-100 border-none text-slate-900 text-sm font-bold rounded-3xl focus:ring-2 focus:ring-rose-500 block p-5 h-32 resize-none shadow-inner"
+                  />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-2 gap-4 mt-12 bg-slate-50 p-4 rounded-[2.5rem]">
+               <button 
+                 onClick={() => { setShowCancelModal(false); setCurrentBooking(null); }}
+                 className="py-5 rounded-[2rem] bg-white text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all border border-slate-100"
+               >
+                 Go Back
+               </button>
+               <button 
+                 onClick={handleConfirmCancel}
+                 className="py-5 rounded-[2rem] bg-rose-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-rose-700 transition-all shadow-xl shadow-rose-600/20"
+               >
+                 Confirm Cancellation
                </button>
              </div>
           </div>
@@ -229,9 +313,17 @@ const StudentDashboard = () => {
                               {app.status}
                             </span>
                             {app.status === "Cancelled" && (
-                              <span className="text-[9px] font-black uppercase tracking-tighter text-slate-300">
-                                {app.refundStatus === "Eligible" ? "✓ Fully Refunded" : "✗ Non-Refundable"}
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                  app.refundStatus === "Processing" ? "bg-amber-50 text-amber-600 border border-amber-100" :
+                                  app.refundStatus === "Completed" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
+                                  "bg-slate-50 text-slate-400 border border-slate-100"
+                                }`}>
+                                  {app.refundStatus === "Processing" ? "Refund In Progress" : 
+                                   app.refundStatus === "Ineligible" ? "Non-Refundable" : 
+                                   app.refundStatus === "Completed" ? "Refund Verified" : "Cancelled"}
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -271,7 +363,7 @@ const StudentDashboard = () => {
                           
                           {(app.status === "Pending" || app.status === "Confirmed") && (
                             <button 
-                              onClick={() => cancelBooking(app.id)}
+                              onClick={() => handleOpenCancel(app)}
                               disabled={!isRefundable && app.status === "Confirmed"}
                               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
                                 !isRefundable && app.status === "Confirmed" 

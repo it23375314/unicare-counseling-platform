@@ -116,11 +116,13 @@ export const BookingProvider = ({ children }) => {
     const b = bookings.find(x => x.id === bookingId);
     if (!b) return;
     const isRefundable = checkIsRefundable(b.date, b.time);
+    const isPaid = b.paymentStatus === "Paid";
 
     await syncBookingUpdate(bookingId, { 
       status: "Cancelled", 
-      paymentStatus: isRefundable ? "Refunded" : b.paymentStatus 
-    }, isRefundable ? "✅ Refund processed. Session cancelled." : "❌ No refund (< 2hrs). Session cancelled.");
+      refundStatus: isPaid ? (isRefundable ? "Processing" : "Ineligible") : "None",
+      paymentStatus: isPaid ? (isRefundable ? "Refund Processing" : b.paymentStatus) : b.paymentStatus 
+    }, isPaid && isRefundable ? "✅ Refund initiated. Session cancelled." : "Session cancelled successfully.");
   };
 
   const rescheduleBooking = async (bookingId, newDate, newTime) => {
