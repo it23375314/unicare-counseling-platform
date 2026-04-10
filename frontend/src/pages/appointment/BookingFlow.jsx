@@ -35,7 +35,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import bookingBg from "../../assets/booking_flow_bg.png";
 
 const BookingFlow = () => {
-  const { id } = useParams();
+  const { counsellorId } = useParams();
   const navigate = useNavigate();
   const { counsellors } = useCounsellorContext();
   const { addBooking, getAvailableSlots } = useBooking();
@@ -48,7 +48,7 @@ const BookingFlow = () => {
   const [studentEmail, setStudentEmail] = useState(user?.email || ""); 
   const [emergencyContact, setEmergencyContact] = useState(""); 
   const [reasonDescription, setReasonDescription] = useState(""); 
-  const [selectedCounsellorId, setSelectedCounsellorId] = useState(id || "");
+  const [selectedCounsellorId, setSelectedCounsellorId] = useState(counsellorId || "");
   const [sessionType, setSessionType] = useState("Individual");
   const [issueCategory, setIssueCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -204,10 +204,21 @@ const BookingFlow = () => {
                       <FormInput label="Contact Email" value={studentEmail} onChange={setStudentEmail} placeholder="yourname@university.com" icon={<Mail size={14} />} />
                     </div>
 
-                    <div className="space-y-8">
-                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2 flex items-center gap-2">
-                         <Award size={14} className="text-emerald-400" /> Professional Assignment
-                       </label>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2 flex items-center gap-2">
+                             <Stethoscope size={14} className="text-emerald-400" /> Select Specialty Expert
+                          </label>
+                          <PremiumExpertSelect 
+                            counsellors={counsellors} 
+                            selectedId={selectedCounsellorId} 
+                            onSelect={setSelectedCounsellorId} 
+                          />
+                        </div>
+
+                       <div className="space-y-8">
+                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2 flex items-center gap-2">
+                           <Award size={14} className="text-emerald-400" /> Professional Assignment Preview
+                         </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {counsellors.map(c => (
                           <ExpertCard 
@@ -574,5 +585,69 @@ const SummaryLine = ({ label, value }) => (
     <p className="text-sm font-black tracking-tight text-white/90">{value || "Pending Protocol..."}</p>
   </div>
 );
+
+const PremiumExpertSelect = ({ counsellors, selectedId, onSelect }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedCounsellor = counsellors.find(c => c.id === selectedId);
+
+  return (
+    <div className="relative z-50">
+      <button
+        type="button"
+        id="counsellor-dropdown-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] py-4 px-6 flex items-center justify-between text-sm font-bold text-slate-900 shadow-inner hover:bg-white transition-all focus:ring-4 focus:ring-emerald-400/10"
+      >
+        <div className="flex items-center gap-4">
+          {selectedCounsellor ? (
+            <>
+              <img src={selectedCounsellor.image} className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm" alt="" />
+              <div className="text-left">
+                <p className="text-sm font-black tracking-tight">{selectedCounsellor.name}</p>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{selectedCounsellor.specialization}</p>
+              </div>
+            </>
+          ) : (
+            <span className="text-slate-300">Choose your wellness expert...</span>
+          )}
+        </div>
+        <ChevronRight className={`transition-transform duration-500 text-slate-300 ${isOpen ? "rotate-[-90deg]" : "rotate-90"}`} size={20} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-[70] p-3 space-y-1"
+            >
+              {counsellors.map(c => (
+                <button
+                  key={c.id}
+                  id={`counsellor-option-${c.id}`}
+                  onClick={() => {
+                    onSelect(c.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-slate-50 transition-all group ${selectedId === c.id ? "bg-emerald-50 border border-emerald-100" : "border border-transparent"}`}
+                >
+                  <img src={c.image} className="w-14 h-14 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform" alt="" />
+                  <div className="text-left">
+                    <p className={`text-sm font-black tracking-tight ${selectedId === c.id ? "text-emerald-900" : "text-slate-900"}`}>{c.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.specialization}</p>
+                  </div>
+                  {selectedId === c.id && <CheckCircle2 className="ml-auto text-emerald-500" size={18} />}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default BookingFlow;

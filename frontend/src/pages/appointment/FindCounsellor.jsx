@@ -112,7 +112,7 @@ const FindCounsellor = () => {
               <div className="relative mb-8">
                 <div className="absolute inset-0 bg-blue-600/5 rounded-[2rem] group-hover:scale-105 transition-transform duration-700" />
                 <img 
-                  src={"https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop"} 
+                  src={counsellor.image || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop"} 
                   alt={counsellor.name} 
                   className="w-full h-72 rounded-[2rem] object-cover relative z-10 group-hover:-translate-y-3 transition-transform duration-700 shadow-lg"
                 />

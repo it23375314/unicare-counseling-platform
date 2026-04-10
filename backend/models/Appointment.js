@@ -74,6 +74,15 @@ const appointmentSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'Video Session'
+  },
+  refundStatus: {
+    type: String,
+    enum: ['None', 'Eligible', 'Not Eligible', 'Processing', 'Refunded'],
+    default: 'None'
+  },
+  cancelReason: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

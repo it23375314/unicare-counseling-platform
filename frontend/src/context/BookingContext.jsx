@@ -112,17 +112,36 @@ export const BookingProvider = ({ children }) => {
     await syncBookingUpdate(bookingId, { status: "Confirmed", paymentStatus: "Paid" }, "Payment Successful! Booking Confirmed.");
   };
 
-  const cancelBooking = async (bookingId) => {
-    const b = bookings.find(x => x.id === bookingId);
-    if (!b) return;
-    const isRefundable = checkIsRefundable(b.date, b.time);
-    const isPaid = b.paymentStatus === "Paid";
+  const cancelBooking = async (bookingId, reason = "") => {
+    try {
+      const response = await fetch(`${API_BASE}/${bookingId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: "Cancelled",
+          cancelReason: reason 
+        })
+      });
 
-    await syncBookingUpdate(bookingId, { 
-      status: "Cancelled", 
-      refundStatus: isPaid ? (isRefundable ? "Processing" : "Ineligible") : "None",
-      paymentStatus: isPaid ? (isRefundable ? "Refund Processing" : b.paymentStatus) : b.paymentStatus 
-    }, isPaid && isRefundable ? "✅ Refund initiated. Session cancelled." : "Session cancelled successfully.");
+      if (!response.ok) throw new Error("Cancellation failed");
+      
+      const resJson = await response.json();
+      const updated = resJson.data || resJson;
+      const normalized = normalizeBooking(updated);
+      
+      setBookings((prev) => prev.map((b) => (String(b.id) === String(bookingId) ? normalized : b)));
+      
+      const msg = resJson.refundEligible 
+        ? "✅ Refund initiated. Session cancelled." 
+        : "Session cancelled. (Non-refundable window)";
+      addToast(msg, resJson.refundEligible ? "success" : "warning");
+      
+      return normalized;
+    } catch (err) {
+      console.error("Cancellation Error:", err);
+      addToast(err.message, "error");
+      throw err;
+    }
   };
 
   const rescheduleBooking = async (bookingId, newDate, newTime) => {

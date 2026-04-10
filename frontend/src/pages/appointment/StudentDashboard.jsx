@@ -1,15 +1,31 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Calendar as CalendarIcon, Clock, Video, FileText, XCircle, AlertCircle, CheckCircle2, Edit, Save, ArrowRight, User, Sparkles, Heart, Activity } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Video, 
+  XCircle, 
+  AlertCircle, 
+  CheckCircle2, 
+  Edit, 
+  ArrowRight, 
+  Sparkles, 
+  Heart, 
+  Activity,
+  ChevronRight,
+  ShieldCheck,
+  Stethoscope,
+  Info
+} from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
 import FeedbackForm from "../../components/FeedbackForm";
 
 const regularSlots = ["09:00", "11:00", "13:00", "15:00"];
 
 const StudentDashboard = () => {
-  const { bookings, cancelBooking, rescheduleBooking, checkIsRefundable, getAvailableSlots } = useBooking();
+  const { bookings, cancelBooking, rescheduleBooking, getAvailableSlots } = useBooking();
   const [filter, setFilter] = useState("All"); 
-  
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [currentBooking, setCurrentBooking] = useState(null);
@@ -27,34 +43,10 @@ const StudentDashboard = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleOpenReschedule = (booking) => {
-    setCurrentBooking(booking);
-    setNewDate(booking.date);
-    setNewTime("");
-    setRescheduleError("");
-    setShowRescheduleModal(true);
-  };
-
-  const handleSaveReschedule = () => {
-    setRescheduleError("");
-    if (!newDate || !newTime) {
-      setRescheduleError("Please pick both a valid date and time.");
-      return;
-    }
-    try {
-      rescheduleBooking(currentBooking.id, newDate, newTime);
-      setShowRescheduleModal(false);
-      setCurrentBooking(null);
-    } catch (err) {
-      setRescheduleError(err.message);
-    }
-  };
-
   const handleOpenCancel = (booking) => {
+    if (!window.confirm("Are you sure you want to cancel this session?")) return;
     if (booking.paymentStatus !== "Paid") {
-      if (window.confirm("Are you sure you want to cancel this session?")) {
-        cancelBooking(booking.id);
-      }
+      cancelBooking(booking.id);
       return;
     }
     setCurrentBooking(booking);
@@ -63,356 +55,303 @@ const StudentDashboard = () => {
   };
 
   const handleConfirmCancel = () => {
-    cancelBooking(currentBooking.id);
-    setShowCancelModal(false);
-    setCurrentBooking(null);
+    if (window.confirm("Are you absolutely sure you want to cancel this session? This action cannot be undone.")) {
+      cancelBooking(currentBooking.id, cancelReason);
+      setShowCancelModal(false);
+      setCurrentBooking(null);
+    }
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-32">
-      {/* Reschedule Modal */}
-      {showRescheduleModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowRescheduleModal(false)} />
-          <div className="glass-card max-w-2xl w-full p-10 rounded-[3rem] shadow-2xl relative animate-fade-in-up border border-white/20 bg-white/95 overflow-y-auto max-h-[90vh] no-scrollbar">
-             <div className="flex items-center gap-4 mb-10">
-               <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
-                 <Edit size={28} />
-               </div>
-               <div>
-                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">Modify Session</h2>
-                 <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Reschedule with {currentBooking?.counsellor}</p>
-               </div>
-             </div>
-
-             {rescheduleError && (
-               <div className="mb-8 p-5 bg-rose-50 text-rose-700 flex items-center gap-4 rounded-2xl border border-rose-100 animate-slide-up">
-                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                 <p className="font-black text-[10px] uppercase tracking-widest">{rescheduleError}</p>
-               </div>
-             )}
-
-             <div className="space-y-10">
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Choose New Date</label>
-                  <input 
-                    type="date" 
-                    value={newDate}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={(e) => { setNewDate(e.target.value); setNewTime(""); }}
-                    className="w-full bg-slate-100 border-none text-slate-900 text-sm font-black rounded-3xl focus:ring-2 focus:ring-indigo-500 block p-5 shadow-inner cursor-pointer transition-all"
-                  />
+    <div className="bg-[#FBFCFE] min-h-screen pb-32 font-sans selection:bg-blue-100 selection:text-blue-900">
+      <AnimatePresence>
+        {/* Modern Cancellation Modal */}
+        {showCancelModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center px-6"
+          >
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl" onClick={() => setShowCancelModal(false)} />
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="bg-white max-w-xl w-full p-10 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] relative border border-white"
+            >
+              <div className="flex items-center gap-6 mb-10">
+                <div className="w-16 h-16 rounded-3xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-inner border border-rose-100/50">
+                  <XCircle size={32} strokeWidth={1.5} />
                 </div>
+                <div>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Confirm Cancellation</h2>
+                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest leading-none">Session with {currentBooking?.counsellor}</p>
+                </div>
+              </div>
 
-                {newDate && (
-                  <div className="space-y-4 animate-fade-in">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Available Slots on {newDate}</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {getAvailableSlots(currentBooking?.counsellor, newDate, regularSlots).map((slot, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => !slot.disabled && setNewTime(slot.time)}
-                          disabled={slot.disabled}
-                          className={`py-4 rounded-2xl font-black text-xs transition-all duration-300 border ${
-                            slot.disabled 
-                              ? "bg-slate-50 text-slate-200 border-slate-50 cursor-not-allowed line-through" 
-                              : newTime === slot.time
-                                ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-600/20 scale-102"
-                                : "bg-white text-slate-600 border-slate-100 hover:border-indigo-400 hover:text-indigo-600 shadow-sm"
-                          }`}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
+              <div className="space-y-8">
+                <div className="p-8 rounded-[2rem] bg-rose-50/50 border border-rose-100 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <Info size={120} />
+                  </div>
+                  <div className="relative z-10 flex gap-5">
+                    <AlertCircle className="w-8 h-8 text-rose-600 shrink-0" />
+                    <div className="space-y-3">
+                      <h4 className="text-lg font-black text-rose-900 leading-none">Refund Evaluation</h4>
+                      <p className="text-sm font-medium text-rose-700/80 leading-relaxed">
+                        Per University Policy, cancellations made within 2 hours of the start time are not eligible for a refund. 
+                        <strong> If this is an emergency, please contact the student wellness center after cancelling.</strong>
+                      </p>
                     </div>
                   </div>
-                )}
-             </div>
-
-             <div className="grid grid-cols-2 gap-4 mt-12 bg-slate-50 p-4 rounded-[2.5rem]">
-               <button 
-                 onClick={() => { setShowRescheduleModal(false); setCurrentBooking(null); }}
-                 className="py-5 rounded-[2rem] bg-white text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all border border-slate-100"
-               >
-                 Go Back
-               </button>
-               <button 
-                 onClick={handleSaveReschedule}
-                 className="py-5 rounded-[2rem] bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/20"
-               >
-                 Save Update
-               </button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cancellation & Refund Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowCancelModal(false)} />
-          <div className="glass-card max-w-xl w-full p-10 rounded-[3rem] shadow-2xl relative animate-fade-in-up border border-white/20 bg-white/95">
-             <div className="flex items-center gap-4 mb-8">
-               <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/10">
-                 <XCircle size={28} />
-               </div>
-               <div>
-                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">Cancel Session</h2>
-                 <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Refunding for {currentBooking?.counsellor}</p>
-               </div>
-             </div>
-
-             <div className="space-y-8">
-                {/* Refund Inquiry Policy Box */}
-                <div className={`p-6 rounded-3xl border ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "bg-emerald-50 border-emerald-100" : "bg-rose-50 border-rose-100"}`}>
-                   <div className="flex items-start gap-4">
-                     {checkIsRefundable(currentBooking?.date, currentBooking?.time) ? (
-                        <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-1" />
-                     ) : (
-                        <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-1" />
-                     )}
-                     <div className="space-y-2">
-                        <h4 className={`text-lg font-black ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "text-emerald-900" : "text-rose-900"}`}>
-                          {checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "Full Refund Eligible" : "Non-Refundable Window"}
-                        </h4>
-                        <p className={`text-xs font-medium leading-relaxed ${checkIsRefundable(currentBooking?.date, currentBooking?.time) ? "text-emerald-700" : "text-rose-700"}`}>
-                          {checkIsRefundable(currentBooking?.date, currentBooking?.time) 
-                            ? "Since you are cancelling more than 2 hours in advance, you will receive a 100% refund (Rs. 3000) to your account." 
-                            : "Cancellations made within 2 hours of the session start time are not eligible for a refund per university policy."}
-                        </p>
-                     </div>
-                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Why are you cancelling? (Optional)</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 ml-1 border-l-2 border-slate-200">Objective Modification Reason</label>
                   <textarea 
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="e.g., Change of plans, academic conflict..."
-                    className="w-full bg-slate-100 border-none text-slate-900 text-sm font-bold rounded-3xl focus:ring-2 focus:ring-rose-500 block p-5 h-32 resize-none shadow-inner"
+                    placeholder="Briefly describe the reason for clinical coordination change..."
+                    className="w-full bg-slate-50 border-2 border-transparent focus:border-rose-500/20 focus:bg-white text-slate-900 text-sm font-bold rounded-3xl block p-6 h-32 resize-none shadow-sm transition-all"
                   />
                 </div>
-             </div>
-
-             <div className="grid grid-cols-2 gap-4 mt-12 bg-slate-50 p-4 rounded-[2.5rem]">
-               <button 
-                 onClick={() => { setShowCancelModal(false); setCurrentBooking(null); }}
-                 className="py-5 rounded-[2rem] bg-white text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-all border border-slate-100"
-               >
-                 Go Back
-               </button>
-               <button 
-                 onClick={handleConfirmCancel}
-                 className="py-5 rounded-[2rem] bg-rose-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-rose-700 transition-all shadow-xl shadow-rose-600/20"
-               >
-                 Confirm Cancellation
-               </button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dynamic Hero Header */}
-      <div className="bg-white border-b border-slate-200 pt-32 pb-24 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px] -mr-64 -mt-64" />
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
-            <div className="space-y-6 animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                <Sparkles size={12} /> Student Dashboard
               </div>
-              <h1 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-none italic">
-                Welcome back, <span className="text-blue-600 not-italic">Alex.</span>
-              </h1>
-              <p className="text-lg text-slate-500 font-medium max-w-xl">
-                Ready to continue your wellness journey? Your history and upcoming sessions are organized right here.
-              </p>
-            </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 animate-fade-in-up delay-100">
-              <StatCard icon={<CalendarIcon size={18} />} label="Sessions" value={bookings.length} />
-              <StatCard icon={<Heart size={18} className="text-rose-500" />} label="Mood Avg" value="Good" />
-              <StatCard icon={<Activity size={18} className="text-emerald-500" />} label="Active" value={bookings.filter(b => b.status === "Confirmed").length} />
-            </div>
+              <div className="grid grid-cols-2 gap-4 mt-12">
+                <button 
+                  onClick={() => setShowCancelModal(false)}
+                  className="py-6 rounded-3xl bg-slate-50 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 transition-all active:scale-95"
+                >
+                  Return to Dashboard
+                </button>
+                <button 
+                  onClick={handleConfirmCancel}
+                  className="py-6 rounded-3xl bg-rose-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-rose-700 transition-all shadow-xl shadow-rose-600/30 active:scale-95"
+                >
+                  Verify Cancellation
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Hero Section */}
+      <div className="bg-[#0F172A] relative pt-32 pb-32 overflow-hidden">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-blue-600/20 rounded-full blur-[160px] -ml-96 -mt-96 animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-emerald-600/10 rounded-full blur-[140px] -mr-64 -mb-64" />
+        
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-16">
+            <motion.div 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="max-w-2xl space-y-8"
+            >
+              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <ShieldCheck size={16} className="text-blue-400" />
+                <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">Clinical Portal Active</span>
+              </div>
+              
+              <h1 className="text-6xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] italic">
+                Wellness <span className="text-blue-500 not-italic">Vault.</span>
+              </h1>
+              
+              <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-lg">
+                Your journey to mental clarity is tracked here. Access your clinical timeline, coordinate sessions, and review your path.
+              </p>
+
+              <div className="flex items-center gap-8 pt-4">
+                <div className="flex -space-x-4">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="w-12 h-12 rounded-2xl border-4 border-[#0F172A] bg-slate-800 overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?u=${i*12}`} alt="User" />
+                    </div>
+                  ))}
+                  <div className="w-12 h-12 rounded-2xl border-4 border-[#0F172A] bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">+24</div>
+                </div>
+                <div className="h-10 w-px bg-white/10" />
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Joined by <span className="text-white">1,240 Students</span></p>
+              </div>
+            </motion.div>
+
+            {/* Live Status Cards */}
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-2 gap-4 w-full lg:w-auto"
+            >
+              <MetricBox icon={<Activity className="text-emerald-400" />} label="Engagement" value="High" />
+              <MetricBox icon={<CalendarIcon className="text-blue-400" />} label="Timeline" value={bookings.length} />
+              <MetricBox icon={<Heart className="text-rose-400" />} label="Completed" value={bookings.filter(b => b.status === "Completed").length} />
+              <MetricBox icon={<Stethoscope className="text-indigo-400" />} label="Experts" value="3" />
+            </motion.div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
-        {/* Main Feed */}
-        <div className="lg:col-span-8 space-y-12">
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-[-64px] relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          <section className="glass-card p-10 rounded-[2.5rem] animate-fade-in-up delay-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-6 border-b border-slate-50 pb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-xl">
-                  <Clock size={24} />
+          {/* Timeline Feed */}
+          <div className="lg:col-span-8 space-y-12">
+            <div className="bg-white p-10 rounded-[3rem] shadow-[0_12px_24px_-8px_rgba(0,0,0,0.05)] border border-slate-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 pb-8 border-b border-slate-50">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 rounded-3xl bg-blue-600 text-white flex items-center justify-center shadow-xl shadow-blue-600/20">
+                    <Clock size={28} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Session Timeline</h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chronological clinical tracking</p>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Timeline</h2>
-              </div>
 
-              <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar">
-                {["All", "Pending", "Confirmed", "Cancelled"].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                      filter === f ? "bg-white shadow-lg shadow-slate-200 text-blue-600 border border-slate-100" : "text-slate-400 hover:text-slate-600"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {filteredBookings.length === 0 ? (
-              <div className="text-center py-20 space-y-4">
-                <CalendarIcon className="w-16 h-16 text-slate-100 mx-auto" />
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No matching sessions found</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {filteredBookings.map((app, idx) => {
-                  const isRefundable = checkIsRefundable(app.date, app.time);
-
-                  return (
-                    <div 
-                      key={app.id} 
-                      className="group bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-500 relative overflow-hidden flex flex-col md:flex-row gap-8"
+                {/* Animated Pills Filter */}
+                <div className="flex p-1.5 bg-slate-50 rounded-2xl border border-slate-100/50">
+                  {["All", "Confirmed", "Pending", "Cancelled"].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`relative px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        filter === f ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                      }`}
                     >
-                      <div className={`absolute top-0 left-0 w-2 h-full transition-all duration-500 ${
-                        app.status === "Confirmed" ? "bg-emerald-500" : 
-                        app.status === "Pending" ? "bg-blue-400" : "bg-slate-300"
-                      }`} />
+                      {filter === f && (
+                        <motion.div layoutId="pill-bg" className="absolute inset-0 bg-white rounded-xl shadow-sm border border-slate-100" />
+                      )}
+                      <span className="relative z-10">{f}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                      <div className="shrink-0 relative">
-                        <div className="absolute inset-0 bg-blue-600/10 rounded-2xl scale-110 group-hover:scale-125 transition-transform duration-500" />
-                        <img 
-                          src={app.counsellorImage} 
-                          alt={app.counsellor} 
-                          className="w-24 h-24 rounded-2xl object-cover relative z-10 border-2 border-white shadow-lg" 
-                        />
-                      </div>
+              {filteredBookings.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-32 space-y-6"
+                >
+                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
+                    <CalendarIcon size={48} strokeWidth={1} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xl font-black text-slate-900 leading-none">The vault is empty</p>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">No matching coordination records found</p>
+                  </div>
+                  <Link to="/appointment" className="inline-flex items-center gap-2 text-blue-600 font-black uppercase tracking-widest text-[10px] hover:gap-3 transition-all pt-4">
+                    Book Your Next Session <ArrowRight size={14} />
+                  </Link>
+                </motion.div>
+              ) : (
+                <div className="space-y-8">
+                  {filteredBookings.map((app, idx) => (
+                    <motion.div 
+                      layout
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      key={app.id}
+                      className="group p-8 rounded-[2.5rem] bg-white border border-slate-100 hover:border-blue-200 hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.06)] transition-all duration-500 relative"
+                    >
+                      <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <div className="relative shrink-0">
+                          <img 
+                            src={app.counsellorImage} 
+                            alt={app.counsellor} 
+                            className="w-28 h-28 rounded-3xl object-cover shadow-lg border-4 border-white" 
+                          />
+                          <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-sm ${
+                            app.status === "Confirmed" ? "bg-emerald-500" : "bg-blue-400"
+                          }`} />
+                        </div>
 
-                      <div className="flex-grow space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                          <div className="space-y-1">
-                            <h3 className="text-xl font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{app.counsellor}</h3>
-                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{app.specialty}</p>
-                          </div>
-                          
-                          <div className="flex flex-col items-end gap-2 shrink-0">
-                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-sm ${
-                              app.status === "Confirmed" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                              app.status === "Pending" ? "bg-blue-50 text-blue-600 border border-blue-100" : 
-                              "bg-slate-50 text-slate-400 border border-slate-100"
-                            }`}>
-                              {app.status}
-                            </span>
-                            {app.status === "Cancelled" && (
-                              <div className="flex items-center gap-1.5">
-                                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                  app.refundStatus === "Processing" ? "bg-amber-50 text-amber-600 border border-amber-100" :
-                                  app.refundStatus === "Completed" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
-                                  "bg-slate-50 text-slate-400 border border-slate-100"
-                                }`}>
-                                  {app.refundStatus === "Processing" ? "Refund In Progress" : 
-                                   app.refundStatus === "Ineligible" ? "Non-Refundable" : 
-                                   app.refundStatus === "Completed" ? "Refund Verified" : "Cancelled"}
-                                </span>
+                        <div className="flex-grow space-y-5">
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                            <div>
+                              <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors uppercase leading-none mb-2">{app.counsellor}</h3>
+                              <p className="text-[10px] font-black text-blue-500 bg-blue-50/50 inline-block px-3 py-1 rounded-lg uppercase tracking-widest">{app.specialty || "Counselling Expert"}</p>
+                            </div>
+                            
+                            <div className="flex flex-col items-end gap-2">
+                              <StatusBadge status={app.status} refund={app.refundStatus} />
+                              <div className="flex items-center gap-1.5 text-slate-400 font-black text-[9px] uppercase tracking-widest">
+                                <Sparkles size={10} /> Certified Expertise
                               </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-3">
+                            <MetaInfo icon={<CalendarIcon size={12} />} text={app.date} />
+                            <MetaInfo icon={<Clock size={12} />} text={app.time} />
+                            <MetaInfo icon={<Video size={12} />} text={app.type || "One-to-One"} />
+                          </div>
+
+                          <div className="pt-4 flex flex-wrap gap-4 border-t border-slate-50">
+                            {app.status === "Confirmed" ? (
+                              <button className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 shadow-xl shadow-slate-900/10 transition-all active:scale-95">
+                                <Video size={16} /> Enter Clinical Suite
+                              </button>
+                            ) : app.status === "Pending" ? (
+                              <Link to="/appointment/payment" className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all active:scale-95">
+                                Complete Final Enrollment
+                              </Link>
+                            ) : null}
+
+                            {app.status !== "Cancelled" && (
+                              <button 
+                                onClick={() => handleOpenCancel(app)}
+                                className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white border border-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-rose-600 hover:border-rose-100 transition-all active:scale-95"
+                              >
+                                <XCircle size={16} /> Opt-Out
+                              </button>
                             )}
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-4 items-center">
-                          <SessionInfo icon={<CalendarIcon size={14} />} text={app.date} />
-                          <SessionInfo icon={<Clock size={14} />} text={app.time} />
-                          <SessionInfo icon={<Video size={14} />} text={app.type} />
-                        </div>
-
-                        <div className="flex flex-wrap gap-3 pt-2">
-                          {app.status === "Pending" && (
-                            <Link to="/appointment/payment" state={{ bookingId: app.id, counsellor: { name: app.counsellor, image: app.counsellorImage, specialty: app.specialty }, date: app.date, time: app.time, price: app.price }} className="btn-primary-sm">
-                              Pay Now
-                            </Link>
-                          )}
-
-                          {app.status === "Confirmed" && (
-                            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20">
-                              <Video className="w-4 h-4" /> Start Session
-                            </button>
-                          )}
-
-                          {app.status === "Pending" && (
-                            <button 
-                              onClick={() => handleOpenReschedule(app)}
-                              disabled={!isRefundable}
-                              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
-                                !isRefundable 
-                                  ? "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" 
-                                  : "bg-white border border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600"
-                              }`}
-                            >
-                              <Edit className="w-4 h-4" /> Reschedule
-                            </button>
-                          )}
-                          
-                          {(app.status === "Pending" || app.status === "Confirmed") && (
-                            <button 
-                              onClick={() => handleOpenCancel(app)}
-                              disabled={!isRefundable && app.status === "Confirmed"}
-                              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition shadow-sm ${
-                                !isRefundable && app.status === "Confirmed" 
-                                  ? "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed" 
-                                  : "bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200"
-                              }`}
-                            >
-                              <XCircle className="w-4 h-4" /> Cancel
-                            </button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* Sidebar Insights */}
-        <div className="lg:col-span-4 space-y-8">
-          
-          <div className="glass-card p-10 rounded-[3rem] bg-slate-900 text-white shadow-2xl shadow-slate-900/40 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl -mr-24 -mt-24 transition-transform duration-700 group-hover:scale-110" />
-            <h3 className="text-xl font-black mb-4 relative z-10">How have <br /> you been?</h3>
-            <p className="text-slate-400 text-sm font-medium mb-10 relative z-10 leading-relaxed">Regular mood logging unlocks tailored wellness insights in your portal.</p>
-            <button className="w-full py-5 rounded-[2rem] bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-slate-900 transition-all duration-500 shadow-xl shadow-blue-600/20 relative z-10 group/btn">
-              Log Your Session <ArrowRight className="inline-block ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-            </button>
-          </div>
-
-          <div className="glass-card p-10 rounded-[3rem] space-y-10 border border-white shadow-2xl shadow-blue-900/5">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <Sparkles size={20} className="text-blue-600" /> Resource Hub
-            </h3>
-            <div className="space-y-6">
-              <ResourceItem title="Managing Academic Stress" category="Reading" min="5" />
-              <ResourceItem title="Sleep Hygiene Guide" category="Audio" min="12" />
-              <ResourceItem title="Building Relationships" category="Session" min="45" />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
-            <button className="w-full text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline pt-4 transition-all">
-              Explore Academic Library
-            </button>
+          </div>
+
+          {/* Sidebar Insights */}
+          <div className="lg:col-span-4 space-y-12">
+            <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 space-y-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Heart size={24} />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none">Wellness Hub</h3>
+              </div>
+
+              <div className="space-y-8">
+                <HubItem icon={<Stethoscope size={18} />} title="Session Notes" desc="Clinical audit trails from your sessions." />
+                <HubItem icon={<CalendarIcon size={18} />} title="Wellness History" desc="Historical coordination timeline." />
+                <HubItem icon={<Sparkles size={18} />} title="Risk Assessment" desc="Automated wellness verification status." />
+              </div>
+
+              <button className="w-full py-5 rounded-3xl bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 font-black uppercase tracking-widest text-[10px] transition-all">
+                Access Medical Library
+              </button>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-10 rounded-[3rem] text-white shadow-2xl shadow-blue-600/30 overflow-hidden relative group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+              <h3 className="text-2xl font-black tracking-tight leading-none mb-4 relative z-10 uppercase italic">Coordinate Next.</h3>
+              <p className="text-white/60 text-sm font-bold mb-10 relative z-10 leading-relaxed uppercase tracking-widest">The path to wellness requires consistent clinical coordination.</p>
+              <Link to="/appointment" className="w-full py-6 rounded-3xl bg-white text-blue-600 text-center block font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-slate-900 hover:text-white transition-all duration-500 active:scale-95">
+                New Enrollment <ArrowRight className="inline-block ml-2 w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
         </div>
-
       </div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-12">
@@ -423,36 +362,64 @@ const StudentDashboard = () => {
   );
 };
 
-const StatCard = ({ icon, label, value }) => (
-  <div className="glass-card px-6 py-5 rounded-3xl border border-slate-100 flex items-center gap-4 group hover:bg-slate-900 hover:text-white transition-all duration-500">
-    <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+const MetricBox = ({ icon, label, value }) => (
+  <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md hover:bg-white/10 transition-all duration-500">
+    <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center mb-4 border border-white/10 shadow-inner">
       {icon}
     </div>
-    <div>
-      <p className="text-2xl font-black leading-none mb-1 tracking-tight">{value}</p>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-500">{label}</p>
+    <div className="space-y-1">
+      <p className="text-3xl font-black text-white tracking-tighter leading-none italic">{value}</p>
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{label}</p>
     </div>
   </div>
 );
 
-const SessionInfo = ({ icon, text }) => (
-  <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 truncate bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl uppercase tracking-widest">
-    <span className="text-blue-500">{icon}</span>
+const MetaInfo = ({ icon, text }) => (
+  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">
+    <span className="text-blue-600">{icon}</span>
     {text}
   </div>
 );
 
-const ResourceItem = ({ title, category, min }) => (
-  <div className="group cursor-pointer">
-    <div className="flex justify-between items-start mb-1">
-      <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{title}</h4>
-      <ArrowRight size={14} className="text-slate-300 group-hover:text-blue-600 transition-all group-hover:translate-x-1" />
+const HubItem = ({ icon, title, desc }) => (
+  <div className="group cursor-pointer flex gap-5">
+    <div className="shrink-0 w-10 p-2 text-slate-300 group-hover:text-blue-600 transition-colors">
+      {icon}
     </div>
-    <div className="flex gap-3">
-      <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{category}</span>
-      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{min} Min</span>
+    <div className="space-y-1">
+      <h4 className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase leading-none">{title}</h4>
+      <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{desc}</p>
     </div>
   </div>
 );
+
+const StatusBadge = ({ status, refund }) => {
+  const isCancelled = status === "Cancelled";
+  
+  if (isCancelled) {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <span className="px-4 py-1.5 rounded-lg bg-slate-50 text-slate-400 border border-slate-100 text-[10px] font-black uppercase tracking-widest">Cancelled</span>
+        {refund !== "None" && (
+          <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${
+            refund === "Eligible" || refund === "Processing" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-500"
+          }`}>
+             {refund === "Eligible" ? "Full Refund Eligible" : 
+              refund === "Processing" ? "Refund In Progress" :
+              refund === "Refunded" ? "Refund Verified" : "Non-Refundable"}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <span className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm ${
+      status === "Confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+    }`}>
+      {status}
+    </span>
+  );
+};
 
 export default StudentDashboard;
