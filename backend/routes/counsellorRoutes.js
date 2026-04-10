@@ -5,7 +5,10 @@ const {
   createCounsellor, 
   updateCounsellor, 
   deleteCounsellor, 
-  updateAvailability 
+  updateAvailability,
+  getMyProfile,
+  updateMyProfile,
+  uploadProfileImage
 } = require('../controllers/counsellorController');
 
 const router = express.Router();
@@ -18,6 +21,16 @@ const router = express.Router();
 router.route('/')
     .get(getAllCounsellors)
     .post(createCounsellor);
+
+/**
+ * Own Profile Management (for logged-in counsellor)
+ * GET /profile/me    - Fetch current counsellor profile
+ * PUT /profile/me    - Update current counsellor profile
+ * POST /profile/upload - Upload profile image
+ */
+router.get('/profile/me', getMyProfile);
+router.put('/profile/me', updateMyProfile);
+router.post('/profile/upload', uploadProfileImage);
 
 /**
  * Individual Expert Management
@@ -35,5 +48,6 @@ router.route('/:id')
  * PATCH /:id/availability - Synchronize expert session slots
  */
 router.patch('/:id/availability', updateAvailability);
+
 
 module.exports = router;

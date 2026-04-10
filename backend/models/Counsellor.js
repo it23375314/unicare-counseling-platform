@@ -7,12 +7,16 @@ const availabilitySchema = new mongoose.Schema({
 
 const counsellorSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  displayName: { type: String, default: "" },
   email: { type: String, required: true, unique: true },
+  phoneNumber: { type: String, default: "" },
   specialization: { type: String, required: true },
   experience: { type: String, required: true },
   bio: { type: String, default: "" },
-  image: { type: String, default: "" },
+  profileImage: { type: String, default: "" },
   price: { type: Number, default: 40 },
+  status: { type: String, enum: ['online', 'offline'], default: 'online' },
+  counsellingType: { type: String, enum: ['online', 'in-person', 'both'], default: 'both' },
   availability: [availabilitySchema]
 }, { 
   timestamps: true,

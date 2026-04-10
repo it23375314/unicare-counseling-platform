@@ -562,8 +562,21 @@ export default function CounsellorDashboard() {
   }
 
   return (
-    <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <div className={`min-h-screen pt-12 pb-24 relative transition-colors duration-500 ${activeTab !== "availability" ? "bg-gray-50/50" : ""}`}>
+
+      {/* Background image — only shown on Availability tab */}
+      {activeTab === "availability" && (
+        <>
+          <div
+            className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1600&auto=format&fit=crop')` }}
+          />
+          {/* Light white overlay for readability */}
+          <div className="fixed inset-0 z-10 bg-white/80 backdrop-blur-[1px]" />
+        </>
+      )}
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-20">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
         <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
 

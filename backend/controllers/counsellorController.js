@@ -1,4 +1,35 @@
 const Counsellor = require('../models/Counsellor');
+const User = require('../models/User');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// ─── Multer Configuration for Profile Pictures ────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/profiles';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `profile-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit per requirement
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|webp/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) return cb(null, true);
+    cb(new Error('Only images (jpeg, jpg, png, webp) are allowed'));
+  }
+}).single('image');
+
 
 /**
  * GET /api/counsellors
@@ -109,3 +140,81 @@ exports.updateAvailability = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+/**
+ * GET /api/counsellors/profile/me?email=...
+ * Fetch profile for the current logged-in counsellor
+ */
+exports.getMyProfile = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const counsellor = await Counsellor.findOne({ email });
+    if (!counsellor) return res.status(404).json({ success: false, message: 'Profile not found' });
+
+    res.status(200).json({ success: true, data: counsellor });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * PUT /api/counsellors/profile/me
+ * Update own profile details and sync with User model
+ */
+exports.updateMyProfile = async (req, res) => {
+  try {
+    const { currentEmail, ...updateData } = req.body;
+    if (!currentEmail) return res.status(400).json({ success: false, message: 'Current email is required for identification' });
+
+    // 1. Update User model (name/email sync)
+    const user = await User.findOne({ email: currentEmail });
+    if (user) {
+      if (updateData.name) user.name = updateData.name;
+      if (updateData.email) user.email = updateData.email;
+      await user.save();
+    }
+
+    // 2. Update Counsellor model
+    const counsellor = await Counsellor.findOneAndUpdate(
+      { email: currentEmail },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!counsellor) return res.status(404).json({ success: false, message: 'Counsellor profile not found' });
+
+    res.status(200).json({ success: true, data: counsellor, msg: 'Profile updated successfully' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * POST /api/counsellors/profile/upload
+ * Handle profile image upload
+ */
+exports.uploadProfileImage = (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ success: false, message: 'Email required to link image' });
+
+      const imagePath = `/uploads/profiles/${req.file.filename}`;
+      const counsellor = await Counsellor.findOneAndUpdate(
+        { email },
+        { profileImage: imagePath },
+        { new: true }
+      );
+
+      res.status(200).json({ success: true, data: counsellor, imagePath });
+    } catch (dbErr) {
+      res.status(500).json({ success: false, message: dbErr.message });
+    }
+  });
+};
+

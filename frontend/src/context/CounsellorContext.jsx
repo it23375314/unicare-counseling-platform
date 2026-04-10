@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const CounsellorContext = createContext();
-const API_URL = "http://localhost:5001/api";
+const API_URL = "/api";
 
 export const useCounsellorContext = () => useContext(CounsellorContext);
 
@@ -110,6 +110,60 @@ export const CounsellorProvider = ({ children }) => {
     return counsellors.find(c => c.email?.toLowerCase() === email.toLowerCase());
   };
 
+  const getMyProfile = async (email) => {
+    try {
+      const res = await fetch(`${API_URL}/counsellors/profile/me?email=${email}`);
+      const json = await res.json();
+      if (json.success) return json.data;
+      throw new Error(json.message);
+    } catch (e) {
+      console.error("Error fetching profile", e);
+      return null;
+    }
+  };
+
+  const updateMyProfile = async (currentEmail, data) => {
+    try {
+      const res = await fetch(`${API_URL}/counsellors/profile/me`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentEmail, ...data })
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      
+      // Update local context state
+      setCounsellors(prev => prev.map(c => c.email === currentEmail ? { ...c, ...json.data, id: json.data._id } : c));
+      addToast("Profile updated successfully!", "success");
+      return json.data;
+    } catch (e) {
+      addToast(e.message || "Error updating profile", "error");
+      throw e;
+    }
+  };
+
+  const uploadProfileImage = async (email, file) => {
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("image", file);
+
+    try {
+      const res = await fetch(`${API_URL}/counsellors/profile/upload`, {
+        method: "POST",
+        body: formData
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+
+      setCounsellors(prev => prev.map(c => c.email === email ? { ...c, profileImage: json.imagePath } : c));
+      addToast("Profile picture updated!", "success");
+      return json.imagePath;
+    } catch (e) {
+      addToast(e.message || "Error uploading image", "error");
+      throw e;
+    }
+  };
+
   return (
     <CounsellorContext.Provider
       value={{
@@ -120,6 +174,9 @@ export const CounsellorProvider = ({ children }) => {
         updateAvailability,
         getCounsellorById,
         getCounsellorByEmail,
+        getMyProfile,
+        updateMyProfile,
+        uploadProfileImage,
         fetchCounsellors
       }}
     >

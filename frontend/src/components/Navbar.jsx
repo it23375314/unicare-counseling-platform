@@ -111,6 +111,11 @@ const Navbar = () => {
                         </Link>
                       </>
                     )}
+                    {role === 'counsellor' && (
+                      <Link to="/counsellor/profile" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 text-slate-700 rounded-lg">
+                        👤 My Profile
+                      </Link>
+                    )}
                     <div className="h-px bg-slate-100 my-1" />
                     <button
                       onClick={handleLogout}

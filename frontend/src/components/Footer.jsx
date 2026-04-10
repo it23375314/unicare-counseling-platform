@@ -3,7 +3,7 @@ import { HeartPulse, Globe, Mail, Phone } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 border-t border-slate-800 pt-20 pb-10 overflow-hidden relative">
+    <footer className="bg-slate-900 border-t border-slate-800 pt-20 pb-10 overflow-hidden relative z-20">
       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-32 -mt-32" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -ml-32 -mb-32" />
 

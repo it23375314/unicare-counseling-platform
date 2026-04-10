@@ -29,6 +29,7 @@ import AppointmentProfile from './pages/counsellor/AppointmentProfile';
 import ChatUI from './pages/counsellor/ChatUI';
 import SavedAvailability from './pages/counsellor/SavedAvailability';
 import AppointmentHistory from './pages/counsellor/AppointmentHistory';
+import Profile from './pages/counsellor/Profile';
 
 // ─── Auth Pages (from Wellness module) ────────────────────────────────────────
 import Login from './pages/Login';
@@ -109,6 +110,11 @@ function App() {
                     <Route path="counsellor/appointments" element={
                       <ProtectedRoute allowedRoles={['counsellor']}>
                         <CounsellorDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="counsellor/profile" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <Profile />
                       </ProtectedRoute>
                     } />
                     <Route path="counsellor/appointment/:id" element={

@@ -92,6 +92,7 @@ export const AuthProvider = ({ children }) => {
     login,
     loginWithCredentials,
     logout,
+    updateUser: (newData) => setUser(prev => ({ ...prev, ...newData })),
     isAuthenticated: !!user,
   }), [user]);
 
