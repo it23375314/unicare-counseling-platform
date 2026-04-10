@@ -121,7 +121,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20 animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 pb-20 animate-fade-in">
 
       {/* Blue Gradient Header Strip */}
       <div className="h-48 bg-gradient-to-r from-blue-700 to-indigo-600 w-full" />

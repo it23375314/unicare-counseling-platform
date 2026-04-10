@@ -80,8 +80,17 @@ const SavedAvailability = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 pt-24 relative">
-      <div className="max-w-5xl mx-auto px-6">
+    <div className="min-h-screen pb-20 pt-24 relative">
+
+      {/* Background Image */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1600&auto=format&fit=crop')` }}
+      />
+      {/* Light white overlay for readability */}
+      <div className="fixed inset-0 z-10 bg-white/82 backdrop-blur-[1px]" />
+
+      <div className="max-w-5xl mx-auto px-6 relative z-20">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">

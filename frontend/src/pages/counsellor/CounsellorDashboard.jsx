@@ -576,6 +576,30 @@ export default function CounsellorDashboard() {
         </>
       )}
 
+      {/* Background image — only shown on Appointments tab */}
+      {activeTab === "appointments" && (
+        <>
+          <div
+            className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=1600&auto=format&fit=crop')` }}
+          />
+          {/* Light white overlay for readability */}
+          <div className="fixed inset-0 z-10 bg-white/80 backdrop-blur-[1px]" />
+        </>
+      )}
+
+      {/* Background image — only shown on Session Notes tab */}
+      {activeTab === "session notes" && (
+        <>
+          <div
+            className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1476234251651-f353703a034d?q=80&w=1600&auto=format&fit=crop')` }}
+          />
+          {/* Light white overlay for readability */}
+          <div className="fixed inset-0 z-10 bg-white/85 backdrop-blur-[1px]" />
+        </>
+      )}
+
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-20">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
         <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
