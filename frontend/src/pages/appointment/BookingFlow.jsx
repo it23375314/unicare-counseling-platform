@@ -112,8 +112,8 @@ const BookingFlow = () => {
       duration,
       notes,
       price: activeCounsellor.price || 3000,
-      status: isPaid ? "Confirmed" : "Pending",
-      paymentStatus: isPaid ? "Paid" : "Unpaid",
+      status: "Pending",
+      paymentStatus: "Unpaid",
       type: "Video Session"
     };
 

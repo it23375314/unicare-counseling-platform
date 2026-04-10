@@ -1,6 +1,6 @@
 const Appointment = require('../models/Appointment');
 const Counsellor = require('../models/Counsellor');
-const nodemailer = require('nodemailer');
+const { sendBookingConfirmation } = require('../utils/mailer');
 
 // Create a new appointment
 exports.createAppointment = async (req, res) => {
@@ -52,6 +52,7 @@ exports.createAppointment = async (req, res) => {
 
     const newAppointment = await appointment.save();
     console.log("✅ Appointment Created Successfully:", newAppointment._id);
+
     res.status(201).json({ success: true, data: newAppointment });
   } catch (err) {
     console.error("❌ CREATE Appointment Error:", err);
@@ -162,7 +163,6 @@ exports.updateStatus = async (req, res) => {
     // Trigger Confirmation Email only when newly marked as 'Paid'
     if (paymentStatus === 'Paid' && prevPaymentStatus !== 'Paid') {
         try {
-            const { sendBookingConfirmation } = require('../utils/mailer');
             await sendBookingConfirmation(appointment);
         } catch (emailErr) {
             console.error("⚠️ Confirmation Email Failed:", emailErr);
