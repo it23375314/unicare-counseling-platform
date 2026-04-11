@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CreditCard, CheckCircle, ShieldCheck, ArrowLeft, Download, ExternalLink, Receipt, Lock, ChevronRight, CheckCircle2, Phone, Sparkles, Mail, RefreshCw, Loader2, AlertCircle, Clock } from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Payment = () => {
   const location = useLocation();
@@ -56,6 +58,77 @@ const Payment = () => {
     }
   };
 
+  const handleDownloadReceipt = () => {
+    const doc = new jsPDF();
+    const timestamp = new Date().toLocaleString();
+    const transId = `UNI-${bookingId.substring(0, 10).toUpperCase()}`;
+
+    // Header & Branding
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59); // slate-900
+    doc.setFont("helvetica", "bold");
+    doc.text("UniCare", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.setFont("helvetica", "normal");
+    doc.text("Clinical Counseling & Wellness Platform", 14, 30);
+    
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(14, 35, 196, 35);
+
+    // Receipt Meta
+    doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.text("PAYMENT RECEIPT", 14, 50);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Transaction ID: ${transId}`, 14, 60);
+    doc.text(`Date & Time: ${timestamp}`, 14, 65);
+    doc.text(`Customer: ${studentName}`, 14, 70);
+
+    // Details Table
+    autoTable(doc, {
+      startY: 80,
+      head: [['Description', 'Expert', 'Schedule', 'Amount']],
+      body: [
+        [
+          'Clinical Consultation session',
+          counsellor.name,
+          `${date} @ ${time}`,
+          `Rs. ${price}.00`
+        ],
+        [
+          'Platform Access Fee',
+          'N/A',
+          'N/A',
+          'Rs. 200.00'
+        ]
+      ],
+      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { top: 80 },
+    });
+
+    // Total Section
+    // Use lastAutoTable.finalY instead of cursor.y for better stability across versions
+    const finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 15 : 150;
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL PAID: Rs. ${Number(price) + 200}.00`, 140, finalY);
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text("Thank you for choosing UniCare for your mental wellness journey.", 105, 280, { align: 'center' });
+    doc.text("This is a computer-generated receipt and requires no signature.", 105, 285, { align: 'center' });
+
+    doc.save(`UniCare_Receipt_${transId}.pdf`);
+  };
+
   if (!counsellor || !bookingId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 px-6">
@@ -98,7 +171,12 @@ const Payment = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10">
                <button onClick={() => navigate("/dashboard")} className="bg-slate-900 text-white px-8 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] hover:bg-black transition-all shadow-xl hover:scale-105 active:scale-95">Enter Portal <ChevronRight size={18} className="inline ml-2" /></button>
-               <button className="bg-white border-2 border-slate-100 text-slate-400 px-8 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] hover:border-slate-300 flex items-center justify-center gap-2"><Download size={18} /> Receipt</button>
+               <button 
+                 onClick={handleDownloadReceipt}
+                 className="bg-white border-2 border-slate-100 text-slate-400 px-8 py-5 rounded-[2rem] font-black uppercase tracking-widest text-[10px] hover:border-slate-300 flex items-center justify-center gap-2 hover:text-slate-900 transition-colors"
+               >
+                 <Download size={18} /> Receipt
+               </button>
             </div>
           </div>
         </motion.div>
@@ -147,7 +225,9 @@ const Payment = () => {
             <div className="glass-card p-10 rounded-[3.5rem] sticky top-32 border border-slate-100 shadow-2xl shadow-blue-900/5 space-y-10 bg-white">
               <div className="flex items-center justify-between border-b border-slate-100 pb-8"><h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Order Breakdown</h3><CheckCircle2 size={24} className="text-emerald-500" /></div>
               <div className="flex items-center gap-6 p-6 bg-slate-50/50 rounded-[2.5rem] border border-slate-100">
-                 <img src={counsellor.image} alt="" className="w-20 h-20 rounded-3xl object-cover shadow-lg border-2 border-white" />
+                 {counsellor.image && (
+                   <img src={counsellor.image} alt="" className="w-20 h-20 rounded-3xl object-cover shadow-lg border-2 border-white" />
+                 )}
                  <div><p className="text-xl font-black text-slate-900 tracking-tight">{counsellor.name}</p><p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{counsellor.specialization || "Expert Consultant"}</p></div>
               </div>
               <div className="space-y-5 px-4 font-black">

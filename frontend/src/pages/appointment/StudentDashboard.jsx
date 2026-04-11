@@ -20,8 +20,10 @@ import {
 } from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
 import FeedbackForm from "../../components/FeedbackForm";
+import PopMsg from "../../components/PopMsg";
 
 const regularSlots = ["09:00", "11:00", "13:00", "15:00"];
+const DEFAULT_COUNSELLOR_IMAGE = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop";
 
 const StudentDashboard = () => {
   const { bookings, cancelBooking, rescheduleBooking, getAvailableSlots } = useBooking();
@@ -34,6 +36,15 @@ const StudentDashboard = () => {
   const [rescheduleError, setRescheduleError] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
+  // Custom Modal State
+  const [popMsg, setPopMsg] = useState({ 
+    isOpen: false, 
+    title: "", 
+    message: "", 
+    onConfirm: null,
+    type: 'warning'
+  });
+
   const filteredBookings = [...bookings].reverse().filter(b => {
     if (filter === "All") return true;
     return b.status === filter;
@@ -44,26 +55,45 @@ const StudentDashboard = () => {
   }, []);
 
   const handleOpenCancel = (booking) => {
-    if (!window.confirm("Are you sure you want to cancel this session?")) return;
-    if (booking.paymentStatus !== "Paid") {
-      cancelBooking(booking.id);
-      return;
-    }
-    setCurrentBooking(booking);
-    setCancelReason("");
-    setShowCancelModal(true);
+    setPopMsg({
+      isOpen: true,
+      title: "Cancel Session?",
+      message: "Are you sure you want to cancel this clinical session? This action will be logged in your wellness timeline.",
+      type: 'warning',
+      onConfirm: () => {
+        setPopMsg(prev => ({ ...prev, isOpen: false }));
+        if (booking.paymentStatus !== "Paid") {
+          cancelBooking(booking.id);
+          return;
+        }
+        setCurrentBooking(booking);
+        setCancelReason("");
+        setShowCancelModal(true);
+      }
+    });
   };
 
   const handleConfirmCancel = () => {
-    if (window.confirm("Are you absolutely sure you want to cancel this session? This action cannot be undone.")) {
-      cancelBooking(currentBooking.id, cancelReason);
-      setShowCancelModal(false);
-      setCurrentBooking(null);
-    }
+    setPopMsg({
+      isOpen: true,
+      title: "Final Verification",
+      message: "Are you absolutely sure? Once cancelled, your slot will be immediately released to other students.",
+      type: 'warning',
+      onConfirm: () => {
+        setPopMsg(prev => ({ ...prev, isOpen: false }));
+        cancelBooking(currentBooking.id, cancelReason);
+        setShowCancelModal(false);
+        setCurrentBooking(null);
+      }
+    });
   };
 
   return (
     <div className="bg-[#FBFCFE] min-h-screen pb-32 font-sans selection:bg-blue-100 selection:text-blue-900">
+      <PopMsg 
+        {...popMsg} 
+        onClose={() => setPopMsg(prev => ({ ...prev, isOpen: false }))} 
+      />
       <AnimatePresence>
         {/* Modern Cancellation Modal */}
         {showCancelModal && (
@@ -261,9 +291,10 @@ const StudentDashboard = () => {
                       <div className="flex flex-col md:flex-row gap-8 items-start">
                         <div className="relative shrink-0">
                           <img 
-                            src={app.counsellorImage} 
+                            src={app.counsellorImage && app.counsellorImage.length > 10 ? app.counsellorImage : DEFAULT_COUNSELLOR_IMAGE} 
                             alt={app.counsellor} 
-                            className="w-28 h-28 rounded-3xl object-cover shadow-lg border-4 border-white" 
+                            className="w-28 h-28 rounded-3xl object-cover shadow-lg border-4 border-white"
+                            onError={(e) => { e.target.src = DEFAULT_COUNSELLOR_IMAGE }}
                           />
                           <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-sm ${
                             app.status === "Confirmed" ? "bg-emerald-500" : "bg-blue-400"
@@ -297,7 +328,19 @@ const StudentDashboard = () => {
                                 <Video size={16} /> Enter Clinical Suite
                               </button>
                             ) : app.status === "Pending" ? (
-                              <Link to="/appointment/payment" className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all active:scale-95">
+                              <Link 
+                                to="/appointment/payment" 
+                                state={{ 
+                                  bookingId: app.id, 
+                                  counsellor: { name: app.counsellor, image: app.counsellorImage },
+                                  studentName: app.studentName,
+                                  studentEmail: app.studentEmail,
+                                  date: app.date,
+                                  time: app.time,
+                                  price: app.price || 400 
+                                }}
+                                className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all active:scale-95"
+                              >
                                 Complete Final Enrollment
                               </Link>
                             ) : null}

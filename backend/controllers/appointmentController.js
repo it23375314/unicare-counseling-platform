@@ -76,9 +76,12 @@ exports.getStudentAppointments = async (req, res) => {
 // Get all appointments (Admin/Counsellor view)
 exports.getAllAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find()
+    const { email } = req.query;
+    const filter = email ? { studentEmail: email } : {};
+    
+    const appointments = await Appointment.find(filter)
       .sort({ date: -1, time: -1 });
-    console.log(`📋 Fetched all (${appointments.length}) appointments (Admin/Counsellor view)`);
+    console.log(`📋 Fetched (${appointments.length}) appointments ${email ? "for " + email : "(Universal view)"}`);
     res.json({ success: true, data: appointments });
   } catch (err) {
     console.error("❌ GET All Appointments Error:", err);

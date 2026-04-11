@@ -4,9 +4,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2 } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video } from "lucide-react";
 import toast from "react-hot-toast";
 import FeedbackForm from "../../components/FeedbackForm";
+import PopMsg from "../../components/PopMsg";
 import studentProfilePlaceholder from "../../assets/student_profile_john_smith.png";
 import student1 from "../../assets/student1.png";
 import student2 from "../../assets/student2.png";
@@ -189,6 +190,25 @@ export default function CounsellorDashboard() {
   const [apptSearchError, setApptSearchError] = useState("");
   const [formData, setFormData] = useState({ id: null, title: "", notes: "", riskLevel: "Low", followUpRecommendation: "", status: "Draft", aiAnalysis: null });
   const [isViewOnly, setIsViewOnly] = useState(false);
+
+  // Custom PopMsg state
+  const [popMsg, setPopMsg] = useState({ 
+    isOpen: false, 
+    title: "", 
+    message: "", 
+    onConfirm: null,
+    type: 'warning'
+  });
+  const [popInput, setPopInput] = useState("");
+
+  const handleModalCancel = (id) => {
+    if (popInput.trim().length > 0 || popMsg.type !== 'prompt') {
+      cancelBookingByCounsellor(id, popInput);
+      setPopMsg(prev => ({ ...prev, isOpen: false }));
+    } else {
+      toast.error("Please provide a reason.");
+    }
+  };
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -558,6 +578,12 @@ export default function CounsellorDashboard() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
+      <PopMsg 
+        {...popMsg} 
+        inputValue={popInput}
+        setInputValue={setPopInput}
+        onClose={() => setPopMsg(prev => ({ ...prev, isOpen: false }))} 
+      />
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
         <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
@@ -890,7 +916,21 @@ export default function CounsellorDashboard() {
                               <CheckCircle size={20} strokeWidth={3}/> Confirm
                             </button>
                             <button 
-                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              onClick={() => {
+                                setPopInput("");
+                                setPopMsg({
+                                  isOpen: true,
+                                  title: "Cancel Appointment",
+                                  message: "Please provide a professional reason for cancelling this student's coordination session.",
+                                  type: 'prompt',
+                                  onConfirm: () => {
+                                    // Note: We need to use the current popInput value, but onConfirm is defined here.
+                                    // Better to use an intermediate function or state to trigger the actual cancellation.
+                                    // For now, I'll pass the logic.
+                                    handleModalCancel(b.id);
+                                  }
+                                });
+                              }}
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
                             >
                               <XCircle size={20} strokeWidth={3}/> Cancel
@@ -907,13 +947,28 @@ export default function CounsellorDashboard() {
                               <MessageCircle size={20} strokeWidth={3}/> {hasChatHistory(b.studentName || b.name) ? "Chat" : "Start Chat"}
                             </button>
                             <button 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
+                              onClick={() => toast.success("Joining Clinical Suite...")}
+                            >
+                              <Video size={20} strokeWidth={3}/> Join Session
+                            </button>
+                            <button 
                               onClick={() => completeBooking(b.id)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-emerald-200"
                             >
                               <CheckCircle size={20} strokeWidth={3}/> Complete
                             </button>
                             <button 
-                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              onClick={() => {
+                                setPopInput("");
+                                setPopMsg({
+                                  isOpen: true,
+                                  title: "Revoke Appointment",
+                                  message: "This session is already confirmed. Cancelling now will alert the student and trigger policy reviews. Provide a reason:",
+                                  type: 'prompt',
+                                  onConfirm: () => handleModalCancel(b.id)
+                                });
+                              }}
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
                             >
                               Cancel

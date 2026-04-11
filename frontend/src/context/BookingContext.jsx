@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
+import { useAuth } from "./AuthContext";
 
 const BookingContext = createContext();
 
@@ -10,6 +11,7 @@ export const useBooking = () => useContext(BookingContext);
 
 export const BookingProvider = ({ children }) => {
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,14 +19,20 @@ export const BookingProvider = ({ children }) => {
   const normalizeBooking = (b) => ({
     ...b,
     id: b._id || b.id,
-    counsellor: b.counsellorName || b.counsellor // Maintain BC for UI components
+    counsellor: b.counsellorName || b.counsellor, // Maintain BC for UI components
+    counsellorImage: b.counsellorImage || b.image // Ensure both naming conventions are supported
   });
 
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      console.log("🔄 Fetching appointments from:", API_BASE);
-      const response = await fetch(API_BASE);
+      // If student, filter by their email on the backend
+      const url = user?.role === "student" && user?.email 
+        ? `${API_BASE}?email=${encodeURIComponent(user.email)}` 
+        : API_BASE;
+
+      console.log("🔄 Fetching appointments from:", url);
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to load records");
       const data = await response.json();
       
@@ -39,7 +47,7 @@ export const BookingProvider = ({ children }) => {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [user?.email, user?.role]);
 
   // Dynamic slot availability logic
   const getAvailableSlots = (counsellorName, date, allSlots) => {
