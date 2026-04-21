@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -30,13 +30,6 @@ export default function GoalHistory() {
     document.body.style.padding = "0";
     fetchHistory();
   }, []);
-
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.clear();
-      window.location.href = '/login';
-    }
-  };
 
   const fetchHistory = async () => {
     try {
@@ -151,38 +144,6 @@ export default function GoalHistory() {
       `}</style>
 
       <div style={styles.dashboardContainer}>
-        
-        {/* --- TOP NAVBAR --- */}
-        <nav style={styles.navbar}>
-          <div style={styles.navLeft} onClick={() => navigate('/')}>
-            <div style={styles.logoBox}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-              </svg>
-            </div>
-            <span style={styles.logoText}>UniCare</span>
-          </div>
-
-          <div style={styles.navLinks}>
-            <Link to="/" className="nav-link" style={styles.navLink}>Home</Link>
-            <Link to="/about" className="nav-link" style={styles.navLink}>About Us</Link>
-            <Link to="/counsellors" className="nav-link" style={styles.navLink}>Find a Counsellor</Link>
-            <Link to="/dashboard" className="nav-link" style={styles.navLink}>Dashboard</Link>
-            <Link to="/wellness-dashboard" style={styles.navLinkActive}>My Wellness Portal</Link>
-          </div>
-
-          <div style={styles.navRight}>
-            <div style={styles.userPill} onClick={handleLogout}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              {userName} ({userRole})
-            </div>
-          </div>
-        </nav>
-
         <div style={styles.mainWrapper}>
           <main style={styles.mainContent}>
             
@@ -245,7 +206,7 @@ export default function GoalHistory() {
                     onChange={e => setSearchQuery(e.target.value)} 
                     />
                   {searchQuery && (
-                    <button type="button" onClick={clearSearch} style={styles.clearSearchBtn} title="Clear search">âœ•</button>
+                    <button type="button" onClick={clearSearch} style={styles.clearSearchBtn} title="Clear search">✕</button>
                   )}
                 </div>
                 
@@ -372,7 +333,7 @@ export default function GoalHistory() {
             </div>
           </div>
           <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
+            © 2026 UniCare Platform. All rights reserved.
           </div>
         </footer>
 

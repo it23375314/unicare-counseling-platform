@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 
 export default function WellnessChatbot({ isOpen: controlledOpen, onOpen, onClose, inline = false, showToggle = true }) {
@@ -79,20 +79,20 @@ export default function WellnessChatbot({ isOpen: controlledOpen, onOpen, onClos
                     {/* Header */}
                     <div style={styles.header}>
                         <div style={styles.headerTitle}>
-                            <span style={styles.botAvatar}>ðŸ¤–</span>
+                            <span style={styles.botAvatar}>🤖</span>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '15px', color: 'white' }}>UniBot Support</h3>
                                 <p style={{ margin: 0, fontSize: '11px', color: '#bfdbfe' }}>Always here to listen</p>
                             </div>
                         </div>
-                        <button onClick={handleClose} style={styles.closeBtn}>âœ–</button>
+                        <button onClick={handleClose} style={styles.closeBtn}>✖</button>
                     </div>
 
                     {/* Messages Area */}
                     <div ref={messagesContainerRef} style={styles.messagesContainer}>
                         {messages.map((msg, idx) => (
                             <div key={idx} style={msg.role === 'user' ? styles.userMessageRow : styles.botMessageRow}>
-                                {msg.role === 'bot' && <div style={styles.botSmallAvatar}>ðŸ¤–</div>}
+                                {msg.role === 'bot' && <div style={styles.botSmallAvatar}>🤖</div>}
                                 <div style={msg.role === 'user' ? styles.userBubble : styles.botBubble}>
                                     {msg.content}
                                 </div>
@@ -100,7 +100,7 @@ export default function WellnessChatbot({ isOpen: controlledOpen, onOpen, onClos
                         ))}
                         {isTyping && (
                             <div style={styles.botMessageRow}>
-                                <div style={styles.botSmallAvatar}>ðŸ¤–</div>
+                                <div style={styles.botSmallAvatar}>🤖</div>
                                 <div style={{ ...styles.botBubble, fontStyle: 'italic', color: '#6b7280' }}>
                                     Typing...
                                 </div>

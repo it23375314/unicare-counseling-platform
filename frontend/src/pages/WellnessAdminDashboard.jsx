@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -8,18 +8,25 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
   
+  // Feedback System
+  const [feedbacks, setFeedbacks] = useState([]);
+  
   const navigate = useNavigate();
   const role = localStorage.getItem('userRole');
   const userName = localStorage.getItem('userName');
 
   useEffect(() => {
+    // Load feedback from localStorage
+    const saved = JSON.parse(localStorage.getItem('systemFeedback')) || [];
+    setFeedbacks(saved);
+    
     // Ensures no white margins around the background
     document.body.style.margin = "0";
     document.body.style.padding = "0";
 
     if (role === 'admin') {
       axios.get('http://localhost:5001/api/auth/users')
-        .then(res => setUsers(res.data))
+        .then(res => setUsers(res.data.data || []))
         .catch(err => setError("Failed to fetch users."));
 
       axios.get('http://localhost:5001/api/resources/admin/all')
@@ -45,6 +52,14 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteFeedback = (id) => {
+    if (window.confirm("Delete this feedback?")) {
+      const updated = feedbacks.filter(f => f.id !== id);
+      setFeedbacks(updated);
+      localStorage.setItem('systemFeedback', JSON.stringify(updated));
+    }
+  };
+
   const handleLogout = () => {
     if (window.confirm("End admin session?")) {
       localStorage.clear();
@@ -57,7 +72,7 @@ export default function AdminDashboard() {
     return (
       <div style={styles.pageWrapper}>
         <div style={{...styles.glassCard, maxWidth: '400px', margin: '100px auto', textAlign: 'center'}}>
-          <div style={{fontSize: '60px', marginBottom: '20px'}}>ðŸ›‘</div>
+          <div style={{fontSize: '60px', marginBottom: '20px'}}>🛑</div>
           <h2 style={{color: '#1e293b', fontWeight: '900', fontSize: '24px'}}>ACCESS DENIED</h2>
           <p style={{color: '#ef4444', fontWeight: 'bold'}}>Administrator Privileges Required.</p>
           <button onClick={() => window.location.href='/login'} style={styles.deniedBtn}>
@@ -102,31 +117,31 @@ export default function AdminDashboard() {
               style={{ backgroundColor: '#f0f4ff', color: '#007bff' }} 
               onClick={() => navigate('/admin-dashboard')}
             >
-              ðŸ›¡ï¸ Control Panel
+              🛡️ Control Panel
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin/resources')}>
-              ðŸ“š Resource Library
+              📚 Resource Library
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>
-              ðŸ“Š System Analytics
+              📊 System Analytics
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-users')}>
-              ðŸ‘¥ User Management
+              👥 User Management
             </li>
             <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>
-              ðŸ“ Platform Logs
+              📝 Platform Logs
             </li>
             <li className="sidebar-item" onClick={() => navigate('/system-config')}>
-              âš™ï¸ System Config
+              ⚙️ System Config
             </li>
             <li className="sidebar-item" onClick={() => navigate('/settings')}>
-              âš™ï¸ Settings
+              ⚙️ Settings
             </li>
           </ul>
           
           <ul style={{ listStyle: 'none', padding: 0, flex: 0, margin: 0 }}>
             <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc3545' }}>
-              ðŸšª Logout
+              🚪 Logout
             </li>
           </ul>
         </div>
@@ -142,7 +157,7 @@ export default function AdminDashboard() {
             </div>
             
             <div style={styles.searchBox}>
-              <span style={styles.searchIcon}>ðŸ”</span>
+              <span style={styles.searchIcon}>🔍</span>
               <input 
                 style={styles.searchInput} 
                 placeholder="Search users by name or email..." 
@@ -190,9 +205,9 @@ export default function AdminDashboard() {
             </div>
             
             <div style={styles.actionCard}>
-              <div style={{fontSize: '30px', marginBottom: '10px'}}>ðŸ› ï¸</div>
+              <div style={{fontSize: '30px', marginBottom: '10px'}}>🛠️</div>
               <h3 style={{color: 'white', margin: '0 0 5px 0', fontSize: '16px'}}>Resource Library</h3>
-              <Link to="/admin/resources" style={styles.actionLink}>Manage Content âž”</Link>
+              <Link to="/admin/resources" style={styles.actionLink}>Manage Content ➔</Link>
             </div>
           </div>
 
@@ -238,6 +253,41 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+
+          {/* SYSTEM FEEDBACK SECTION */}
+          <div style={{...styles.headerSection, marginTop: '60px', marginBottom: '20px'}}>
+            <div>
+              <h2 style={{...styles.mainTitle, fontSize: '28px'}}>Platform <span style={{color: '#0284c7'}}>Feedback</span></h2>
+              <p style={styles.subTitle}>Direct anonymous and identified feedback from platform users.</p>
+            </div>
+          </div>
+
+          {feedbacks.length === 0 ? (
+            <div style={{...styles.glassCard, textAlign: 'center', padding: '40px'}}>
+              <div style={{fontSize: '40px', marginBottom: '10px'}}>💭</div>
+              <p style={{color: '#64748b', fontWeight: 'bold'}}>No feedback received yet.</p>
+            </div>
+          ) : (
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px'}}>
+              {feedbacks.map(f => (
+                <div key={f.id} style={{backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: '20px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '15px'}}>
+                    <div>
+                      <span style={{fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', color: f.sender.includes('Anonymous') ? '#8b5cf6' : '#2563eb', backgroundColor: f.sender.includes('Anonymous') ? '#ede9fe' : '#dbeafe', padding: '4px 10px', borderRadius: '10px'}}>
+                        {f.sender}
+                      </span>
+                    </div>
+                    <span style={{fontSize: '11px', fontWeight: 'bold', color: '#94a3b8'}}>{f.date}</span>
+                  </div>
+                  <p style={{color: '#334155', fontSize: '14px', lineHeight: '1.6', flex: 1, margin: '0 0 15px 0'}}>{f.text}</p>
+                  <div style={{textAlign: 'right', borderTop: '1px solid #f1f5f9', paddingTop: '10px'}}>
+                    <button onClick={() => deleteFeedback(f.id)} style={{background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', cursor: 'pointer', padding: '5px 10px'}}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
 
       </div>
@@ -267,11 +317,11 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     position: 'fixed', // Locks it to the left side of the screen
-    top: 0,
+    top: '80px', // Push down so it doesn't cover the Navbar
     left: 0,
     bottom: 0,
     boxSizing: 'border-box',
-    zIndex: 1000
+    zIndex: 40
   },
 
   // --- MAIN CONTENT AREA ---

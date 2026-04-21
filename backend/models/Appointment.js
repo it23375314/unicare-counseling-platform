@@ -7,10 +7,22 @@ const appointmentSchema = new mongoose.Schema({
   },
   studentEmail: {
     type: String,
-    required: true
+    required: false
   },
   studentId: {
     type: String,
+  },
+  studentPhone: {
+    type: String,
+    required: false
+  },
+  emergencyContact: {
+    type: String, // Name + Relation
+    required: false
+  },
+  reasonDescription: {
+    type: String,
+    required: false
   },
   counsellorId: {
     type: String, // Changed from ObjectId to support universal seeding
@@ -62,6 +74,15 @@ const appointmentSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'Video Session'
+  },
+  refundStatus: {
+    type: String,
+    enum: ['None', 'Eligible', 'Not Eligible', 'Processing', 'Refunded'],
+    default: 'None'
+  },
+  cancelReason: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -10,8 +10,13 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  // Get requested destination or default to home/dashboards
+  const from = location.state?.from?.pathname || null;
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -28,14 +33,16 @@ export default function Login() {
 
       if (!data.success) {
         setError(data.msg || 'Login failed');
+        setIsPending(!!data.pending);
         return;
       }
 
-      // Update AuthContext with full user data
       login(data.data);
 
-      // Redirect based on role
-      if (data.data.role === 'admin') {
+      // Redirect logic: Priority to 'from' state, then role-based defaults
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (data.data.role === 'admin') {
         navigate('/admin/resources', { replace: true });
       } else if (data.data.role === 'counsellor') {
         navigate('/counsellor/availability', { replace: true });
@@ -43,7 +50,9 @@ export default function Login() {
         navigate('/', { replace: true });
       }
     } catch (err) {
-      setError(err.response?.data?.msg || 'Login failed. Please try again.');
+      const errData = err.response?.data;
+      setError(errData?.msg || 'Login failed. Please try again.');
+      setIsPending(!!errData?.pending);
     } finally {
       setLoading(false);
     }
@@ -74,7 +83,17 @@ export default function Login() {
             <p style={styles.formSubText}>Enter your credentials to access your dashboard.</p>
           </div>
 
-          {error && <div style={styles.errorBox}>{error}</div>}
+          {error && (
+            <div style={isPending ? {
+              backgroundColor: '#fffbeb', border: '1px solid #fcd34d', color: '#92400e',
+              borderRadius: '10px', padding: '14px 16px', marginBottom: '16px', fontSize: '14px', lineHeight: '1.5'
+            } : {
+              backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#dc2626',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', fontSize: '14px'
+            }}>
+              {isPending ? '⏳ ' : '⚠️ '}{error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} style={styles.formStack}>
             <div style={styles.inputWrapper}>

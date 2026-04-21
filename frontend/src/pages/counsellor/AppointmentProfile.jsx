@@ -58,8 +58,8 @@ export default function AppointmentProfile() {
   const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { getNoteByBookingId } = useSessionNotes();
 
-  const appointment = bookings.find(b => b.id === id);
-  const note = appointment ? getNoteByBookingId(appointment.id) : null;
+  const appointment = bookings.find(b => String(b.id) === String(id) || String(b._id) === String(id));
+  const note = appointment ? getNoteByBookingId(appointment.id || appointment._id) : null;
 
   // Mocking previous sessions count for demo purposes based on email/name matching
   const previousSessions = appointment 

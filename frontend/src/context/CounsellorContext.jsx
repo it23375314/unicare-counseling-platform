@@ -1,11 +1,10 @@
-﻿import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
 
 const CounsellorContext = createContext();
 const API_URL = "http://localhost:5001/api";
 
 export const useCounsellorContext = () => useContext(CounsellorContext);
-
 
 export const CounsellorProvider = ({ children }) => {
   const { addToast } = useToast();
@@ -87,30 +86,14 @@ export const CounsellorProvider = ({ children }) => {
 
   const updateAvailability = async (counsellorId, date, timeSlots) => {
     try {
-        const counsellor = counsellors.find(c => c.id === counsellorId);
-        if(!counsellor) return;
-
-        let newAvail = [...(counsellor.availability || [])];
-        const dateIndex = newAvail.findIndex(a => a.date === date);
-        
-        if (dateIndex >= 0) {
-          if (timeSlots.length === 0) {
-            newAvail.splice(dateIndex, 1);
-          } else {
-            newAvail[dateIndex].slots = timeSlots;
-          }
-        } else if (timeSlots.length > 0) {
-          newAvail.push({ date, slots: timeSlots });
-        }
-        
-        const res = await fetch(`${API_URL}/counsellors/${counsellorId}`, {
-            method: "PUT", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ availability: newAvail })
+        const res = await fetch(`${API_URL}/counsellors/${counsellorId}/availability`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date, slots: timeSlots })
         });
         
         const json = await res.json();
         if(json.success) {
-            setCounsellors((prev) => prev.map((c) => c.id === counsellorId ? { ...c, availability: newAvail } : c));
+            setCounsellors((prev) => prev.map((c) => c.id === counsellorId ? { ...c, availability: json.data.availability } : c));
             addToast("Availability updated!", "success");
         }
     } catch(e) {
@@ -122,6 +105,11 @@ export const CounsellorProvider = ({ children }) => {
     return counsellors.find(c => c.id === id);
   };
 
+  const getCounsellorByEmail = (email) => {
+    if (!email) return null;
+    return counsellors.find(c => c.email?.toLowerCase() === email.toLowerCase());
+  };
+
   return (
     <CounsellorContext.Provider
       value={{
@@ -130,7 +118,9 @@ export const CounsellorProvider = ({ children }) => {
         editCounsellor,
         deleteCounsellor,
         updateAvailability,
-        getCounsellorById
+        getCounsellorById,
+        getCounsellorByEmail,
+        fetchCounsellors
       }}
     >
       {children}

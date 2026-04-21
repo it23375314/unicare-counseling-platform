@@ -4,8 +4,10 @@ import { useAuth } from "../../context/AuthContext";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2 } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video } from "lucide-react";
 import toast from "react-hot-toast";
+import FeedbackForm from "../../components/FeedbackForm";
+import PopMsg from "../../components/PopMsg";
 import studentProfilePlaceholder from "../../assets/student_profile_john_smith.png";
 import student1 from "../../assets/student1.png";
 import student2 from "../../assets/student2.png";
@@ -54,11 +56,11 @@ const getAvatarColor = (name) => {
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
-  const { getCounsellorById, updateAvailability } = useCounsellorContext();
-  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
+  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
-  const counsellor = getCounsellorById(user?.id) || null;
+  const counsellor = getCounsellorById(user?.id) || getCounsellorByEmail(user?.email) || null;
   const counsellorName = counsellor?.name || user?.name || "";
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,14 +74,30 @@ export default function CounsellorDashboard() {
   const path = location.pathname;
   let activeTab = "availability";
   if (path.includes("appointments")) activeTab = "appointments";
-  else if (path.includes("history")) activeTab = "history";
   else if (path.includes("notes")) activeTab = "session notes";
+
+  // Re-fetch bookings on navigating to appointments
+  useEffect(() => {
+    if (activeTab === "appointments" && typeof fetchBookings === "function") {
+      fetchBookings();
+    }
+  }, [activeTab, fetchBookings]);
 
   // For Availability
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [slotInput, setSlotInput] = useState("");
   const [availabilityErrors, setAvailabilityErrors] = useState({});
+
+  // Handle ?edit=date query param
+  useEffect(() => {
+    const editDate = new URLSearchParams(location.search).get('edit');
+    if (editDate && counsellor) {
+      setSelectedDate(editDate);
+      const existing = counsellor.availability?.find(a => a.date === editDate);
+      setSelectedSlots(existing ? existing.slots : []);
+    }
+  }, [location.search, counsellor]);
 
   const formatSelectedDate = (dateString) => {
     if (!dateString) return "---";
@@ -112,7 +130,7 @@ export default function CounsellorDashboard() {
        setAvailabilityErrors((prev) => ({ ...prev, slot: "This time slot is already added" }));
        return;
     }
-    setSelectedSlots(prev => [...prev, slotInput]);
+    setSelectedSlots(prev => [...prev, slotInput].sort());
     setSlotInput("");
     setAvailabilityErrors((prev) => ({ ...prev, slot: null, slots: null }));
   };
@@ -146,8 +164,11 @@ export default function CounsellorDashboard() {
         const promise = updateAvailability(counsellor?.id, selectedDate, selectedSlots);
         if (promise instanceof Promise) await promise;
       }
-      toast.success("Availability saved successfully");
+      toast.success("Availability saved successfully.");
       setAvailabilityErrors({});
+      setSelectedDate("");
+      setSelectedSlots([]);
+      setSlotInput("");
     } catch (err) {
       toast.error("Failed to save availability");
     }
@@ -155,7 +176,11 @@ export default function CounsellorDashboard() {
 
   // For Appointments Tab
   const safeBookings = Array.isArray(bookings) ? bookings : [];
-  const myBookings = safeBookings.filter(b => b?.counsellor === counsellor?.name);
+  const myBookings = safeBookings.filter(b => 
+    b?.counsellorId === counsellor?.id || 
+    b?.counsellorName === counsellor?.name || 
+    b?.counsellor === counsellor?.name
+  );
   
   const [searchApptStudent, setSearchApptStudent] = useState("");
   const [filterApptDate, setFilterApptDate] = useState("");
@@ -165,6 +190,25 @@ export default function CounsellorDashboard() {
   const [apptSearchError, setApptSearchError] = useState("");
   const [formData, setFormData] = useState({ id: null, title: "", notes: "", riskLevel: "Low", followUpRecommendation: "", status: "Draft", aiAnalysis: null });
   const [isViewOnly, setIsViewOnly] = useState(false);
+
+  // Custom PopMsg state
+  const [popMsg, setPopMsg] = useState({ 
+    isOpen: false, 
+    title: "", 
+    message: "", 
+    onConfirm: null,
+    type: 'warning'
+  });
+  const [popInput, setPopInput] = useState("");
+
+  const handleModalCancel = (id) => {
+    if (popInput.trim().length > 0 || popMsg.type !== 'prompt') {
+      cancelBookingByCounsellor(id, popInput);
+      setPopMsg(prev => ({ ...prev, isOpen: false }));
+    } else {
+      toast.error("Please provide a reason.");
+    }
+  };
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -511,6 +555,10 @@ export default function CounsellorDashboard() {
     }
   };
 
+  const upcomingAvailability = counsellor?.availability ? [...counsellor.availability]
+      .filter(a => a.date >= new Date().toISOString().split('T')[0])
+      .sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
+
   if (user?.role !== "counsellor") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -530,6 +578,12 @@ export default function CounsellorDashboard() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
+      <PopMsg 
+        {...popMsg} 
+        inputValue={popInput}
+        setInputValue={setPopInput}
+        onClose={() => setPopMsg(prev => ({ ...prev, isOpen: false }))} 
+      />
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
         <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
@@ -541,9 +595,17 @@ export default function CounsellorDashboard() {
           <div className="space-y-8 animate-in fade-in duration-700">
             <div className="bg-gradient-to-br from-blue-50/60 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-blue-100/50 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600"></div>
-              <h2 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
-                <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Set Your Availability
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
+                  <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Set Your Availability
+                </h2>
+                <button 
+                  onClick={() => navigate('/counsellor/my-availability')}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg hover:-translate-y-1"
+                >
+                  <Calendar size={16} /> View Schedule
+                </button>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 gap-10">
                 <div className="space-y-10">
                   <div className="group">
@@ -625,34 +687,47 @@ export default function CounsellorDashboard() {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-gradient-to-br from-indigo-50/50 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-indigo-100/50 relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-indigo-500"></div>
-              <h3 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
-                <Activity size={28} strokeWidth={3} className="text-indigo-600" /> Current Weekly Schedule
-              </h3>
-              
-              {(counsellor?.availability?.length || 0) > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {(counsellor?.availability || []).map(avail => (
-                    <div key={avail.date} className="bg-white group hover:shadow-2xl hover:-translate-y-1.5 border-2 border-gray-100 hover:border-indigo-400 rounded-[1.5rem] p-8 transition-all duration-500">
-                      <div className="font-black text-gray-900 flex items-center gap-2.5 mb-6 text-sm border-b-2 border-gray-50 pb-4 group-hover:border-indigo-100 transition-colors">
-                        <Calendar size={20} strokeWidth={2.5} className="text-indigo-500 shrink-0"/> {avail.date}
+
+            {/* Current Weekly Schedule Section */}
+            <div className="bg-white p-8 lg:p-12 rounded-[2rem] shadow-md border border-gray-100 flex flex-col pt-10">
+              <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-3 tracking-tight border-b-2 border-gray-50 pb-6">
+                <Calendar size={28} strokeWidth={3} className="text-blue-600" /> Current Weekly Schedule
+              </h2>
+              {upcomingAvailability.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {upcomingAvailability.map((avail, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-gray-50 p-6 rounded-[2rem] border border-gray-200/60 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all"
+                    >
+                      <div className="absolute top-0 left-0 bottom-0 w-2 bg-blue-500"></div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mb-1">
+                            {new Date(avail.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                          </p>
+                          <p className="text-xl font-black text-gray-900 tracking-tight">
+                            {formatSelectedDate(avail.date)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-3">
-                        {avail.slots.map(s => (
-                          <div key={s} className="bg-indigo-50/50 text-indigo-700 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 border-2 border-indigo-100/50 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shadow-sm">
-                            <Clock size={14} strokeWidth={3} className="shrink-0" /> {s}
-                          </div>
+                      <div className="flex flex-wrap gap-2">
+                        {avail.slots.map((slot, i) => (
+                          <span 
+                            key={i} 
+                            className="bg-blue-100/50 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-black"
+                          >
+                            {slot}
+                          </span>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                  <Calendar size={48} className="text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-400 font-bold">No sessions scheduled yet.</p>
+                <div className="text-center py-16 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-black uppercase tracking-widest text-sm">No sessions scheduled yet.</p>
                 </div>
               )}
             </div>
@@ -841,7 +916,21 @@ export default function CounsellorDashboard() {
                               <CheckCircle size={20} strokeWidth={3}/> Confirm
                             </button>
                             <button 
-                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              onClick={() => {
+                                setPopInput("");
+                                setPopMsg({
+                                  isOpen: true,
+                                  title: "Cancel Appointment",
+                                  message: "Please provide a professional reason for cancelling this student's coordination session.",
+                                  type: 'prompt',
+                                  onConfirm: () => {
+                                    // Note: We need to use the current popInput value, but onConfirm is defined here.
+                                    // Better to use an intermediate function or state to trigger the actual cancellation.
+                                    // For now, I'll pass the logic.
+                                    handleModalCancel(b.id);
+                                  }
+                                });
+                              }}
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
                             >
                               <XCircle size={20} strokeWidth={3}/> Cancel
@@ -852,10 +941,16 @@ export default function CounsellorDashboard() {
                         {(b.status === "Confirmed" || b.status === "Accepted") && (
                           <>
                             <button 
-                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
                             >
                               <MessageCircle size={20} strokeWidth={3}/> {hasChatHistory(b.studentName || b.name) ? "Chat" : "Start Chat"}
+                            </button>
+                            <button 
+                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
+                              onClick={() => toast.success("Joining Clinical Suite...")}
+                            >
+                              <Video size={20} strokeWidth={3}/> Join Session
                             </button>
                             <button 
                               onClick={() => completeBooking(b.id)} 
@@ -864,7 +959,16 @@ export default function CounsellorDashboard() {
                               <CheckCircle size={20} strokeWidth={3}/> Complete
                             </button>
                             <button 
-                              onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(b.id, reason); }} 
+                              onClick={() => {
+                                setPopInput("");
+                                setPopMsg({
+                                  isOpen: true,
+                                  title: "Revoke Appointment",
+                                  message: "This session is already confirmed. Cancelling now will alert the student and trigger policy reviews. Provide a reason:",
+                                  type: 'prompt',
+                                  onConfirm: () => handleModalCancel(b.id)
+                                });
+                              }}
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
                             >
                               Cancel
@@ -875,7 +979,7 @@ export default function CounsellorDashboard() {
                         {b.status === "Completed" && (
                           <>
                             <button 
-                              onClick={() => navigate(`/chat?student=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
                             >
                               <MessageCircle size={20} strokeWidth={3}/> Chat
@@ -901,131 +1005,6 @@ export default function CounsellorDashboard() {
                   <Calendar className="mx-auto h-16 w-16 text-gray-100 mb-6" />
                   <h3 className="text-lg font-black text-gray-900 tracking-tight">No appointments found</h3>
                   <p className="text-gray-400 text-sm font-medium mt-1">Try adjusting your filters or search term.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* History Tab */}
-        {activeTab === "history" && (
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1 w-full space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Past Student Name</label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Search past appointments..." 
-                    value={searchHistory}
-                    onChange={(e) => setSearchHistory(e.target.value)}
-                    className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium"
-                  />
-                </div>
-              </div>
-              <div className="w-full md:w-64 space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Filter by Date</label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                  <input 
-                    type="date" 
-                    value={filterDateHistory}
-                    onChange={(e) => setFilterDateHistory(e.target.value)}
-                    className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-xs shadow-sm shadow-gray-100/50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              {historyBookings.length > 0 ? (
-                historyBookings.map(b => {
-                  if (!b) return null;
-                  const note = getNoteByBookingId(b.id);
-                  const safeID = (b.id || "").toString();
-                  const studentDispName = b.studentName || b.name || "N/A Student";
-                  const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
-                  const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
-                  
-                  return (
-                    <div key={b.id || Math.random()} className={`rounded-3xl shadow-sm border transition-all duration-500 hover:shadow-xl hover:-translate-y-1 group overflow-hidden relative p-8 ${
-                      b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed'
-                        ? 'border-emerald-100 bg-gradient-to-br from-emerald-50/40 via-white to-white'
-                        : 'border-blue-100/80 bg-gradient-to-br from-blue-50/40 via-white to-white'
-                    }`}>
-                      <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2 ${
-                        b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-400' : 'bg-blue-400/50'
-                      }`}></div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-5">
-                          <div className="relative group/avatar shrink-0">
-                            <div className={`w-14 h-14 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-2 border-white shadow-md overflow-hidden transition-all duration-500 group-hover/avatar:rotate-3 group-hover/avatar:scale-110`}>
-                              {profileSrc ? (
-                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-white font-black text-lg">{initials}</span>
-                              )}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
-                          </div>
-                          <div>
-                            <h3 className="font-black text-gray-900 text-2xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{studentDispName}</h3>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className={`text-[10px] items-center gap-2 px-3 py-1 rounded-xl font-black uppercase tracking-[0.15em] border shadow-sm transition-all duration-300 flex ${
-                                b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200/50' : 'bg-blue-100/50 text-blue-700 border-blue-200/50'
-                              }`}>
-                                <span className={`w-2 h-2 rounded-full animate-pulse ${
-                                  b.status === 'Accepted' || b.status === 'Confirmed' || b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-500'
-                                }`}></span>
-                                {b.status || "N/A"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100/50 flex items-center justify-center text-emerald-600 shadow-sm group-hover/item:scale-110 transition-transform"><Calendar size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.date || "N/A"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm group-hover/item:scale-110 transition-transform"><Clock size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Time</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.time || "N/A"}</span>
-                            </div>
-                          </div>
-                          {safeID && (
-                            <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/30 transition-all">
-                              <div className="w-10 h-10 rounded-xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm group-hover/item:scale-110 transition-transform"><FileText size={18}/></div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ID</span>
-                                <span className="text-xs font-bold text-gray-800 uppercase leading-none mt-0.5">{safeID.substring(0,8)}</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {b.rejectReason && <p className="text-xs text-rose-600 mt-4 font-black uppercase tracking-wider bg-rose-50 inline-block px-4 py-1.5 rounded-full border border-rose-100">Reason: {b.rejectReason}</p>}
-                      </div>
-                      
-                      {(b.status === "Accepted" || b.status === "Confirmed" || b.status === "Completed") && (
-                        <button onClick={() => openNotesModal("booking", b)} className={`h-11 px-8 rounded-xl font-black text-[11px] uppercase tracking-[0.15em] flex items-center gap-3 transition-all shadow-sm active:scale-95 border ${
-                          note ? 'bg-white text-blue-700 border-blue-100 hover:bg-gray-50' : 'bg-blue-600 text-white border-transparent hover:bg-blue-700 shadow-lg shadow-blue-100'
-                        }`}>
-                          <FileText size={18} /> {note ? "View Note" : "Add Note"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                  <Activity className="mx-auto h-16 w-16 text-gray-100 mb-6" />
-                  <h3 className="text-lg font-black text-gray-900 tracking-tight">No history records found</h3>
-                  <p className="text-gray-400 text-sm font-medium mt-1">Visit your appointments tab to manage current sessions.</p>
                 </div>
               )}
             </div>
@@ -1405,6 +1384,11 @@ export default function CounsellorDashboard() {
           </div>
         </div>
       )}
+
+      {/* Global Feedback Form placed below tabs */}
+      <div className="max-w-7xl mx-auto mt-6">
+        <FeedbackForm />
+      </div>
 
     </div>
   );

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -113,7 +113,7 @@ export default function MoodSupportAssistant() {
     return (
       <div style={styles.deniedContainer}>
         <div style={styles.deniedCard}>
-          <div style={styles.deniedIconWrap}>ðŸš«</div>
+          <div style={styles.deniedIconWrap}>🚫</div>
           <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>Access Denied</h2>
           <button onClick={() => window.location.href = '/login'} style={styles.deniedBtn}>Return to Login</button>
         </div>
@@ -190,7 +190,7 @@ export default function MoodSupportAssistant() {
           if (counselingFlag) {
             botReplies.push({
                 id: Date.now().toString() + '_3', role: 'bot', type: 'counseling', 
-                content: "Youâ€™ve reported feeling overwhelmed recently. We strongly encourage you to connect with a professional for support."
+                content: "You’ve reported feeling overwhelmed recently. We strongly encourage you to connect with a professional for support."
             });
           }
 
@@ -220,34 +220,12 @@ export default function MoodSupportAssistant() {
       `}</style>
 
       <div style={styles.dashboardContainer}>
-        <nav style={styles.navbar}>
-          <div style={styles.navLeft} onClick={() => navigate('/')}>
-            <div style={styles.logoBox}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-            </div>
-            <span style={styles.logoText}>UniCare</span>
-          </div>
-          <div style={styles.navLinks}>
-            <Link to="/" className="nav-link" style={styles.navLink}>Home</Link>
-            <Link to="/about" className="nav-link" style={styles.navLink}>About Us</Link>
-            <Link to="/counsellors" className="nav-link" style={styles.navLink}>Find a Counsellor</Link>
-            <Link to="/dashboard" className="nav-link" style={styles.navLink}>Dashboard</Link>
-            <Link to="/wellness-dashboard" style={styles.navLinkActive}>My Wellness Portal</Link>
-          </div>
-          <div style={styles.navRight}>
-            <div style={styles.userPill} onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              {userName} ({userRole})
-            </div>
-          </div>
-        </nav>
-
         <div style={styles.mainWrapper}>
           <main style={styles.mainContent}>
             
             <div style={styles.headerSection}>
               <div>
-                <div style={styles.sessionBadge}>PRIVATE CHECK-IN â€¢ {displayName}</div>
+                <div style={styles.sessionBadge}>PRIVATE CHECK-IN • {displayName}</div>
                 <h1 style={styles.mainTitle}>Mood Support Assistant</h1>
               </div>
               <div style={styles.headerButtons}>
@@ -294,7 +272,7 @@ export default function MoodSupportAssistant() {
                                         <div style={styles.resourceList}>
                                             {msg.content.map((res, i) => (
                                                 <div key={i} style={styles.resourceItem}>
-                                                    <div style={styles.bulletIcon}>â€¢</div>
+                                                    <div style={styles.bulletIcon}>•</div>
                                                     <div>
                                                         <div style={{fontWeight: '700', color: '#1e3a8a', marginBottom: '2px'}}>{res.title}</div>
                                                         <div style={{color: '#475569', fontSize: '14px', lineHeight: '1.5'}}>{res.desc}</div>
@@ -314,7 +292,7 @@ export default function MoodSupportAssistant() {
                                         <div>
                                             <p style={{margin: '0 0 6px 0', fontSize: '15px', color: '#7f1d1d', fontWeight: '700'}}>Professional Support Recommended</p>
                                             <p style={{margin: 0, fontSize: '14px', color: '#991b1b', lineHeight: '1.5'}}>{msg.content}</p>
-                                            <Link to="/counsellors" style={styles.bookBtn}>Find a Counsellor â†’</Link>
+                                            <Link to="/counsellors" style={styles.bookBtn}>Find a Counsellor →</Link>
                                         </div>
                                     </div>
                                 )}
@@ -334,7 +312,7 @@ export default function MoodSupportAssistant() {
 
                 <div style={styles.inputArea}>
                     <p style={styles.inputPromptText}>How are you feeling today? <span style={{color: '#ef4444'}}>*</span></p>
-                  {hasTodayEntry && <div style={styles.dailyLimitNotice}>âœ… You already submitted todayâ€™s mood check-in.</div>}
+                  {hasTodayEntry && <div style={styles.dailyLimitNotice}>✅ You already submitted today’s mood check-in.</div>}
                     
                     <input 
                         type="text" 

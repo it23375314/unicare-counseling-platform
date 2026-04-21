@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -145,10 +145,6 @@ export default function WellnessCenter() {
     catch (err) { alert("Error deleting goal"); }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) { localStorage.clear(); window.location.href = '/login'; }
-  };
-
   const resetSearch = () => {
     setSearchQuery('');
     setFilterCategory('All');
@@ -207,38 +203,6 @@ export default function WellnessCenter() {
       `}</style>
 
       <div style={styles.dashboardContainer}>
-        
-        {/* --- TOP NAVBAR --- */}
-        <nav style={styles.navbar}>
-          <div style={styles.navLeft} onClick={() => navigate('/')}>
-            <div style={styles.logoBox}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-              </svg>
-            </div>
-            <span style={styles.logoText}>UniCare</span>
-          </div>
-
-          <div style={styles.navLinks}>
-            <Link to="/" className="nav-link" style={styles.navLink}>Home</Link>
-            <Link to="/about" className="nav-link" style={styles.navLink}>About Us</Link>
-            <Link to="/counsellors" className="nav-link" style={styles.navLink}>Find a Counsellor</Link>
-            <Link to="/dashboard" className="nav-link" style={styles.navLink}>Dashboard</Link>
-            <Link to="/wellness-dashboard" style={styles.navLinkActive}>My Wellness Portal</Link>
-          </div>
-
-          <div style={styles.navRight}>
-            <div style={styles.userPill} onClick={handleLogout}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              {userName} ({userRole})
-            </div>
-          </div>
-        </nav>
-
         <div style={styles.mainWrapper}>
           <main style={styles.mainContent}>
             
@@ -282,7 +246,7 @@ export default function WellnessCenter() {
               </div>
               <div style={{ ...styles.statsGrid, gridTemplateColumns: isMobile ? "1fr" : "1.5fr 1fr 1fr 1fr" }}>
                 <div style={styles.heroStatCard}>
-                  <div><p style={styles.heroLabel}>Completion Rate</p><h2 style={styles.heroValue}>{progressPercentage}%</h2><p style={styles.heroSubtext}>{completedGoals} completed â€¢ {activeGoals} active</p></div>
+                  <div><p style={styles.heroLabel}>Completion Rate</p><h2 style={styles.heroValue}>{progressPercentage}%</h2><p style={styles.heroSubtext}>{completedGoals} completed • {activeGoals} active</p></div>
                   <div style={styles.ringWrap}>
                     <svg width="92" height="92" viewBox="0 0 100 100">
                       <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="10" />
@@ -363,7 +327,7 @@ export default function WellnessCenter() {
                                 <button onClick={(e) => { e.stopPropagation(); deleteGoal(goal._id); }} style={styles.deleteBtn} title="Delete">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 </button>
-                                <span style={{ ...styles.chevron, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>â–¼</span>
+                                <span style={{ ...styles.chevron, transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                             </div>
                           </div>
                         </div>
@@ -420,7 +384,7 @@ export default function WellnessCenter() {
             </div>
           </div>
           <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
+            © 2026 UniCare Platform. All rights reserved.
           </div>
         </footer>
 
@@ -450,7 +414,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Goal Name <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="title" style={errors.title ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.title} onChange={handleFormChange} />
-                        {errors.title && <span style={styles.errorText}>âš ï¸ {errors.title}</span>}
+                        {errors.title && <span style={styles.errorText}>⚠️ {errors.title}</span>}
                     </div>
                     
                     <div style={styles.inputGroup}>
@@ -461,7 +425,7 @@ export default function WellnessCenter() {
                             value={formData.description} 
                             onChange={handleFormChange} 
                         />
-                        {errors.description && <span style={styles.errorText}>âš ï¸ {errors.description}</span>}
+                        {errors.description && <span style={styles.errorText}>⚠️ {errors.description}</span>}
                     </div>
                     
                     <div style={styles.inputGroup}>
@@ -513,7 +477,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Deadline <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="targetDate" style={errors.targetDate ? { ...styles.input, ...styles.inputError } : styles.input} type="date" value={formData.targetDate} min={todayStr} onChange={handleFormChange} />
-                        {errors.targetDate && <span style={styles.errorText}>âš ï¸ {errors.targetDate}</span>}
+                        {errors.targetDate && <span style={styles.errorText}>⚠️ {errors.targetDate}</span>}
                     </div>
                     
                     <button type="button" onClick={() => setActiveTab(1)} style={styles.nextBtn}>
@@ -537,9 +501,9 @@ export default function WellnessCenter() {
                             })}
                         </div>
                     </div>
-                    {formData.frequency === 'Custom' && (<div style={styles.inputGroup}><label style={styles.label}>Times per week</label><input name="customFrequency" type="number" min="1" max="7" style={errors.customFrequency ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.customFrequency} onChange={handleFormChange} />{errors.customFrequency && <span style={styles.errorText}>âš ï¸ {errors.customFrequency}</span>}</div>)}
+                    {formData.frequency === 'Custom' && (<div style={styles.inputGroup}><label style={styles.label}>Times per week</label><input name="customFrequency" type="number" min="1" max="7" style={errors.customFrequency ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.customFrequency} onChange={handleFormChange} />{errors.customFrequency && <span style={styles.errorText}>⚠️ {errors.customFrequency}</span>}</div>)}
                     <div style={styles.inputGroup}><label style={styles.label}>Progress Type</label><div style={{ display: 'flex', gap: '8px' }}>{[{ v: 'Binary', l: 'Yes/No' }, { v: 'Numeric', l: 'Count' }, { v: 'Timer-based', l: 'Timer' }].map(pt => (<button type="button" key={pt.v} onClick={() => setFormData(p => ({ ...p, progressType: pt.v }))} style={{ ...styles.priorityBtn, background: formData.progressType === pt.v ? '#eff6ff' : '#fff', borderColor: formData.progressType === pt.v ? '#2563eb' : '#e5e7eb', color: formData.progressType === pt.v ? '#1d4ed8' : '#6b7280' }}>{pt.l}</button>))}</div></div>
-                    {(formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') && (<div style={styles.inputGroup}><label style={styles.label}>Target {formData.progressType === 'Numeric' ? 'Value' : 'Mins'}</label><input name="targetValue" type="number" min="1" style={errors.targetValue ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.targetValue} onChange={handleFormChange} />{errors.targetValue && <span style={styles.errorText}>âš ï¸ {errors.targetValue}</span>}</div>)}
+                    {(formData.progressType === 'Numeric' || formData.progressType === 'Timer-based') && (<div style={styles.inputGroup}><label style={styles.label}>Target {formData.progressType === 'Numeric' ? 'Value' : 'Mins'}</label><input name="targetValue" type="number" min="1" style={errors.targetValue ? { ...styles.input, ...styles.inputError } : styles.input} value={formData.targetValue} onChange={handleFormChange} />{errors.targetValue && <span style={styles.errorText}>⚠️ {errors.targetValue}</span>}</div>)}
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button type="button" onClick={() => setActiveTab(0)} style={styles.backBtn}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:'6px', verticalAlign:'text-bottom'}}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -559,7 +523,7 @@ export default function WellnessCenter() {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Reward <span style={{color: '#ef4444'}}>*</span></label>
                         <input name="reward" style={errors.reward ? { ...styles.input, ...styles.inputError } : styles.input} placeholder="Treat yourself..." value={formData.reward} onChange={handleFormChange} />
-                        {errors.reward && <span style={styles.errorText}>âš ï¸ {errors.reward}</span>}
+                        {errors.reward && <span style={styles.errorText}>⚠️ {errors.reward}</span>}
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button type="button" onClick={() => setActiveTab(1)} style={styles.backBtn}>
@@ -583,7 +547,7 @@ export default function WellnessCenter() {
             <div style={{ ...styles.modalContent, maxWidth: '400px', textAlign: 'center', padding: '30px' }}>
               <h2 style={{ margin: '0 0 10px 0', color: '#111827', fontSize: '24px', fontWeight: '800' }}>Goal Completed?</h2>
               <p style={{color: '#6b7280', fontSize: '14px', marginBottom: '24px'}}>Marking this complete will archive it and update your stats.</p>
-              <div style={{ display: 'flex', gap: '15px' }}><button onClick={() => setCompleteModalOpen(false)} style={styles.cancelBtn}>Not Yet</button><button onClick={confirmCompletion} style={styles.confirmBtn}>Verify âœ“</button></div>
+              <div style={{ display: 'flex', gap: '15px' }}><button onClick={() => setCompleteModalOpen(false)} style={styles.cancelBtn}>Not Yet</button><button onClick={confirmCompletion} style={styles.confirmBtn}>Verify ✓</button></div>
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-﻿// Add score details mapping for mood label and meaning
+// Add score details mapping for mood label and meaning
 const SCORE_DETAILS = {
   1: { label: 'Very Low', meaning: 'Feeling overwhelmed or drained; focus on one grounding breath and take it easy.' },
   2: { label: 'Low', meaning: 'You are carrying weight right now; a restful break or gentle movement can help.' },
@@ -34,7 +34,7 @@ export default function MoodHistory() {
   const [hoveredEntryId, setHoveredEntryId] = useState(null);
 
   // User-facing expressions are kept as emojis since they act as data points
-  const SCORE_EMOJIS = { 1: 'ðŸ˜”', 2: 'ðŸ™', 3: 'ðŸ˜', 4: 'ðŸ™‚', 5: 'ðŸ˜„' };
+  const SCORE_EMOJIS = { 1: '😔', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' };
 
   useEffect(() => {
     document.body.style.margin = '0';
@@ -67,29 +67,22 @@ export default function MoodHistory() {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.clear();
-      window.location.href = '/login';
-    }
-  };
-
   // --- STAT CALCULATIONS ---
   const scoredEntries = entries.filter(entry => typeof entry.moodScore === 'number');
   const totalEntries = entries.length;
   
   const averageScore = scoredEntries.length
     ? (scoredEntries.reduce((sum, entry) => sum + entry.moodScore, 0) / scoredEntries.length).toFixed(1)
-    : 'â€”';
+    : '—';
     
-  const lastEntryDate = entries[0]?.entryDate || 'â€”';
+  const lastEntryDate = entries[0]?.entryDate || '—';
   
   const lowCount = scoredEntries.filter(entry => entry.moodScore <= 2).length;
   const neutralCount = scoredEntries.filter(entry => entry.moodScore === 3).length;
   const highCount = scoredEntries.filter(entry => entry.moodScore >= 4).length;
 
   let avgLabel = "No Data";
-  if (averageScore !== 'â€”') {
+  if (averageScore !== '—') {
       const avg = parseFloat(averageScore);
       if (avg < 2.5) {
           avgLabel = <span style={{display: 'flex', alignItems: 'center'}}>Trending Low <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginLeft: '4px'}}><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></span>;
@@ -112,38 +105,6 @@ export default function MoodHistory() {
       `}</style>
 
       <div style={styles.dashboardContainer}>
-        
-        {/* --- TOP NAVBAR --- */}
-        <nav style={styles.navbar}>
-          <div style={styles.navLeft} onClick={() => navigate('/')}>
-            <div style={styles.logoBox}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-              </svg>
-            </div>
-            <span style={styles.logoText}>UniCare</span>
-          </div>
-
-          <div style={styles.navLinks}>
-            <Link to="/" className="nav-link" style={styles.navLink}>Home</Link>
-            <Link to="/about" className="nav-link" style={styles.navLink}>About Us</Link>
-            <Link to="/counsellors" className="nav-link" style={styles.navLink}>Find a Counsellor</Link>
-            <Link to="/dashboard" className="nav-link" style={styles.navLink}>Dashboard</Link>
-            <Link to="/wellness-dashboard" style={styles.navLinkActive}>My Wellness Portal</Link>
-          </div>
-
-          <div style={styles.navRight}>
-            <div style={styles.userPill} onClick={handleLogout}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              {userName} ({userRole})
-            </div>
-          </div>
-        </nav>
-
         <div style={styles.mainWrapper}>
           <main style={styles.mainContent}>
             
@@ -236,8 +197,8 @@ export default function MoodHistory() {
                           onMouseEnter={() => setHoveredEntryId(entry._id)}
                           onMouseLeave={() => setHoveredEntryId(null)}
                         >
-                          <span style={styles.scoreEmoji}>{entry.moodScore ? SCORE_EMOJIS[entry.moodScore] : 'â€”'}</span>
-                          {entry.moodScore || 'â€”'}
+                          <span style={styles.scoreEmoji}>{entry.moodScore ? SCORE_EMOJIS[entry.moodScore] : '—'}</span>
+                          {entry.moodScore || '—'}
                         </span>
                         <span style={{ color: '#4b5563' }}>{entry.moodText || <em style={{color: '#9ca3af'}}>No note provided</em>}</span>
                       </div>
@@ -247,7 +208,7 @@ export default function MoodHistory() {
                         <div style={styles.detailsCard}>
                           {entry.moodScore && (
                             <div style={{ marginBottom: entry.aiResponse ? '16px' : '0' }}>
-                              <strong style={{ color: '#111827' }}>Mood Level:</strong> {SCORE_DETAILS[entry.moodScore]?.label || 'â€”'} 
+                              <strong style={{ color: '#111827' }}>Mood Level:</strong> {SCORE_DETAILS[entry.moodScore]?.label || '—'} 
                               <span style={{ color: '#6b7280', marginLeft: '6px' }}>({SCORE_DETAILS[entry.moodScore]?.meaning})</span>
                             </div>
                           )}
@@ -297,7 +258,7 @@ export default function MoodHistory() {
             </div>
           </div>
           <div style={styles.footerBottom}>
-            Â© 2026 UniCare Platform. All rights reserved.
+            © 2026 UniCare Platform. All rights reserved.
           </div>
         </footer>
 

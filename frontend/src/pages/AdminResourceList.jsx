@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -122,16 +122,16 @@ export default function AdminResourceList() {
                         UniCare Admin
                     </h2>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 1, margin: 0 }}>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>ðŸ›¡ï¸ Control Panel</li>
-                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>ðŸ“š Resource Library</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>ðŸ“Š System Analytics</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>ðŸ‘¥ User Management</li>
-                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>ðŸ“ Platform Logs</li>
-                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>âš™ï¸ System Config</li>
-                        <li className="sidebar-item" onClick={() => navigate('/settings')}>âš™ï¸ Settings</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-dashboard')}>🛡️ Control Panel</li>
+                        <li className="sidebar-item" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 'bold' }} onClick={() => navigate('/admin/resources')}>📚 Resource Library</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-analytics')}>📊 System Analytics</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-users')}>👥 User Management</li>
+                        <li className="sidebar-item" onClick={() => navigate('/admin-logs')}>📝 Platform Logs</li>
+                        <li className="sidebar-item" onClick={() => navigate('/system-config')}>⚙️ System Config</li>
+                        <li className="sidebar-item" onClick={() => navigate('/settings')}>⚙️ Settings</li>
                     </ul>
                     <ul style={{ listStyle: 'none', padding: 0, flex: 0, margin: 0 }}>
-                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>ðŸšª Logout</li>
+                        <li className="sidebar-item" onClick={handleLogout} style={{ color: '#dc2626' }}>🚪 Logout</li>
                     </ul>
                 </div>
 
@@ -236,7 +236,7 @@ export default function AdminResourceList() {
                                 <div style={styles.loadingState}>Loading directory...</div>
                             ) : resources.length === 0 ? (
                                 <div style={styles.emptyState}>
-                                    <div style={{fontSize: '48px', marginBottom: '16px'}}>ðŸ“­</div>
+                                    <div style={{fontSize: '48px', marginBottom: '16px'}}>📭</div>
                                     <h3 style={{margin: '0 0 8px 0', color: '#111827', fontSize: '20px', fontWeight: '800'}}>Directory is empty</h3>
                                     <p style={{margin: 0, color: '#6b7280', fontSize: '15px'}}>Click "Add New Resource" to start building the library.</p>
                                 </div>
@@ -323,7 +323,7 @@ export default function AdminResourceList() {
 
 const styles = {
     dashboardContainer: { display: 'flex', minHeight: '100vh', width: '100%', fontFamily: "'Inter', 'Segoe UI', sans-serif", backgroundColor: '#f9fafb' },
-    sidebar: { width: '250px', backgroundColor: '#ffffff', padding: '20px', boxShadow: '2px 0 10px rgba(0, 0, 0, 0.05)', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0, boxSizing: 'border-box', zIndex: 1000 },
+    sidebar: { width: '250px', backgroundColor: '#ffffff', padding: '20px', boxShadow: '2px 0 10px rgba(0, 0, 0, 0.05)', display: 'flex', flexDirection: 'column', position: 'fixed', top: '80px', left: 0, bottom: 0, boxSizing: 'border-box', zIndex: 40 },
     mainContent: { flex: 1, marginLeft: '250px', padding: '48px 40px', boxSizing: 'border-box' },
     contentMaxWidth: { maxWidth: '1100px', margin: '0 auto' },
     

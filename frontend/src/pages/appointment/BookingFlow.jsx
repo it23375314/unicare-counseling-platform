@@ -1,32 +1,54 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useCounsellorContext } from "../../context/CounsellorContext";
-import { useBooking } from "../../context/BookingContext";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
   ChevronRight, 
+  ChevronLeft,
   Calendar as CalendarIcon, 
   Clock, 
   Shield, 
-  User, 
+  User as UserIcon, 
+  Mail,
   Stethoscope, 
   Brain, 
   Hourglass, 
   FileText,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Zap,
+  Target,
+  CreditCard,
+  History,
+  Star,
+  Award,
+  ShieldCheck,
+  Activity,
+  MessageSquare,
+  HelpingHand
 } from "lucide-react";
+import { useCounsellorContext } from "../../context/CounsellorContext";
+import { useBooking } from "../../context/BookingContext";
+import { useAuth } from "../../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+
+import bookingBg from "../../assets/booking_flow_bg.png";
 
 const BookingFlow = () => {
+  const { counsellorId } = useParams();
   const navigate = useNavigate();
-  const { id } = useParams();
   const { counsellors } = useCounsellorContext();
   const { addBooking, getAvailableSlots } = useBooking();
+  const { user } = useAuth();
 
-  // Form State (Sections A-G)
-  const [studentName, setStudentName] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
-  const [selectedCounsellorId, setSelectedCounsellorId] = useState(id || "");
+  const [currentStep, setCurrentStep] = useState(1);
+  
+  // Form State
+  const [studentName, setStudentName] = useState(user?.name || "");
+  const [studentEmail, setStudentEmail] = useState(user?.email || ""); 
+  const [emergencyContact, setEmergencyContact] = useState(""); 
+  const [reasonDescription, setReasonDescription] = useState(""); 
+  const [selectedCounsellorId, setSelectedCounsellorId] = useState(counsellorId || "");
   const [sessionType, setSessionType] = useState("Individual");
   const [issueCategory, setIssueCategory] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -35,51 +57,52 @@ const BookingFlow = () => {
   const [notes, setNotes] = useState("");
   
   const [error, setError] = useState("");
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      if (!studentName) setStudentName(user.name || "");
+      if (!studentEmail) setStudentEmail(user.email || "");
+    }
+  }, [user]);
 
   const activeCounsellor = useMemo(() => 
     counsellors.find(c => c.id === selectedCounsellorId), 
     [counsellors, selectedCounsellorId]
   );
 
-  // Form Validation Logic
-  const isFormValid = useMemo(() => {
-    return (
-      studentName.trim().length > 0 &&
-      selectedCounsellorId !== "" &&
-      sessionType !== "" &&
-      issueCategory !== "" &&
-      selectedDate !== "" &&
-      selectedTime !== "" &&
-      duration !== ""
-    );
-  }, [studentName, selectedCounsellorId, sessionType, issueCategory, selectedDate, selectedTime, duration]);
-
-  // Rule: Fixed time slots as requested
-  const fixedSlots = ["09:00", "11:00", "13:00", "15:00"];
+  const isStep1Valid = studentName.trim().length > 0 && 
+                      studentEmail.trim().length > 5 && 
+                      studentEmail.includes("@") &&
+                      selectedCounsellorId !== "";
+  const isStep2Valid = sessionType !== "" && 
+                      issueCategory !== "" && 
+                      duration !== "" && 
+                      reasonDescription.trim().length > 5;
+  const isStep3Valid = selectedDate !== "" && selectedTime !== "";
+  const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
 
   const availableSlots = useMemo(() => {
     if (!selectedDate || !activeCounsellor) return [];
-    const slots = getAvailableSlots(activeCounsellor.name, selectedDate, fixedSlots);
-    return slots.map(s => ({
-      ...s,
-      // VERY NICE TOUCH: Detailed booked message
-      reason: s.reason === "Already booked" ? `Reserved for ${activeCounsellor.name}` : s.reason
-    }));
+    
+    const counsellorDayAvailability = activeCounsellor.availability?.find(a => a.date === selectedDate);
+    const slotsToFilter = counsellorDayAvailability ? counsellorDayAvailability.slots : [];
+    
+    if (slotsToFilter.length === 0) return [];
+    
+    return getAvailableSlots(activeCounsellor.name, selectedDate, slotsToFilter);
   }, [selectedDate, activeCounsellor, getAvailableSlots]);
 
-  const handleContinue = () => {
-    setShowConfirmModal(true);
-  };
-
-  const handleFinalConfirm = async () => {
+  const handleFinalConfirm = async (status = "Pending") => {
     setIsSubmitting(true);
+    const isPaid = status === "Paid";
     const bookingData = {
       studentName,
-      studentEmail,
-      counsellor: activeCounsellor.name,
+      studentEmail, 
+      emergencyContact,
+      reasonDescription,
+      counsellorId: selectedCounsellorId,
+      counsellorName: activeCounsellor.name,
       counsellorImage: activeCounsellor.image,
       specialty: activeCounsellor.specialization,
       sessionType,
@@ -90,22 +113,27 @@ const BookingFlow = () => {
       notes,
       price: activeCounsellor.price || 3000,
       status: "Pending",
+      paymentStatus: "Unpaid",
       type: "Video Session"
     };
 
     try {
       const newBookingId = await addBooking(bookingData);
-      navigate("/appointment/payment", {
-        state: {
-          bookingId: newBookingId,
-          counsellor: activeCounsellor,
-          studentName,
-          studentEmail,
-          date: selectedDate,
-          time: selectedTime,
-          price: activeCounsellor.price || 3000
-        }
-      });
+      if (status === "Pending") {
+        navigate("/dashboard");
+      } else {
+        navigate("/appointment/payment", {
+          state: {
+            bookingId: newBookingId,
+            counsellor: activeCounsellor,
+            studentName,
+            studentEmail,
+            date: selectedDate,
+            time: selectedTime,
+            price: activeCounsellor.price || 3000
+          }
+        });
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -113,331 +141,513 @@ const BookingFlow = () => {
     }
   };
 
-  const handleSavePending = async () => {
-    setIsSubmitting(true);
-    try {
-      await addBooking({
-        studentName,
-        studentEmail,
-        counsellor: activeCounsellor.name,
-        counsellorImage: activeCounsellor.image,
-        specialty: activeCounsellor.specialization,
-        sessionType,
-        issueCategory,
-        date: selectedDate,
-        time: selectedTime,
-        duration,
-        notes,
-        price: activeCounsellor.price || 3000,
-        status: "Pending",
-        type: "Video Session"
-      });
-      navigate("/dashboard");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-32 pt-24 font-sans">
-      {/* Booking Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowConfirmModal(false)} />
-          <div className="glass-card max-w-lg w-full p-10 rounded-[3rem] shadow-2xl relative animate-fade-in-up border border-white/20 bg-white/90">
-             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-inner">
-               <Shield size={32} />
-             </div>
-             <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-4">Final Review</h2>
-             <div className="space-y-4 mb-10 text-sm text-slate-600">
-                <p><strong>Student:</strong> {studentName}</p>
-                <p><strong>Expert:</strong> {activeCounsellor?.name}</p>
-                <p><strong>Schedule:</strong> {selectedDate} at {selectedTime}</p>
-                <p><strong>Category:</strong> {issueCategory} ({duration})</p>
-             </div>
-             
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <button 
-                onClick={handleFinalConfirm} 
-                disabled={isSubmitting}
-                className="py-5 rounded-[2rem] bg-blue-600 text-white font-black uppercase tracking-widest text-xs hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
-               >
-                 {isSubmitting ? "Booking..." : "Pay Now"} {!isSubmitting && <ChevronRight size={16} />}
-               </button>
-               <button 
-                onClick={handleSavePending} 
-                disabled={isSubmitting}
-                className="py-5 rounded-[2rem] bg-slate-100 text-slate-600 font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all shadow-md disabled:opacity-50 disabled:cursor-wait"
-               >
-                 {isSubmitting ? "Booking..." : "Pay Later"}
-               </button>
-             </div>
-             
-             <button onClick={() => setShowConfirmModal(false)} className="w-full mt-6 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors text-center">
-               Back to Editing
-             </button>
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen relative overflow-hidden bg-slate-900">
+      {/* Immersive Background */}
+      <div className="fixed inset-0 z-0">
+        <img src={bookingBg} className="w-full h-full object-cover opacity-60 scale-105" alt="" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900/40 to-indigo-900/20 backdrop-blur-[2px]" />
+      </div>
 
-      <div className="max-w-4xl mx-auto px-6">
-        <header className="mb-16 space-y-4 animate-fade-in">
-          <button onClick={() => navigate("/appointment/counsellors")} className="flex items-center text-slate-400 hover:text-blue-600 font-bold text-xs uppercase tracking-widest transition-colors mb-4 group">
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" /> Back to Experts
-          </button>
-          <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none italic">
-            Session <span className="text-blue-600 not-italic">Intake Form.</span>
-          </h1>
-          <p className="text-slate-500 font-medium max-w-lg">Please provide your details and select a convenient time for your consultation.</p>
-        </header>
+      {/* Dynamic Aura Glows */}
+      <div className="fixed inset-0 z-1 pointer-events-none">
+        <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] transition-all duration-1000 ${
+          currentStep === 1 ? "bg-emerald-500/20 scale-150" : 
+          currentStep === 2 ? "bg-blue-500/20 scale-125" : 
+          currentStep === 3 ? "bg-purple-500/20 scale-110" : "bg-indigo-500/20 scale-150"
+        }`} />
+      </div>
 
-        {error && (
-          <div className="mb-10 p-6 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 text-rose-700 animate-slide-up">
-            <AlertCircle size={24} />
-            <p className="font-black text-xs uppercase tracking-[0.1em]">{error}</p>
-          </div>
-        )}
-
-        <div className="space-y-12">
-          {/* Section A: Student Details */}
-          <Section icon={<User />} title="A. Student Details">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-              <FormGroup label="Full Name" required>
-                <input 
-                  type="text" 
-                  value={studentName} 
-                  onChange={(e) => setStudentName(e.target.value)} 
-                  placeholder="Enter your registered name" 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1" 
-                />
-              </FormGroup>
-              <FormGroup label="Email (Optional)">
-                <input 
-                  type="email" 
-                  value={studentEmail} 
-                  onChange={(e) => setStudentEmail(e.target.value)} 
-                  placeholder="example@unicare.edu" 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1" 
-                />
-              </FormGroup>
-            </div>
-          </Section>
-
-          {/* Section B: Counsellor Selection */}
-          <Section icon={<Stethoscope />} title="B. Counsellor Selection">
-            <div className="mt-6">
-              <FormGroup label="Choose Your Expert" required>
-                <select 
-                  value={selectedCounsellorId} 
-                  onChange={(e) => setSelectedCounsellorId(e.target.value)} 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1 appearance-none cursor-pointer"
-                >
-                  <option value="">Select a counsellor...</option>
-                  {counsellors.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} – {c.specialization} ({c.experience})</option>
-                  ))}
-                </select>
-              </FormGroup>
-            </div>
-          </Section>
-
-          {/* Section C: Session Details */}
-          <Section icon={<Brain />} title="C. Session Details">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-6">
-              <FormGroup label="Session Type" required>
-                <div className="flex gap-4 mt-1">
-                  {["Individual", "Group"].map(type => (
-                    <button
-                      key={type}
-                      onClick={() => setSessionType(type)}
-                      className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all ${
-                        sessionType === type ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-32">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          
+          <div className="flex-1 w-full space-y-12">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div className="space-y-4 animate-fade-in-up">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest border border-white/20 backdrop-blur-md">
+                   <Sparkles size={12} className="text-emerald-400" /> Medical Intake Vault
                 </div>
-              </FormGroup>
+                <h1 className="text-5xl lg:text-7xl font-black text-white tracking-tight leading-none italic">
+                  Clinical <span className="text-emerald-400 not-italic">Intake.</span>
+                </h1>
+                <p className="text-slate-200 font-medium max-w-sm">
+                  Your path to wellness starts here. Secure, private, and professionally guided.
+                </p>
+              </div>
+              <StepIndicator current={currentStep} />
+            </header>
 
-              <FormGroup label="Issue Category" required>
-                <select 
-                  value={issueCategory} 
-                  onChange={(e) => setIssueCategory(e.target.value)} 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1 appearance-none cursor-pointer"
-                >
-                  <option value="">Select a category...</option>
-                  <option value="Anxiety">Anxiety</option>
-                  <option value="Depression">Depression</option>
-                  <option value="Academic Stress">Academic Stress</option>
-                  <option value="Other">Other</option>
-                </select>
-              </FormGroup>
-            </div>
-          </Section>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="glass-card bg-white rounded-[3.5rem] p-8 lg:p-14 shadow-2xl border border-white relative overflow-hidden group"
+              >
+                {/* Internal Card Aura */}
+                <div className={`absolute -top-24 -right-24 w-64 h-64 blur-[80px] opacity-10 transition-all duration-1000 ${
+                  currentStep === 1 ? "bg-emerald-400" : 
+                  currentStep === 2 ? "bg-blue-400" : 
+                  currentStep === 3 ? "bg-purple-400" : "bg-indigo-400"
+                }`} />
 
-          {/* Section D: Date Selection */}
-          <Section icon={<CalendarIcon />} title="D. Date Selection">
-            <div className="mt-6">
-              <FormGroup label="Pick a Business Day (Future Only)" required>
-                <input 
-                  type="date" 
-                  value={selectedDate} 
-                  min={new Date().toISOString().split("T")[0]} 
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setSelectedTime("");
-                  }} 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1 cursor-pointer" 
-                />
-              </FormGroup>
-            </div>
-          </Section>
+                {currentStep === 1 && (
+                  <div className="space-y-12 relative z-10">
+                    <SectionLabel icon={<UserIcon className="text-emerald-400" />} title="Identify Expert" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <FormInput label="Full Name" value={studentName} onChange={setStudentName} placeholder="Enter your name" icon={<Sparkles size={14} />} />
+                      <FormInput label="Contact Email" value={studentEmail} onChange={setStudentEmail} placeholder="yourname@university.com" icon={<Mail size={14} />} />
+                    </div>
 
-          {/* Section E: Time Slot Selection */}
-          <Section icon={<Clock />} title="E. Time Slot Selection">
-            <div className="mt-6">
-              <FormGroup label="Available Times" required>
-                {!selectedDate ? (
-                  <div className="p-8 bg-slate-50 border border-dashed border-slate-200 rounded-3xl text-center mt-1">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select a date first to view slots</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-1">
-                    {availableSlots.map((slot, idx) => (
-                      <button
-                        key={idx}
-                        disabled={slot.disabled}
-                        onClick={() => setSelectedTime(slot.time)}
-                        className={`py-5 rounded-2xl font-black text-xs transition-all border-2 ${
-                          slot.disabled 
-                            ? "bg-slate-50 border-slate-50 text-slate-200 cursor-not-allowed line-through" 
-                            : selectedTime === slot.time
-                              ? "bg-blue-600 text-white border-blue-600 shadow-xl shadow-blue-600/20"
-                              : "bg-white border-slate-100 text-slate-600 hover:border-blue-400 hover:text-blue-600"
-                        }`}
-                      >
-                        {slot.time}
-                        {slot.disabled && <span className="block text-[8px] mt-1 opacity-60">{slot.reason}</span>}
-                      </button>
-                    ))}
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2 flex items-center gap-2">
+                             <Stethoscope size={14} className="text-emerald-400" /> Select Specialty Expert
+                          </label>
+                          <PremiumExpertSelect 
+                            counsellors={counsellors} 
+                            selectedId={selectedCounsellorId} 
+                            onSelect={setSelectedCounsellorId} 
+                          />
+                        </div>
+
+                       <div className="space-y-8">
+                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2 flex items-center gap-2">
+                           <Award size={14} className="text-emerald-400" /> Professional Assignment Preview
+                         </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {counsellors.map(c => (
+                          <ExpertCard 
+                            key={c.id} 
+                            expert={c} 
+                            isSelected={selectedCounsellorId === c.id}
+                            onClick={() => setSelectedCounsellorId(c.id)}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
-              </FormGroup>
-            </div>
-          </Section>
 
-          {/* Section F: Duration */}
-          <Section icon={<Hourglass />} title="F. Duration">
-            <div className="mt-6 flex flex-wrap gap-4">
-              {["30 mins", "60 mins", "90 mins"].map(d => (
-                <button
-                  key={d}
-                  onClick={() => setDuration(d)}
-                  className={`px-8 py-5 rounded-3xl font-black text-xs uppercase tracking-widest border-2 transition-all ${
-                    duration === d ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </Section>
+                {currentStep === 2 && (
+                  <div className="space-y-12 relative z-10">
+                    <SectionLabel icon={<FileText className="text-blue-400" />} title="Medical Specifications" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-8">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Focus Category</label>
+                          <div className="flex flex-wrap gap-2">
+                            {["Anxiety", "Academic", "Relationship", "Career", "Other"].map(cat => (
+                              <Pill key={cat} active={issueCategory === cat} onClick={() => setIssueCategory(cat)} label={cat} />
+                            ))}
+                          </div>
+                        </div>
 
-          {/* Section G: Additional Notes */}
-          <Section icon={<FileText />} title="G. Additional Notes">
-            <div className="mt-6">
-              <FormGroup label="Context for your expert (Optional)">
-                <textarea 
-                  value={notes} 
-                  onChange={(e) => setNotes(e.target.value)} 
-                  rows={4} 
-                  placeholder="Share any background or specific questions you'd like addressed..." 
-                  className="w-full bg-slate-50 border-none text-slate-900 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-blue-500 block p-4 shadow-inner mt-1 resize-none" 
-                />
-              </FormGroup>
-            </div>
-          </Section>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Session Environment</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <SelectCard active={sessionType === "Individual"} onClick={() => setSessionType("Individual")} label="Individual" icon={<UserIcon size={18} />} />
+                            <SelectCard active={sessionType === "Group"} onClick={() => setSessionType("Group")} label="Group Session" icon={<Brain size={18} />} />
+                          </div>
+                        </div>
+                      </div>
 
-          {/* Booking Summary - VERY NICE TOUCH */}
-          <div className={`transition-all duration-700 overflow-hidden ${isFormValid ? "max-h-[500px] opacity-100 mb-12" : "max-h-0 opacity-0 mb-0"}`}>
-            <div className="bg-slate-900 text-white rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group border border-white/10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-32 -mt-32" />
-              <h3 className="text-xl font-black mb-8 border-b border-white/5 pb-4 flex items-center gap-3 uppercase tracking-widest text-blue-400">
-                <CheckCircle2 className="text-emerald-400" size={20} /> Booking Summary
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-8">
-                <SummaryItemLight label="Expert Professional" value={activeCounsellor?.name} />
-                <SummaryItemLight label="Scheduled Date" value={selectedDate} />
-                <SummaryItemLight label="Session Time" value={selectedTime} />
-                <SummaryItemLight label="Duration" value={duration} />
-                <SummaryItemLight label="Type" value={sessionType} />
-                <SummaryItemLight label="Amount Due" value={`Rs. ${activeCounsellor?.price || 3000}`} highlight />
-              </div>
-            </div>
+                      <div className="space-y-8">
+                        <FormTextArea 
+                          label="Session Objectives" 
+                          value={reasonDescription} 
+                          onChange={setReasonDescription} 
+                          placeholder="What would you like to achieve today?" 
+                        />
+                        <FormInput 
+                          label="Safety Contact" 
+                          value={emergencyContact} 
+                          onChange={setEmergencyContact} 
+                          placeholder="Name + Relation" 
+                          icon={<AlertCircle size={14} />} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 3 && (
+                  <div className="space-y-12 relative z-10">
+                    <SectionLabel icon={<CalendarIcon className="text-purple-400" />} title="Timing Coordination" />
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                      <div className="lg:col-span-12 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                           <div className="space-y-4">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Select Date</label>
+                              <input 
+                                type="date" 
+                                min={new Date().toISOString().split('T')[0]}
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="w-full p-6 bg-slate-50 border-none rounded-[2rem] text-xl font-black text-slate-900 shadow-inner focus:ring-4 focus:ring-purple-500/10"
+                              />
+                           </div>
+                           <div className="p-6 bg-purple-50 rounded-[2.5rem] border border-purple-100 flex items-start gap-4 shadow-sm">
+                              <Target className="text-purple-400 shrink-0 mt-1" size={20} />
+                              <p className="text-[10px] font-bold text-slate-500 leading-relaxed uppercase tracking-widest">
+                                Synchronization is active. All time slots are verified in real-time.
+                              </p>
+                           </div>
+                        </div>
+
+                        <div className="space-y-4 pt-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 block">Choose Available Time</label>
+                          {selectedDate ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                              {availableSlots.length > 0 ? (
+                                availableSlots.map(slot => (
+                                  <SlotButton 
+                                    key={slot.time}
+                                    time={slot.time}
+                                    active={selectedTime === slot.time}
+                                    disabled={slot.disabled}
+                                    onClick={() => setSelectedTime(slot.time)}
+                                  />
+                                ))
+                              ) : (
+                                <div className="col-span-full p-12 bg-rose-50 rounded-[3rem] border border-dashed border-rose-200 text-center">
+                                   <AlertCircle className="text-rose-300 mx-auto mb-4" size={40} />
+                                   <p className="text-xs font-black uppercase tracking-widest text-rose-400">No slots available for this timeline</p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="h-32 flex items-center justify-center text-slate-200 font-black text-xs uppercase tracking-widest border-2 border-dashed border-slate-100 rounded-[2.5rem]">
+                              Please select a date first
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 4 && (
+                  <div className="space-y-12 text-center py-10 relative z-10">
+                    <div className="w-28 h-28 bg-emerald-50 text-emerald-400 rounded-[3.5rem] flex items-center justify-center mx-auto shadow-xl border border-emerald-100 mb-10">
+                       <CheckCircle2 size={56} className="animate-pulse" />
+                    </div>
+                    <div className="space-y-6 max-w-lg mx-auto mb-16">
+                      <h2 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tight italic leading-none">Final <span className="text-emerald-400 not-italic">Vault.</span></h2>
+                      <p className="text-slate-500 font-medium text-lg leading-relaxed">Review your clinical summary below. Once confirmed, your session will be locked and an OTP will be sent.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                       <GatewayCard 
+                        title="Secure Payment" 
+                        desc="Instant Authorization" 
+                        icon={<CreditCard size={32} />} 
+                        primary 
+                        onClick={() => handleFinalConfirm("Paid")}
+                        loading={isSubmitting}
+                       />
+                       <GatewayCard 
+                        title="Book Now" 
+                        desc="Pay at University Counter" 
+                        icon={<History size={32} />} 
+                        onClick={() => handleFinalConfirm("Pending")}
+                        loading={isSubmitting}
+                       />
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Navigation */}
+                {currentStep < 4 && (
+                  <div className="mt-20 pt-10 border-t border-slate-100 flex justify-between items-center relative z-10">
+                    <button 
+                      onClick={prevStep}
+                      disabled={currentStep === 1}
+                      className="px-10 py-5 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all disabled:opacity-0 disabled:pointer-events-none group"
+                    >
+                      <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
+                    </button>
+                    <button 
+                      onClick={nextStep}
+                      disabled={(currentStep === 1 && !isStep1Valid) || (currentStep === 2 && !isStep2Valid) || (currentStep === 3 && !isStep3Valid)}
+                      className="px-12 py-5 bg-slate-900 text-white rounded-[2rem] flex items-center gap-4 text-[10px] font-black uppercase tracking-widest shadow-2xl hover:bg-emerald-400 transition-all hover:scale-105 active:scale-95 disabled:opacity-20 disabled:grayscale disabled:cursor-not-allowed"
+                    >
+                      Next Step <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          {/* Final Action */}
-          <div className="pt-12 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-4 text-emerald-600 bg-emerald-50 px-6 py-4 rounded-3xl border border-emerald-100">
-              <CheckCircle2 size={24} />
-              <div className="text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest">Pricing Policy</p>
-                <p className="text-sm font-bold">Rs. {activeCounsellor?.price || "3000"} per session</p>
-              </div>
+          {/* Dynamic Summary Sidebar */}
+          <aside className="w-full lg:w-[400px] sticky top-12">
+            <div className="glass-card bg-slate-900 rounded-[3.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-125 transition-transform duration-700" />
+               
+               <header className="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+                 <h2 className="text-xl font-black italic tracking-tight">Summary <span className="text-emerald-400 not-italic">Vault.</span></h2>
+                 <Shield className="text-emerald-400" size={20} />
+               </header>
+
+               <div className="space-y-10">
+                  {activeCounsellor ? (
+                    <div className="flex items-center gap-6 p-5 bg-white/5 rounded-[2.5rem] border border-white/10 shadow-inner group/expert">
+                      <img src={activeCounsellor.image} className="w-16 h-16 rounded-2xl object-cover border-2 border-white/10 group-hover/expert:rotate-3 transition-transform" alt="" />
+                      <div className="space-y-1">
+                        <p className="text-lg font-black tracking-tight">{activeCounsellor.name}</p>
+                        <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none">{activeCounsellor.specialization}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-10 border-2 border-dashed border-white/10 rounded-[2.5rem] text-white/20 text-[10px] font-black uppercase tracking-widest text-center">
+                       Expert Not Assigned
+                    </div>
+                  )}
+
+                  <div className="space-y-8">
+                    <SummaryLine label="Identity" value={studentName} />
+                    <SummaryLine label="Channel" value={studentEmail} />
+                    <SummaryLine label="Temporal Coordination" value={selectedDate ? `${selectedDate} @ ${selectedTime || "Pending Time"}` : "Waiting for date..."} />
+                    <SummaryLine label="Safety Protocol" value={emergencyContact || "Required Step 2"} />
+                  </div>
+
+                  <div className="pt-10 border-t border-white/10 flex justify-between items-end">
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Total Valuation</p>
+                       <p className="text-5xl font-black text-white tracking-tighter italic leading-none">
+                         Rs. {activeCounsellor ? Number(activeCounsellor.price) + 200 : "---"}
+                       </p>
+                    </div>
+                    <div className="text-[9px] font-black text-emerald-400 animate-pulse uppercase tracking-[0.2em] mb-1">SECURE</div>
+                  </div>
+               </div>
             </div>
-            
-            <button 
-              onClick={handleContinue}
-              disabled={!isFormValid || isSubmitting}
-              className={`w-full md:w-auto px-16 py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 ${
-                isFormValid && !isSubmitting
-                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30"
-                  : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-              }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Booking...
-                </>
-              ) : "Finalize Intake"}
-            </button>
-          </div>
+          </aside>
         </div>
       </div>
     </div>
   );
 };
 
-const SummaryItemLight = ({ label, value, highlight }) => (
-  <div className="space-y-1">
-    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
-    <p className={`text-sm font-bold tracking-wide ${highlight ? "text-blue-400 text-lg" : "text-white"}`}>{value}</p>
+// UI Components
+const StepIndicator = ({ current }) => (
+  <div className="flex gap-2">
+    {[1, 2, 3, 4].map(s => (
+      <div 
+        key={s} 
+        className={`h-2 rounded-full transition-all duration-700 ${
+          s === current ? "w-12 bg-emerald-400 shadow-lg shadow-emerald-400/20" : 
+          s < current ? "w-8 bg-emerald-500/50 shadow-lg" : "w-6 bg-white/20"
+        }`} 
+      />
+    ))}
   </div>
 );
 
-// Helper Components
-const Section = ({ icon, title, children }) => (
-  <section className="glass-card p-10 rounded-[3rem] border border-white shadow-2xl shadow-blue-900/5 hover:shadow-blue-900/10 transition-shadow duration-700 relative overflow-hidden group bg-white/80 backdrop-blur-sm">
-    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-colors" />
-    <div className="flex items-center gap-4 mb-8">
-      <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
+const SectionLabel = ({ icon, title }) => (
+  <div className="flex items-center gap-5">
+    <div className="w-14 h-14 bg-slate-50 text-slate-900 rounded-[1.5rem] flex items-center justify-center shadow-inner border border-slate-100">
+      {icon}
+    </div>
+    <h3 className="text-3xl font-black text-slate-900 tracking-tight italic">{title}</h3>
+  </div>
+);
+
+const ExpertCard = ({ expert, isSelected, onClick }) => (
+  <motion.div 
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className={`p-5 rounded-[2.5rem] border-2 cursor-pointer transition-all relative overflow-hidden group ${
+      isSelected ? "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-xl shadow-emerald-400/10" : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+    }`}
+  >
+    <div className="absolute top-4 right-4 flex gap-1 items-center">
+       <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${
+         isSelected ? "bg-emerald-400 text-white" : "bg-slate-200 text-slate-500"
+       }`}>
+         <Star size={10} fill={isSelected ? "currentColor" : "none"} /> 4.9
+       </div>
+    </div>
+
+    <div className="flex items-center gap-4">
+      <img src={expert.image} className="w-16 h-16 rounded-2xl object-cover border-2 border-white/20 group-hover:rotate-2 transition-transform" alt="" />
+      <div>
+        <p className="text-sm font-black tracking-tight">{expert.name}</p>
+        <p className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? "text-slate-900/40" : "text-emerald-600"}`}>
+          {expert.specialization}
+        </p>
+      </div>
+    </div>
+  </motion.div>
+);
+
+const FormInput = ({ label, value, onChange, placeholder, icon }) => (
+  <div className="space-y-4">
+    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">{label}</label>
+    <div className="relative group">
+      <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-400 transition-colors">
         {icon}
       </div>
-      <h3 className="text-2xl font-black text-slate-900 tracking-tight italic">{title}</h3>
+      <input 
+        type="text" 
+        value={value} 
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] py-6 pl-14 pr-8 text-sm font-bold text-slate-900 placeholder:text-slate-200 focus:ring-4 focus:ring-emerald-400/10 transition-all shadow-inner"
+      />
     </div>
-    {children}
-  </section>
-);
-
-const FormGroup = ({ label, required, children }) => (
-  <div className="flex flex-col">
-    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-      {label} {required && <span className="text-rose-500">*</span>}
-    </label>
-    {children}
   </div>
 );
+
+const FormTextArea = ({ label, value, onChange, placeholder }) => (
+  <div className="space-y-4">
+    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">{label}</label>
+    <textarea 
+      value={value} 
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows="4"
+      className="w-full bg-slate-50 border border-slate-100 rounded-[2.5rem] p-8 text-sm font-bold text-slate-900 placeholder:text-slate-200 focus:ring-4 focus:ring-emerald-400/10 transition-all shadow-inner resize-none"
+    />
+  </div>
+);
+
+const Pill = ({ label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+      active ? "bg-slate-900 text-white shadow-xl scale-105" : "bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100"
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const SelectCard = ({ label, active, onClick, icon }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-5 p-6 rounded-[2rem] border-2 transition-all group ${
+      active ? "border-slate-900 bg-slate-900 text-white shadow-xl" : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+    }`}
+  >
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${active ? "bg-emerald-400 text-slate-900" : "bg-white text-slate-200 group-hover:bg-white"}`}>
+      {icon}
+    </div>
+    <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+  </button>
+);
+
+const SlotButton = ({ time, active, disabled, onClick }) => (
+  <button 
+    disabled={disabled}
+    onClick={onClick}
+    className={`py-6 rounded-3xl text-[11px] font-black uppercase tracking-[0.2em] transition-all border ${
+      active ? "bg-slate-900 text-white border-slate-900 shadow-2xl scale-105" : 
+      disabled ? "bg-slate-50 text-slate-200 border-slate-100 cursor-not-allowed italic" : 
+      "bg-white border-slate-100 text-slate-600 hover:border-emerald-400 hover:text-emerald-600 shadow-sm"
+    }`}
+  >
+    {time}
+  </button>
+);
+
+const GatewayCard = ({ title, desc, icon, primary, onClick, loading }) => (
+  <button 
+    onClick={onClick}
+    disabled={loading}
+    className={`p-10 rounded-[3.5rem] text-left transition-all border-2 flex items-center gap-8 group scale-hover active:scale-95 relative overflow-hidden ${
+      primary ? "border-emerald-400 bg-emerald-50 shadow-xl shadow-emerald-400/5 hover:bg-emerald-100" : "border-slate-100 bg-white hover:border-slate-200"
+    }`}
+  >
+    <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center shrink-0 transition-all group-hover:shadow-lg ${
+      primary ? "bg-emerald-400 text-white shadow-emerald-400/20" : "bg-slate-50 text-slate-400"
+    }`}>
+      {icon}
+    </div>
+    <div className="space-y-2 relative z-10">
+      <p className="text-2xl font-black text-slate-900 tracking-tight leading-none italic">{title}</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{desc}</p>
+    </div>
+  </button>
+);
+
+const SummaryLine = ({ label, value }) => (
+  <div className="space-y-2">
+    <p className="text-[9px] font-black text-white/20 uppercase tracking-widest px-1">{label}</p>
+    <p className="text-sm font-black tracking-tight text-white/90">{value || "Pending Protocol..."}</p>
+  </div>
+);
+
+const PremiumExpertSelect = ({ counsellors, selectedId, onSelect }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedCounsellor = counsellors.find(c => c.id === selectedId);
+
+  return (
+    <div className="relative z-50">
+      <button
+        type="button"
+        id="counsellor-dropdown-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] py-4 px-6 flex items-center justify-between text-sm font-bold text-slate-900 shadow-inner hover:bg-white transition-all focus:ring-4 focus:ring-emerald-400/10"
+      >
+        <div className="flex items-center gap-4">
+          {selectedCounsellor ? (
+            <>
+              <img src={selectedCounsellor.image} className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-sm" alt="" />
+              <div className="text-left">
+                <p className="text-sm font-black tracking-tight">{selectedCounsellor.name}</p>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{selectedCounsellor.specialization}</p>
+              </div>
+            </>
+          ) : (
+            <span className="text-slate-300">Choose your wellness expert...</span>
+          )}
+        </div>
+        <ChevronRight className={`transition-transform duration-500 text-slate-300 ${isOpen ? "rotate-[-90deg]" : "rotate-90"}`} size={20} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute top-full left-0 right-0 mt-4 bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-[70] p-3 space-y-1"
+            >
+              {counsellors.map(c => (
+                <button
+                  key={c.id}
+                  id={`counsellor-option-${c.id}`}
+                  onClick={() => {
+                    onSelect(c.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full p-4 rounded-2xl flex items-center gap-4 hover:bg-slate-50 transition-all group ${selectedId === c.id ? "bg-emerald-50 border border-emerald-100" : "border border-transparent"}`}
+                >
+                  <img src={c.image} className="w-14 h-14 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform" alt="" />
+                  <div className="text-left">
+                    <p className={`text-sm font-black tracking-tight ${selectedId === c.id ? "text-emerald-900" : "text-slate-900"}`}>{c.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.specialization}</p>
+                  </div>
+                  {selectedId === c.id && <CheckCircle2 className="ml-auto text-emerald-500" size={18} />}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default BookingFlow;

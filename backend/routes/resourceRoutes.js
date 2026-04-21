@@ -46,7 +46,7 @@ router.post('/add', upload.fields([
       try { resourceData.tags = JSON.parse(resourceData.tags); } catch (e) {}
     }
 
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:5001';
 
     if (req.files?.['image']) {
       resourceData.imageUrl = `${BASE_URL}/uploads/${req.files['image'][0].filename}`;
@@ -88,7 +88,7 @@ router.put('/edit/:id', upload.fields([
 
     const updates = {};
     const files = req.files || {};
-    const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:5001';
 
     if (files.image?.length) {
       updates.imageUrl = `${BASE_URL}/uploads/${files.image[0].filename}`;

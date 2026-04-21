@@ -51,13 +51,6 @@ export default function WellnessDashboard() {
     navigate('/mood');
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.clear();
-      window.location.href = '/login';
-    }
-  };
-
   return (
     <>
       <style>{`
@@ -220,42 +213,6 @@ export default function WellnessDashboard() {
 
           </main>
         </div>
-
-        {/* --- FOOTER --- */}
-        <footer style={styles.footer}>
-          <div style={styles.footerGrid}>
-            <div>
-              <h3 style={styles.footerHeading}>UniCare</h3>
-              <p style={styles.footerText}>
-                Empowering university students with accessible, secure, and private mental health counseling.
-              </p>
-            </div>
-            
-            <div>
-              <h3 style={styles.footerHeading}>Links</h3>
-              <Link to="/" className="footer-link" style={styles.footerLink}>Home</Link>
-              <Link to="/about" className="footer-link" style={styles.footerLink}>About Us</Link>
-              <Link to="/counsellors" className="footer-link" style={styles.footerLink}>Find a Counsellor</Link>
-            </div>
-
-            <div>
-              <h3 style={styles.footerHeading}>Support</h3>
-              <Link to="/faq" className="footer-link" style={styles.footerLink}>FAQ</Link>
-              <Link to="/privacy" className="footer-link" style={styles.footerLink}>Privacy Policy</Link>
-              <Link to="/terms" className="footer-link" style={styles.footerLink}>Terms of Service</Link>
-            </div>
-
-            <div>
-              <h3 style={styles.footerHeading}>Contact</h3>
-              <a href="mailto:support@unicare.edu" className="footer-link" style={styles.footerLink}>support@unicare.edu</a>
-              <p style={{...styles.footerLink, cursor: 'default'}}>1-800-UNICARE</p>
-            </div>
-          </div>
-          <div style={styles.footerBottom}>
-            © 2026 UniCare Platform. All rights reserved.
-          </div>
-        </footer>
-
       </div>
     </>
   );

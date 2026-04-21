@@ -7,10 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    name: '', email: '', password: '', role: 'student', itNumber: '',
+    name: '', email: '', password: '', role: 'student', itNumber: '', specialization: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingApproval, setPendingApproval] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -30,10 +31,15 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // Register
-      await axios.post(`${API_URL}/api/auth/register`, formData);
+      const res = await axios.post(`${API_URL}/api/auth/register`, formData);
 
-      // Auto-login after registration
+      // If counsellor, show pending screen — DO NOT auto-login
+      if (res.data.pending) {
+        setPendingApproval(true);
+        return;
+      }
+
+      // For students/admins: auto-login after registration
       const loginRes = await axios.post(`${API_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password,
@@ -53,6 +59,25 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  // Show pending approval screen for counsellors
+  if (pendingApproval) {
+    return (
+      <div style={styles.pageWrapper}>
+        <div style={{ maxWidth: '500px', width: '90%', backgroundColor: '#fff', borderRadius: '24px', padding: '60px 48px', textAlign: 'center', boxShadow: '0 20px 60px -15px rgba(15,118,110,0.15)' }}>
+          <div style={{ fontSize: '64px', marginBottom: '24px' }}>⏳</div>
+          <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#164e63', marginBottom: '16px' }}>Registration Submitted!</h2>
+          <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.7', marginBottom: '32px' }}>
+            Your counsellor account is <strong>pending admin approval</strong>. You will be able to log in once an administrator reviews and confirms your registration.
+          </p>
+          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px', marginBottom: '32px' }}>
+            <p style={{ color: '#166534', fontSize: '14px', fontWeight: '600', margin: 0 }}>📧 We'll contact you at <strong>{formData.email}</strong></p>
+          </div>
+          <Link to="/login" style={{ display: 'inline-block', backgroundColor: '#0891b2', color: '#fff', padding: '14px 36px', borderRadius: '12px', fontWeight: '700', textDecoration: 'none', fontSize: '15px' }}>Go to Login</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.pageWrapper}>
@@ -131,6 +156,17 @@ export default function Register() {
                 <option value="admin">Role: Admin</option>
               </select>
             </div>
+
+            {formData.role === 'counsellor' && (
+              <div style={styles.inputWrapper}>
+                <span style={styles.icon}>🏥</span>
+                <input
+                  type="text" placeholder="Specialization (e.g. Anxiety, Career Guidance)"
+                  style={styles.inputField} value={formData.specialization}
+                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                />
+              </div>
+            )}
 
             <button
               type="submit" disabled={loading}

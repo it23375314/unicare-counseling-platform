@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { BookingProvider } from './context/BookingContext';
 import { CounsellorProvider } from './context/CounsellorContext';
 import { SessionNoteProvider } from './context/SessionNoteContext';
+import { ChatProvider } from './context/ChatContext';
 
 // ─── Config (axios interceptor for unified API port) ──────────────────────────
 import './config/api';
@@ -26,6 +27,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CounsellorDashboard from './pages/counsellor/CounsellorDashboard';
 import AppointmentProfile from './pages/counsellor/AppointmentProfile';
 import ChatUI from './pages/counsellor/ChatUI';
+import SavedAvailability from './pages/counsellor/SavedAvailability';
+import AppointmentHistory from './pages/counsellor/AppointmentHistory';
 
 // ─── Auth Pages (from Wellness module) ────────────────────────────────────────
 import Login from './pages/Login';
@@ -47,6 +50,15 @@ import AdminResourceList from './pages/AdminResourceList';
 import AdminAddResource from './pages/AdminAddResource';
 import AdminEditResource from './pages/AdminEditResource';
 
+// ─── New Admin & Settings Pages (Merged from auth-module) ────────────────────
+import UserManagement from './pages/admin/UserManagement';
+import PlatformLogs from './pages/admin/PlatformLogs';
+import SystemAnalytics from './pages/admin/SystemAnalytics';
+import SystemConfig from './pages/admin/SystemConfig';
+import Settings from './pages/Settings';
+
+import ProtectedRoute from './components/ProtectedRoute';
+
 function App() {
   return (
     <ToastProvider>
@@ -55,9 +67,10 @@ function App() {
         <CounsellorProvider>
           <BookingProvider>
             <SessionNoteProvider>
-              <Router>
-                <ScrollToTop />
-                <Routes>
+              <ChatProvider>
+                <Router>
+                  <ScrollToTop />
+                  <Routes>
 
                   {/* ── Main Layout (Navbar + Footer) ── */}
                   <Route path="/" element={<Layout />}>
@@ -66,37 +79,145 @@ function App() {
 
                     {/* ── Appointment & Payment ── */}
                     <Route path="appointment/counsellors" element={<FindCounsellor />} />
-                    <Route path="appointment/book/:counsellorId" element={<BookingFlow />} />
-                    <Route path="appointment/payment" element={<Payment />} />
-                    <Route path="dashboard" element={<StudentDashboard />} />
+                    
+                    {/* Protected Booking Routes */}
+                    <Route path="appointment/book/:counsellorId" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <BookingFlow />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="appointment/payment" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <Payment />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="dashboard" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <StudentDashboard />
+                      </ProtectedRoute>
+                    } />
 
                     {/* ── Counsellor Management (UniCare Admin) ── */}
-                    <Route path="admin/counsellors" element={<AdminDashboard />} />
+                    <Route path="admin/counsellors" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    } />
 
                     {/* ── Counsellor Portal ── */}
                     <Route path="counsellor/dashboard" element={<Navigate to="/counsellor/availability" replace />} />
-                    <Route path="counsellor/availability" element={<CounsellorDashboard />} />
-                    <Route path="counsellor/appointments" element={<CounsellorDashboard />} />
-                    <Route path="counsellor/appointment/:id" element={<AppointmentProfile />} />
-                    <Route path="counsellor/history" element={<CounsellorDashboard />} />
-                    <Route path="counsellor/notes" element={<CounsellorDashboard />} />
-                    <Route path="chat" element={<ChatUI />} />
+                    <Route path="counsellor/my-availability" element={<SavedAvailability />} />
+                    <Route path="history" element={<AppointmentHistory />} />
+                    <Route path="counsellor/availability" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <CounsellorDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="counsellor/appointments" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <CounsellorDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="counsellor/appointment/:id" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <AppointmentProfile />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="counsellor/history" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <CounsellorDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="counsellor/notes" element={
+                      <ProtectedRoute allowedRoles={['counsellor']}>
+                        <CounsellorDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="chat" element={
+                      <ProtectedRoute allowedRoles={['counsellor', 'student']}>
+                        <ChatUI />
+                      </ProtectedRoute>
+                    } />
 
                     {/* ── Wellness Module ── */}
-                    <Route path="wellness-dashboard" element={<WellnessDashboard />} />
-                    <Route path="wellness" element={<WellnessCenter />} />
-                    <Route path="wellness/history" element={<GoalHistory />} />
-                    <Route path="mood" element={<MoodSupportAssistant />} />
-                    <Route path="mood/history" element={<MoodHistory />} />
+                    <Route path="wellness-dashboard" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <WellnessDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="wellness" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <WellnessCenter />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="wellness/history" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <GoalHistory />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="mood" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <MoodSupportAssistant />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="mood/history" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <MoodHistory />
+                      </ProtectedRoute>
+                    } />
                     <Route path="resources" element={<ResourceLibrary />} />
                     <Route path="resources/:id" element={<ResourceDetail />} />
-                    <Route path="saved" element={<SavedResources />} />
+                    <Route path="saved" element={
+                      <ProtectedRoute allowedRoles={['student']}>
+                        <SavedResources />
+                      </ProtectedRoute>
+                    } />
 
                     {/* ── Wellness Admin ── */}
-                    <Route path="admin-dashboard" element={<WellnessAdminDashboard />} />
-                    <Route path="admin/resources" element={<AdminResourceList />} />
-                    <Route path="admin/resources/add" element={<AdminAddResource />} />
-                    <Route path="admin/resources/edit/:id" element={<AdminEditResource />} />
+                    <Route path="admin-dashboard" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <WellnessAdminDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin/resources" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminResourceList />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin/resources/add" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminAddResource />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin/resources/edit/:id" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminEditResource />
+                      </ProtectedRoute>
+                    } />
+
+                    {/* ── New Admin & Settings (Merged) ── */}
+                    <Route path="admin-users" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <UserManagement />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin-logs" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <PlatformLogs />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin-analytics" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <SystemAnalytics />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="system-config" element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <SystemConfig />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="settings" element={<Settings />} />
+
                   </Route>
 
                   {/* ── Standalone Auth Pages (no Layout) ── */}
@@ -108,7 +229,8 @@ function App() {
 
                 </Routes>
               </Router>
-            </SessionNoteProvider>
+            </ChatProvider>
+          </SessionNoteProvider>
           </BookingProvider>
         </CounsellorProvider>
       </AuthProvider>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 
@@ -53,7 +53,7 @@ export default function AdminStats() {
                         <div style={styles.navDivider}></div>
                         
                         <div style={styles.adminProfile}>
-                            <span style={{fontSize: '14px'}}>ðŸ‘‘</span> 
+                            <span style={{fontSize: '14px'}}>👑</span> 
                             <span style={{fontWeight: '900', fontSize: '11px', color: '#1e293b', textTransform: 'uppercase'}}>
                                 {userName?.split(' ')[0] || "Admin"}
                             </span>
