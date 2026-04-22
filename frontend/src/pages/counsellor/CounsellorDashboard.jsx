@@ -211,7 +211,7 @@ export default function CounsellorDashboard() {
   const [filterApptTiming, setFilterApptTiming] = useState("All");
   const [debouncedSearchAppt, setDebouncedSearchAppt] = useState("");
   const [apptSearchError, setApptSearchError] = useState("");
-  const [formData, setFormData] = useState({ id: null, title: "", notes: "", riskLevel: "Low", followUpRecommendation: "", status: "Draft", aiAnalysis: null });
+  const [formData, setFormData] = useState({ id: null, title: "", notes: "", riskLevel: "Low", counsellorAssessment: "", status: "Draft", aiAnalysis: null });
   const [isViewOnly, setIsViewOnly] = useState(false);
 
   // Custom PopMsg state
@@ -282,8 +282,8 @@ export default function CounsellorDashboard() {
     if (!noteText.trim()) newErrors.noteText = "Please enter detailed session notes";
     else if (noteText.trim().length < 10) newErrors.noteText = "Detailed session notes must be at least 10 characters";
     
-    if (!recommendation.trim()) newErrors.recommendation = "Please enter follow-up recommendation";
-    else if (recommendation.trim().length < 5) newErrors.recommendation = "Follow-up recommendation must be at least 5 characters";
+    if (!counsellorAssessment.trim()) newErrors.counsellorAssessment = "Please enter counsellor assessment";
+    else if (counsellorAssessment.trim().length < 5) newErrors.counsellorAssessment = "Counsellor assessment must be at least 5 characters";
 
     if (!existingNoteId && selectedBookingId) {
       const alreadyExists = getNoteByBookingId(selectedBookingId);
@@ -425,7 +425,7 @@ export default function CounsellorDashboard() {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteText, setNoteText] = useState("");
   const [riskLevel, setRiskLevel] = useState("Low");
-  const [recommendation, setRecommendation] = useState("");
+  const [counsellorAssessment, setCounsellorAssessment] = useState("");
   const [noteStatus, setNoteStatus] = useState("Draft");
   
   // AI Risk State
@@ -496,7 +496,7 @@ export default function CounsellorDashboard() {
     setNoteTitle(note.title);
     setNoteText(note.notes);
     setRiskLevel(note.riskLevel);
-    setRecommendation(note.followUpRecommendation);
+    setCounsellorAssessment(note.counsellorAssessment || note.followUpRecommendation || "");
     setNoteStatus(note.status);
     setAiAnalysis(note.aiAnalysis || null);
     setErrors({});
@@ -507,7 +507,7 @@ export default function CounsellorDashboard() {
     setNoteTitle("");
     setNoteText("");
     setRiskLevel("Low");
-    setRecommendation("");
+    setCounsellorAssessment("");
     setNoteStatus("Draft");
     setAiAnalysis(null);
     setErrors({});
@@ -556,7 +556,7 @@ export default function CounsellorDashboard() {
       title: noteTitle,
       notes: noteText,
       riskLevel,
-      followUpRecommendation: recommendation,
+      counsellorAssessment: counsellorAssessment,
       status: noteStatus,
       aiAnalysis: aiAnalysis
     };
@@ -1339,7 +1339,7 @@ export default function CounsellorDashboard() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Suggested Follow-up</div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Suggested Assessment</div>
                       <div className="text-sm font-medium text-gray-800">{aiAnalysis.suggestedAction}</div>
                     </div>
                   </div>
@@ -1351,7 +1351,7 @@ export default function CounsellorDashboard() {
                     <button 
                       onClick={() => {
                         setRiskLevel(aiAnalysis.suggestedRisk);
-                        if (!recommendation) setRecommendation(aiAnalysis.suggestedAction);
+                        if (!counsellorAssessment) setCounsellorAssessment(aiAnalysis.suggestedAction);
                       }}
                       disabled={isViewOnly}
                       className="text-sm bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-semibold transition shadow-sm disabled:opacity-50"
@@ -1363,16 +1363,16 @@ export default function CounsellorDashboard() {
               )}
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Follow-up Recommendation *</label>
-                <input 
-                  type="text" 
-                  value={recommendation}
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Counsellor Assessment *</label>
+                <textarea 
+                  value={counsellorAssessment}
                   disabled={isViewOnly}
-                  onChange={(e) => { setRecommendation(e.target.value); if(errors.recommendation) setErrors({...errors, recommendation: null}); }}
-                  placeholder="e.g. Schedule another session in 2 weeks"
-                  className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition disabled:bg-gray-50 ${errors.recommendation ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                  onChange={(e) => { setCounsellorAssessment(e.target.value); if(errors.counsellorAssessment) setErrors({...errors, counsellorAssessment: null}); }}
+                  placeholder="Record professional clinical assessment and diagnostic notes..."
+                  rows={3}
+                  className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition disabled:bg-gray-50 ${errors.counsellorAssessment ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                 />
-                {errors.recommendation && <p className="text-red-600 text-xs mt-1 font-medium">{errors.recommendation}</p>}
+                {errors.counsellorAssessment && <p className="text-red-600 text-xs mt-1 font-medium">{errors.counsellorAssessment}</p>}
               </div>
 
               <div>

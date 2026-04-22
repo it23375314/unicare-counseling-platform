@@ -282,8 +282,8 @@ export default function AppointmentProfile() {
                   </div>
                   
                   <div className="p-6 bg-gray-50/30 rounded-2xl border border-gray-100 transition-all hover:bg-gray-50/60">
-                    <label className="text-[9px] text-gray-400 uppercase font-black tracking-widest block mb-3">Follow-up Recommendation</label>
-                    <p className="font-bold text-gray-900">{note.followUpRecommendation}</p>
+                    <label className="text-[9px] text-gray-400 uppercase font-black tracking-widest block mb-3">Counsellor Assessment</label>
+                    <p className="font-bold text-gray-900">{note.counsellorAssessment || note.followUpRecommendation || "N/A"}</p>
                   </div>
                   
                   <div className="pt-2">

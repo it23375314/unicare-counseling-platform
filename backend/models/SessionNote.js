@@ -64,7 +64,7 @@ SessionNote.data = [
         riskLevel: "Low",
         status: "Completed",
         sessionDate: "2026-03-29",
-        followUpRecommendation: "Continue current exercises."
+        counsellorAssessment: "Continue current exercises."
     })
 ];
 
