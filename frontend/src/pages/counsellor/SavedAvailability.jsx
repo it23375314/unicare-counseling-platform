@@ -80,7 +80,7 @@ const SavedAvailability = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 pt-24 relative">
+    <div className="availability-layout-bg pb-20 pt-24">
       <div className="max-w-5xl mx-auto px-6">
         
         {/* Header Section */}
@@ -89,10 +89,10 @@ const SavedAvailability = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest border border-indigo-100">
               <CalendarDays size={12} /> Schedule Management
             </div>
-            <h1 className="text-5xl font-black text-slate-900 tracking-tight italic">
-              My <span className="text-indigo-600 not-italic">Availability.</span>
+            <h1 className="text-5xl font-black text-white tracking-tight italic">
+              My <span className="text-blue-400 not-italic">Availability.</span>
             </h1>
-            <p className="text-slate-500 font-bold text-sm max-w-lg uppercase tracking-tight opacity-70">
+            <p className="text-blue-100 font-bold text-sm max-w-lg uppercase tracking-tight opacity-80">
               View and manage your saved time slots for upcoming counseling sessions.
             </p>
           </div>
@@ -107,7 +107,7 @@ const SavedAvailability = () => {
 
         {/* Availability List */}
         {availability.length === 0 ? (
-          <div className="glass-card p-20 rounded-[3rem] text-center space-y-6 border border-white shadow-2xl shadow-slate-200/50 animate-fade-in">
+          <div className="glass-green p-20 rounded-[3rem] text-center space-y-6 border border-white shadow-2xl shadow-slate-200/50 animate-fade-in">
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
               <AlertCircle size={48} className="text-slate-200" />
             </div>
@@ -127,7 +127,7 @@ const SavedAvailability = () => {
             {availability.map((day, idx) => (
               <div 
                 key={day.date} 
-                className="group glass-card p-2 rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-900/5 flex flex-col md:flex-row animate-fade-in-up"
+                className="group glass-green p-2 rounded-[2.5rem] border border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-900/5 flex flex-col md:flex-row animate-fade-in-up"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 {/* Date Side */}

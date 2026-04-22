@@ -5,8 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Send, UserCircle, Search, Settings, ArrowLeft, MoreVertical, Paperclip, Smile, Bot, Zap, MessageCircle, Shield, Sparkles, CheckCircle } from "lucide-react";
 import EmojiPicker from 'emoji-picker-react';
 
-// Custom Background Asset
-import chatBg from "../../assets/chat_bg_premium.png";
+// Custom Background Asset imports removed in favor of CSS utility classes
+
 
 export default function ChatUI() {
   const { user } = useAuth();
@@ -117,16 +117,13 @@ export default function ChatUI() {
   const isInputDisabled = user.role === 'student' && activeTarget?.status !== 'Completed';
 
   return (
-    <div className="h-[calc(100vh-80px)] mt-20 flex text-slate-900 overflow-hidden font-sans relative">
+    <div className="chat-layout-bg mt-20 flex text-slate-900 overflow-hidden font-sans relative">
       
-      {/* Immersive Background Layer */}
-      <div className="absolute inset-0 z-0">
-        <img src={chatBg} className="w-full h-full object-cover opacity-40" alt="" />
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]" />
-      </div>
+      {/* Immersive Background Layer handled via .chat-layout-bg CSS */}
+
 
       {/* Sidebar - Glass Thread List */}
-      <div className="w-1/4 lg:w-1/5 min-w-[320px] bg-white/40 backdrop-blur-3xl border-r border-white/20 hidden md:flex flex-col z-20 shadow-[20px_0_40px_-20px_rgba(0,0,0,0.05)]">
+      <div className="w-1/4 lg:w-1/5 min-w-[320px] bg-white/80 backdrop-blur-3xl border-r border-white/20 hidden md:flex flex-col z-20 shadow-[20px_0_40px_-20px_rgba(0,0,0,0.05)]">
         
         <div className="p-8 border-b border-white/20 flex items-center justify-between">
             <h2 className="text-3xl font-black tracking-tighter text-slate-900 italic">Threads<span className="text-indigo-600">.</span></h2>
@@ -219,7 +216,7 @@ export default function ChatUI() {
         ) : (
           <>
             {/* Elegant Header */}
-            <div className="px-10 py-8 border-b border-white/20 flex items-center justify-between bg-white/30 backdrop-blur-2xl sticky top-0 z-30 shadow-sm">
+            <div className="px-10 py-8 border-b border-white/20 flex items-center justify-between bg-white/80 backdrop-blur-2xl sticky top-0 z-30 shadow-sm">
                 <div className="flex items-center gap-7">
                     <button className="md:hidden p-3 rounded-2xl hover:bg-white/50 transition-all text-slate-400" onClick={() => setActiveTarget(null)}>
                         <ArrowLeft size={20} />

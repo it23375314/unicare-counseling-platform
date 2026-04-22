@@ -600,23 +600,26 @@ export default function CounsellorDashboard() {
   }
 
   return (
-    <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
+    <div className="counsellor-layout-bg pt-20 pb-32">
       <PopMsg 
         {...popMsg} 
         inputValue={popInput}
         setInputValue={setPopInput}
         onClose={() => setPopMsg(prev => ({ ...prev, isOpen: false }))} 
       />
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
-        <p className="text-gray-500 font-black uppercase tracking-widest text-[10px] mb-10 opacity-60">Manage notes only</p>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <h1 className="text-5xl font-black text-white tracking-tight mb-2 selection:bg-blue-600/30">Welcome, {counsellor?.name || user?.name || 'Counsellor'}</h1>
+        <p className="text-blue-200 font-black uppercase tracking-widest text-xs mb-12 opacity-80 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div> Secure Clinical Portal
+        </p>
 
         {/* In-page tabs removed in favor of global Navbar routing */}
 
         {/* Availability Tab */}
         {activeTab === "availability" && (
           <div className="space-y-8 animate-in fade-in duration-700">
-            <div className="bg-gradient-to-br from-blue-50/60 via-white to-white p-8 lg:p-12 rounded-[2rem] shadow-md border-2 border-blue-100/50 relative overflow-hidden">
+            <div className="glass-green p-8 lg:p-14 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/5 rounded-full -mr-32 -mt-32 blur-3xl transition-all group-hover:bg-blue-400/10"></div>
               <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-blue-600"></div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
                 <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3 tracking-tight">
@@ -766,7 +769,7 @@ export default function CounsellorDashboard() {
               </h2>
             </div>
             
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
+            <div className="glass-blue p-8 flex flex-col md:flex-row gap-6 items-end">
               <div className="flex-1 w-full space-y-2">
                 <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Search Student or ID</label>
                 <div className="relative">
@@ -842,12 +845,12 @@ export default function CounsellorDashboard() {
                   const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
                   const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
                   return (
-                    <div key={b.id || Math.random()} className={`rounded-[2rem] shadow-md border-2 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group overflow-hidden relative ${
-                      b.status === 'Cancelled' || b.status === 'Rejected' 
-                        ? 'border-rose-200 bg-gradient-to-br from-rose-50/60 via-white to-white' 
+                    <div key={b.id || index} className={`relative flex flex-col lg:flex-row glass-blue overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group ${
+                        b.status === 'Cancelled' || b.status === 'Rejected' 
+                        ? 'border-rose-200' 
                         : b.status === 'Completed'
-                        ? 'border-emerald-200 bg-gradient-to-br from-emerald-50/60 via-white to-white'
-                        : 'border-blue-200 bg-gradient-to-br from-blue-50/60 via-white to-white'
+                        ? 'border-emerald-200'
+                        : 'border-blue-200'
                     }`}>
                       <div className={`absolute left-0 top-0 bottom-0 w-2.5 transition-all duration-300 group-hover:w-3.5 ${
                         b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-500' : b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-600'
@@ -1042,15 +1045,15 @@ export default function CounsellorDashboard() {
         {activeTab === "session notes" && (
           <div className="space-y-8">
             <div className="flex justify-between items-center">
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <FileText size={18} className="text-blue-600" /> Manage Professional Notes
+              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                <FileText size={18} className="text-blue-400" /> Manage Professional Notes
               </h2>
               <button onClick={() => openNotesModal("new")} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all flex items-center gap-2 active:scale-95">
                 <Plus size={18} /> Create New Note
               </button>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
+            <div className="glass-purple p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 w-full space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Keywords</label>
                 <div className="relative">
@@ -1118,7 +1121,7 @@ export default function CounsellorDashboard() {
                 const profileSrc = n.studentProfile || getGuestPhoto(n.appointmentId || n.id || 'default');
 
                 return (
-                  <div key={n.id} className="bg-gradient-to-br from-blue-50/50 via-white to-white rounded-3xl shadow-sm border border-blue-100/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-xl hover:shadow-blue-200/20 hover:border-blue-300 group overflow-hidden relative p-6 pl-8 transition-all duration-300">
+                  <div key={n.id} className="glass-purple flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-xl hover:shadow-blue-200/20 hover:border-blue-300 group overflow-hidden relative p-6 pl-8 transition-all duration-300">
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500 transition-all duration-300 group-hover:w-2"></div>
                     
                     <div className="flex-1 w-full">

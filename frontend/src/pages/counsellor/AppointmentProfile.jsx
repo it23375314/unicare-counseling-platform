@@ -92,7 +92,7 @@ export default function AppointmentProfile() {
   }
 
   return (
-    <div className="bg-gray-50/50 min-h-screen pt-12 pb-24">
+    <div className="counsellor-layout-bg pt-20 pb-32">
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         
         {/* Header Section */}
@@ -105,9 +105,9 @@ export default function AppointmentProfile() {
             <ArrowLeft size={22} className="text-gray-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-all" />
           </button>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-4 flex-wrap mb-1">
-              <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none">
-                Appointment Details
+            <div className="flex items-center gap-4 flex-wrap mb-2">
+              <h1 className="text-5xl font-black text-white tracking-tight leading-none">
+                Appointment Profile
               </h1>
               <span className={`text-[10px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest border shadow-sm ${
                 appointment.status === 'Confirmed' || appointment.status === 'Accepted' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
@@ -131,7 +131,7 @@ export default function AppointmentProfile() {
           <div className="lg:col-span-2 space-y-10">
             
             {/* Student Profile Card */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-10 relative overflow-hidden group">
+            <div className="glass-blue p-10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-50/50 rounded-full -mr-24 -mt-24 blur-3xl transition-all duration-700 group-hover:bg-blue-100/50"></div>
               
               <div className="relative z-10">
@@ -215,7 +215,7 @@ export default function AppointmentProfile() {
             </div>
 
             {/* Appointment Information Card */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-10 overflow-hidden relative">
+            <div className="glass-neutral p-10 overflow-hidden relative">
               <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-10 flex items-center gap-3">
                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div> Appointment Information
               </h2>
@@ -259,7 +259,7 @@ export default function AppointmentProfile() {
             </div>
 
             {/* Clinical Records Card */}
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-10">
+            <div className="glass-neutral p-10">
               <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-10 flex items-center gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div> Clinical Records
               </h2>
@@ -311,7 +311,7 @@ export default function AppointmentProfile() {
 
           {/* Right Column: Available Actions Panel */}
           <div className="lg:col-span-1 space-y-10 sticky top-24">
-            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+            <div className="glass-blue p-8">
               <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em] mb-10 border-b border-gray-50 pb-5">Available Actions</h2>
               
               <div className="flex flex-col gap-4">
