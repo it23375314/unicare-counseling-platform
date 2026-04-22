@@ -763,78 +763,93 @@ export default function CounsellorDashboard() {
         {/* Appointments Tab */}
         {activeTab === "appointments" && (
           <div className="space-y-8">
-            <div className="flex justify-between items-center">
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Calendar size={18} className="text-blue-600" /> Appointment Management
-              </h2>
+            
+            {/* Premium Header */}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border" style={{ background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.2)', color: 'rgba(59,130,246,0.8)' }}>
+                  <Calendar size={12} /> Patient Coordination
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Appointment Management</h2>
+                <p className="text-sm text-gray-400 font-medium mt-1">Review, manage, and track all counselling sessions</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="px-4 py-2 rounded-xl text-xs font-black border border-gray-100 bg-white text-gray-500 shadow-sm">
+                  {filteredAppointments.length} Record{filteredAppointments.length !== 1 ? 's' : ''}
+                </div>
+              </div>
             </div>
             
-            <div className="glass-blue p-8 flex flex-col md:flex-row gap-6 items-end">
-              <div className="flex-1 w-full space-y-2">
-                <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Search Student or ID</label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Search by student name, ID, or appointment ID" 
-                    value={searchApptStudent}
-                    onChange={(e) => setSearchApptStudent(e.target.value)}
-                    className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium"
-                  />
-                </div>
-                {apptSearchError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider mt-1 ml-1">{apptSearchError}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Date</label>
+            {/* Premium Filter Bar */}
+            <div className="relative overflow-hidden rounded-2xl border border-gray-100 shadow-lg" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)' }}>
+              <div className="p-6 flex flex-col lg:flex-row gap-5 items-end">
+                <div className="flex-1 w-full space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Student or ID</label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
                     <input 
-                      type="date" 
-                      value={filterApptDate}
-                      onChange={(e) => setFilterApptDate(e.target.value)}
-                      className="w-full pl-10 pr-4 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm"
+                      type="text" 
+                      placeholder="Search by student name, ID, or appointment ID" 
+                      value={searchApptStudent}
+                      onChange={(e) => setSearchApptStudent(e.target.value)}
+                      className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-medium text-sm"
                     />
                   </div>
+                  {apptSearchError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider mt-1 ml-1">{apptSearchError}</p>}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Status</label>
-                  <div className="relative">
-                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                    <select 
-                      value={filterApptStatus} 
-                      onChange={(e) => setFilterApptStatus(e.target.value)}
-                      className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm appearance-none text-gray-700"
-                    >
-                      <option value="">All Statuses</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto lg:min-w-[480px]">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                      <input 
+                        type="date" 
+                        value={filterApptDate}
+                        onChange={(e) => setFilterApptDate(e.target.value)}
+                        className="w-full pl-10 pr-3 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-medium text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 block ml-1 mb-1">Timing</label>
-                  <div className="relative">
-                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                    <select 
-                      value={filterApptTiming} 
-                      onChange={(e) => setFilterApptTiming(e.target.value)}
-                      className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-gray-50/50 transition-all font-medium text-sm appearance-none text-gray-700"
-                    >
-                      <option value="All">All Timing</option>
-                      <option value="Upcoming">Upcoming</option>
-                      <option value="Past">Past</option>
-                    </select>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
+                    <div className="relative">
+                      <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                      <select 
+                        value={filterApptStatus} 
+                        onChange={(e) => setFilterApptStatus(e.target.value)}
+                        className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-bold text-xs appearance-none text-gray-600"
+                      >
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Timing</label>
+                    <div className="relative">
+                      <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                      <select 
+                        value={filterApptTiming} 
+                        onChange={(e) => setFilterApptTiming(e.target.value)}
+                        className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-bold text-xs appearance-none text-gray-600"
+                      >
+                        <option value="All">All Timing</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Past">Past</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Appointment Cards */}
             <div className="space-y-5">
               {filteredAppointments.length > 0 ? (
                 filteredAppointments.map(b => {
@@ -844,181 +859,192 @@ export default function CounsellorDashboard() {
                   const studentDispName = b.studentName || b.name || getGuestName(safeID);
                   const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
                   const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
+                  
+                  const isCancelled = b.status === 'Cancelled' || b.status === 'Rejected';
+                  const isCompleted = b.status === 'Completed';
+                  const isLive = b.status === 'In Session';
+                  const isPending = b.status === 'Pending';
+                  const isConfirmed = b.status === 'Confirmed' || b.status === 'Accepted';
+
+                  // Accent/status colors
+                  const accentColor = isCancelled ? '#f43f5e' : isCompleted ? '#10b981' : isLive ? '#ef4444' : isPending ? '#f59e0b' : '#3b82f6';
+
                   return (
-                    <div key={b.id || index} className={`relative flex flex-col lg:flex-row items-stretch glass-blue overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group ${
-                        b.status === 'Cancelled' || b.status === 'Rejected' 
-                        ? 'border-rose-200' 
-                        : b.status === 'Completed'
-                        ? 'border-emerald-200'
-                        : 'border-blue-200'
-                    }`}>
-                      <div className={`absolute left-0 top-0 bottom-0 w-2.5 transition-all duration-300 group-hover:w-3.5 ${
-                        b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-500' : b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-600'
-                      }`}></div>
-                      
-                      {/* Segment 1: Student Identity (25%) */}
-                      <div className="flex flex-col items-center justify-center p-8 lg:w-1/4 text-center border-b lg:border-b-0 border-gray-100/50 bg-white/10">
-                        <div className="relative group/avatar shrink-0 mb-4">
-                          <div className={`w-20 h-20 rounded-3xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-4 border-white shadow-xl overflow-hidden transition-all duration-500 group-hover/avatar:rotate-6 group-hover/avatar:scale-110`}>
-                            {profileSrc ? (
-                              <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-white font-black text-2xl">{initials}</span>
+                    <div key={b.id} className="relative group rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1" style={{
+                      background: 'rgba(255,255,255,0.85)',
+                      backdropFilter: 'blur(24px)',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
+                    }}>
+                      {/* Status Accent Bar */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2" style={{ backgroundColor: accentColor }}></div>
+
+                      <div className="flex flex-col lg:flex-row items-stretch">
+                        
+                        {/* Column 1: Student Identity */}
+                        <div className="flex items-center gap-5 p-7 pl-8 lg:w-[280px] shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100/60">
+                          <div className="relative group/avatar shrink-0">
+                            <div className={`w-16 h-16 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-[3px] border-white shadow-lg overflow-hidden transition-all duration-500 group-hover/avatar:scale-110`}>
+                              {profileSrc ? (
+                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-white font-black text-xl">{initials}</span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-[3px] border-white shadow-sm" style={{ backgroundColor: accentColor }}></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-black text-gray-900 text-lg leading-tight tracking-tight mb-1.5 group-hover:text-blue-600 transition-colors truncate">{studentDispName}</h3>
+                            <span className="inline-block text-[10px] font-black text-blue-500/70 uppercase tracking-widest bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100/50">
+                              {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A")}
+                            </span>
+                            {isLive && (
+                              <span className="inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 bg-red-50 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest animate-pulse border border-red-100">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Live
+                              </span>
                             )}
                           </div>
-                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-white rounded-full shadow-md"></div>
-                        </div>
-                        <h3 className="font-black text-gray-900 text-xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight mb-2">{studentDispName}</h3>
-                        <span className="text-[10px] font-black text-blue-600/60 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100/50">
-                          {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A ID")}
-                        </span>
-                      </div>
-
-                      {/* Segment 2: Session Context (50%) */}
-                      <div className="flex-1 flex flex-col justify-center p-8 lg:px-12 border-b lg:border-b-0 lg:border-r border-gray-100/50">
-                        <div className="flex items-center gap-3 mb-8">
-                          <div className="h-0.5 w-8 bg-blue-600/20 rounded-full"></div>
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Session Details</span>
-                          <div className="h-0.5 flex-1 bg-blue-600/10 rounded-full"></div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                          <div className="group/item flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-2xl bg-violet-100/50 flex items-center justify-center text-violet-600 shadow-sm border border-violet-100 group-hover/item:scale-110 transition-transform"><Activity size={20}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</span>
-                              <span className="text-sm font-black text-gray-800 capitalize leading-none mt-1">{b.sessionType || "1-on-1"}</span>
+                        {/* Column 2: Session Details */}
+                        <div className="flex-1 p-6 lg:px-8 border-b lg:border-b-0 lg:border-r border-gray-100/60">
+                          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-500 border border-violet-100/60 shrink-0"><Activity size={17}/></div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</span>
+                                <span className="text-sm font-black text-gray-800 capitalize leading-none mt-0.5 truncate">{b.sessionType || "1-on-1"}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100/60 shrink-0"><Calendar size={17}/></div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Date</span>
+                                <span className="text-sm font-black text-gray-800 leading-none mt-0.5 truncate">{b.date || "N/A"}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100/60 shrink-0"><Clock size={17}/></div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Time</span>
+                                <span className="text-sm font-black text-gray-800 leading-none mt-0.5 truncate">{b.time || "N/A"}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/60 shrink-0"><Hash size={17}/></div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Appt ID</span>
+                                <span className="text-sm font-black text-gray-800 uppercase leading-none mt-0.5 truncate">{safeID ? safeID.substring(0,8) : "N/A"}</span>
+                              </div>
                             </div>
                           </div>
-                          <div className="group/item flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-2xl bg-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 group-hover/item:scale-110 transition-transform"><Calendar size={20}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span>
-                              <span className="text-sm font-black text-gray-800 leading-none mt-1">{b.date || "N/A"}</span>
+
+                          {/* Rejection Reason */}
+                          {b.rejectReason && (
+                            <div className="mt-4 p-3 rounded-xl bg-rose-50/60 border border-rose-100 flex items-start gap-2.5">
+                              <XCircle size={15} className="text-rose-400 mt-0.5 shrink-0" />
+                              <p className="text-[11px] text-rose-600 font-bold leading-relaxed"><span className="opacity-50 mr-1.5">Reason:</span>{b.rejectReason}</p>
                             </div>
-                          </div>
-                          <div className="group/item flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-2xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 group-hover/item:scale-110 transition-transform"><Clock size={20}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span>
-                              <span className="text-sm font-black text-gray-800 leading-none mt-1">{b.time || "N/A"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm border border-slate-100 group-hover/item:scale-110 transition-transform"><Hash size={20}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Appointment ID</span>
-                              <span className="text-sm font-black text-gray-800 uppercase leading-none mt-1">{safeID ? safeID.substring(0,8) : "N/A"}</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
 
-                        {b.rejectReason && (
-                          <div className="mt-8 p-4 rounded-2xl bg-rose-50 border border-rose-100 flex items-start gap-3">
-                            <XCircle size={18} className="text-rose-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-rose-700 font-bold leading-relaxed"><span className="uppercase text-[10px] tracking-widest opacity-60 mr-2">Declined reason:</span>{b.rejectReason}</p>
+                        {/* Column 3: Status + Actions */}
+                        <div className="lg:w-[220px] shrink-0 p-6 flex flex-col justify-center gap-4">
+                          {/* Status Badge */}
+                          <div className={`self-center lg:self-stretch flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] border shadow-sm ${
+                            isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                            isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' : 
+                            isLive ? 'bg-red-50 text-red-700 border-red-200' : 
+                            isPending ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                            'bg-blue-50 text-blue-700 border-blue-200'
+                          }`}>
+                            <span className={`w-2 h-2 rounded-full ${
+                              isCompleted ? 'bg-emerald-500' : isCancelled ? 'bg-rose-500' : isLive ? 'bg-red-500 animate-pulse' : isPending ? 'bg-amber-500' : 'bg-blue-500'
+                            }`}></span>
+                            {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : isLive ? 'Live Session' : (b.status || "Pending")}
                           </div>
-                        )}
-                      </div>
 
-                      {/* Segment 3: Operations (25%) */}
-                      <div className="lg:w-1/4 p-8 flex flex-col justify-center gap-6 bg-gray-50/10">
-                        <div className={`self-center lg:self-end flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 shadow-sm transition-all duration-300 w-fit ${
-                          b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
-                          b.status === 'In Session' ? 'bg-rose-50 text-rose-800 border-rose-200' : 
-                          b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
-                          b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
-                          'bg-amber-100 text-amber-800 border-amber-200'
-                        }`}>
-                          <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                            b.status === 'Completed' ? 'bg-emerald-600' : 
-                            b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-600' : 
-                            b.status === 'In Session' ? 'bg-rose-600' : 
-                            b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-600' : 'bg-amber-600'
-                          }`}></span>
-                          {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : b.status === 'In Session' ? 'Session Live' : (b.status || "Pending")}
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          {/* Primary Session Actions */}
-                          <div className="flex flex-col gap-3">
-                            {b.status === "Pending" && (
+                          {/* Primary Action */}
+                          <div className="flex flex-col gap-2">
+                            {isPending && (
                               <button 
                                 onClick={() => confirmBookingByCounsellor(b.id)} 
-                                className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200 hover:-translate-y-0.5 active:scale-95"
+                                className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95"
                               >
-                                <CheckCircle size={16} strokeWidth={3}/> Confirm
+                                <CheckCircle size={14} strokeWidth={3}/> Confirm
                               </button>
                             )}
 
-                            {(b.status === "Confirmed" || b.status === "Accepted" || b.status === "In Session") && (
+                            {(isConfirmed || isLive) && (
                               <>
-                                {b.status === "In Session" ? (
-                                  <button onClick={() => window.open(b.sessionLink, "_blank")} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-rose-600 text-white hover:bg-rose-700 hover:shadow-rose-200 hover:-translate-y-0.5 active:scale-95">
-                                    <Video size={16} strokeWidth={3}/> Open Room
+                                {isLive ? (
+                                  <button onClick={() => window.open(b.sessionLink, "_blank")} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-red-600 text-white hover:bg-red-700 hover:-translate-y-0.5 active:scale-95">
+                                    <Video size={14} strokeWidth={3}/> Open Room
                                   </button>
                                 ) : (
-                                  <button onClick={() => startSession(b.id)} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200 hover:-translate-y-0.5 active:scale-95">
-                                    <Video size={16} strokeWidth={3}/> Start Session
+                                  <button onClick={() => startSession(b.id)} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95">
+                                    <Video size={14} strokeWidth={3}/> Start Session
                                   </button>
                                 )}
-                                <button onClick={() => completeBooking(b.id)} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-emerald-200 hover:-translate-y-0.5 active:scale-95">
-                                  <CheckCircle size={16} strokeWidth={3}/> Finalize
+                                <button onClick={() => completeBooking(b.id)} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5 active:scale-95">
+                                  <CheckCircle size={14} strokeWidth={3}/> Complete
                                 </button>
                               </>
                             )}
+
+                            {isCompleted && (
+                              <button 
+                                onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
+                                className="w-full h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 active:scale-95"
+                              >
+                                <MessageCircle size={14} strokeWidth={3}/> Chat
+                              </button>
+                            )}
                           </div>
 
-                          {/* Secondary Utility Actions */}
-                          <div className="grid grid-cols-2 gap-3">
+                          {/* Secondary Actions */}
+                          <div className="grid grid-cols-2 gap-2">
                             <button 
                               onClick={() => navigate(`/counsellor/appointment/${b.id}`)} 
-                              className="h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border-2 border-gray-100 bg-white text-gray-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 flex items-center justify-center"
+                              className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all border border-gray-100 bg-white/80 text-gray-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 active:scale-95 flex items-center justify-center"
                             >
                               Details
                             </button>
                             
-                            {b.status === "Completed" ? (
-                               <button onClick={() => openNotesModal("booking", b)} className={`h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center ${note ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-gray-50 text-gray-400 border-gray-100'} border-2 active:scale-95`}>
-                                 {note ? "View Note" : "Add Note"}
-                               </button>
+                            {isCompleted ? (
+                              <button onClick={() => openNotesModal("booking", b)} className={`h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center border active:scale-95 ${
+                                note ? 'bg-sky-50 text-sky-600 border-sky-100' : 'bg-gray-50 text-gray-400 border-gray-100'
+                              }`}>
+                                {note ? "Note" : "Add Note"}
+                              </button>
                             ) : (
                               <button 
                                 onClick={() => {
                                   setPopInput("");
                                   setPopMsg({
                                     isOpen: true,
-                                    title: b.status === "Pending" ? "Decline Invitation" : "Revoke Session",
-                                    message: b.status === "Pending" ? "Provide a reason for declining:" : "This session is confirmed. Mandatory reason for cancellation:",
+                                    title: isPending ? "Decline Invitation" : "Revoke Session",
+                                    message: isPending ? "Provide a reason for declining:" : "This session is confirmed. Mandatory reason for cancellation:",
                                     type: 'prompt',
                                     onConfirm: () => handleModalCancel(b.id)
                                   });
                                 }}
-                                className="h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border-2 border-rose-50 text-rose-300 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 active:scale-95 flex items-center justify-center"
+                                className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all border border-rose-100/60 text-rose-300 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 active:scale-95 flex items-center justify-center"
                               >
-                                {b.status === "Pending" ? "Decline" : "Cancel"}
+                                {isPending ? "Decline" : "Cancel"}
                               </button>
                             )}
                           </div>
-
-                          {b.status === "Completed" && (
-                            <button 
-                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
-                              className="w-full h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white active:scale-95 mt-1"
-                            >
-                              <MessageCircle size={14} strokeWidth={3}/> Patient Chat
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-                  <Calendar className="mx-auto h-16 w-16 text-gray-100 mb-6" />
-                  <h3 className="text-lg font-black text-gray-900 tracking-tight">No appointments found</h3>
-                  <p className="text-gray-400 text-sm font-medium mt-1">Try adjusting your filters or search term.</p>
+                <div className="text-center py-20 rounded-2xl border border-dashed border-gray-200" style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(16px)' }}>
+                  <Calendar className="mx-auto h-14 w-14 text-gray-200 mb-5" />
+                  <h3 className="text-lg font-black text-gray-700 tracking-tight">No appointments found</h3>
+                  <p className="text-gray-400 text-sm font-medium mt-1.5">Try adjusting your filters or search term.</p>
                 </div>
               )}
             </div>
