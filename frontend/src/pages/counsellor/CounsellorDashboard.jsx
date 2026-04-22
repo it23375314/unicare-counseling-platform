@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video, Hash } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video, Hash, ClipboardList, ShieldAlert, Save, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import FeedbackForm from "../../components/FeedbackForm";
 import PopMsg from "../../components/PopMsg";
@@ -204,6 +204,14 @@ export default function CounsellorDashboard() {
     b?.counsellorName === counsellor?.name || 
     b?.counsellor === counsellor?.name
   );
+  
+  const stats = {
+    total: myBookings.length,
+    confirmed: myBookings.filter(b => b.status === 'Confirmed' || b.status === 'Accepted').length,
+    completed: myBookings.filter(b => b.status === 'Completed').length,
+    cancelled: myBookings.filter(b => b.status === 'Cancelled' || b.status === 'Rejected').length,
+    live: myBookings.filter(b => b.status === 'In Session').length
+  };
   
   const [searchApptStudent, setSearchApptStudent] = useState("");
   const [filterApptDate, setFilterApptDate] = useState("");
@@ -764,95 +772,119 @@ export default function CounsellorDashboard() {
         {activeTab === "appointments" && (
           <div className="space-y-8">
             
-            {/* Premium Header */}
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border" style={{ background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.2)', color: 'rgba(59,130,246,0.8)' }}>
-                  <Calendar size={12} /> Patient Coordination
-                </div>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Appointment Management</h2>
-                <p className="text-sm text-gray-400 font-medium mt-1">Review, manage, and track all counselling sessions</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="px-4 py-2 rounded-xl text-xs font-black border border-gray-100 bg-white text-gray-500 shadow-sm">
-                  {filteredAppointments.length} Record{filteredAppointments.length !== 1 ? 's' : ''}
+          <div className="space-y-12">
+            
+            {/* Premium Hero Section */}
+            <div className="relative p-10 lg:p-16 rounded-[3rem] overflow-hidden group shadow-2xl mb-12" style={{ background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8))', backdropFilter: 'blur(20px)' }}>
+              <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full -mr-48 -mt-48 blur-[100px] animate-pulse"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 rounded-full -ml-32 -mb-32 blur-[80px]"></div>
+              
+              <div className="relative z-10">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] animate-fade-in">
+                      <Sparkles size={14} /> Intelligence Dashboard
+                    </div>
+                    <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tighter italic">Clinical <span className="text-blue-500">Appointments.</span></h2>
+                    <p className="text-gray-400 font-medium max-w-lg leading-relaxed">
+                      Manage and coordinate your patient care journey with advanced analytics and real-time session tracking.
+                    </p>
+                  </div>
+                  
+                  {/* Compact Stats Row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 lg:gap-6">
+                    {[
+                      { label: 'Total', value: stats.total, color: 'text-white' },
+                      { label: 'Confirmed', value: stats.confirmed, color: 'text-blue-400' },
+                      { label: 'Completed', value: stats.completed, color: 'text-emerald-400' },
+                      { label: 'Cancelled', value: stats.cancelled, color: 'text-rose-400' },
+                      { label: 'Live', value: stats.live, color: 'text-red-500', pulse: true }
+                    ].map((stat, idx) => (
+                      <div key={idx} className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl min-w-[100px] flex flex-col items-center justify-center transition-all hover:bg-white/10 hover:-translate-y-1">
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">{stat.label}</span>
+                        <div className="flex items-center gap-2">
+                          {stat.pulse && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />}
+                          <span className={`text-2xl font-black tracking-tight ${stat.color}`}>{stat.value}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-            
-            {/* Premium Filter Bar */}
-            <div className="relative overflow-hidden rounded-2xl border border-gray-100 shadow-lg" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)' }}>
-              <div className="p-6 flex flex-col lg:flex-row gap-5 items-end">
-                <div className="flex-1 w-full space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Search Student or ID</label>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+          
+          {/* Floating Premium Filter Toolbar */}
+            <div className="sticky top-24 z-40 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/20 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.15)] bg-white/70 backdrop-blur-3xl p-3 lg:p-4">
+                <div className="flex flex-col lg:flex-row gap-3 items-center">
+                  
+                  {/* Search Field */}
+                  <div className="relative flex-grow w-full lg:w-auto group">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-600" size={20} />
                     <input 
                       type="text" 
-                      placeholder="Search by student name, ID, or appointment ID" 
+                      placeholder="Search correspondence or student ID..." 
                       value={searchApptStudent}
                       onChange={(e) => setSearchApptStudent(e.target.value)}
-                      className="w-full pl-12 pr-4 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-medium text-sm"
+                      className="w-full pl-14 pr-6 h-16 bg-white/50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-blue-600/5 focus:border-blue-500/30 outline-none transition-all font-bold text-sm text-gray-700 placeholder:text-gray-400 shadow-inner"
                     />
                   </div>
-                  {apptSearchError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-wider mt-1 ml-1">{apptSearchError}</p>}
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto lg:min-w-[480px]">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                  {/* Horizontal Filters */}
+                  <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto shrink-0">
+                    <div className="relative flex-1 sm:w-44">
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                       <input 
                         type="date" 
                         value={filterApptDate}
                         onChange={(e) => setFilterApptDate(e.target.value)}
-                        className="w-full pl-10 pr-3 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-medium text-sm"
+                        className="w-full pl-12 pr-4 h-16 bg-white/50 border border-transparent rounded-[2rem] focus:bg-white focus:border-blue-500/30 outline-none transition-all font-black text-[10px] uppercase tracking-widest text-gray-600 appearance-none cursor-pointer"
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status</label>
-                    <div className="relative">
-                      <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                    <div className="relative flex-1 sm:w-44">
+                      <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                       <select 
                         value={filterApptStatus} 
                         onChange={(e) => setFilterApptStatus(e.target.value)}
-                        className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-bold text-xs appearance-none text-gray-600"
+                        className="w-full pl-12 pr-10 h-16 bg-white/50 border border-transparent rounded-[2rem] focus:bg-white focus:border-blue-500/30 outline-none transition-all font-black text-[10px] uppercase tracking-widest text-gray-600 appearance-none cursor-pointer"
                       >
-                        <option value="">All Statuses</option>
+                        <option value="">Status</option>
                         <option value="Pending">Pending</option>
                         <option value="Confirmed">Confirmed</option>
                         <option value="Completed">Completed</option>
                         <option value="Cancelled">Cancelled</option>
+                        <option value="In Session">Live</option>
                       </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <Plus size={14} className="rotate-45" />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Timing</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={15} />
+                    <div className="relative flex-1 sm:w-44">
+                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                       <select 
                         value={filterApptTiming} 
                         onChange={(e) => setFilterApptTiming(e.target.value)}
-                        className="w-full pl-10 pr-8 h-12 border border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 outline-none bg-white/60 transition-all font-bold text-xs appearance-none text-gray-600"
+                        className="w-full pl-12 pr-10 h-16 bg-white/50 border border-transparent rounded-[2rem] focus:bg-white focus:border-blue-500/30 outline-none transition-all font-black text-[10px] uppercase tracking-widest text-gray-600 appearance-none cursor-pointer"
                       >
-                        <option value="All">All Timing</option>
+                        <option value="All">Timing</option>
                         <option value="Upcoming">Upcoming</option>
                         <option value="Past">Past</option>
                       </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <Plus size={14} className="rotate-45" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Appointment Cards */}
-            <div className="space-y-5">
+            {/* Premium Appointment Cards Grid */}
+            <div className="space-y-6">
               {filteredAppointments.length > 0 ? (
-                filteredAppointments.map(b => {
+                filteredAppointments.map((b, idx) => {
                   if (!b) return null;
                   const note = getNoteByBookingId(b.id);
                   const safeID = (b.id || "").toString();
@@ -866,174 +898,183 @@ export default function CounsellorDashboard() {
                   const isPending = b.status === 'Pending';
                   const isConfirmed = b.status === 'Confirmed' || b.status === 'Accepted';
 
-                  // Accent/status colors
-                  const accentColor = isCancelled ? '#f43f5e' : isCompleted ? '#10b981' : isLive ? '#ef4444' : isPending ? '#f59e0b' : '#3b82f6';
+                  // Dynamic Card Styling based on status - Soft Solid Gradients
+                  const statusColors = {
+                    Completed: { 
+                      accent: '#10b981', 
+                      gradient: 'linear-gradient(135deg, #e6f9f0 0%, #f5fffb 100%)', 
+                      border: 'rgba(16, 185, 129, 0.2)', 
+                      badgeBg: 'bg-emerald-100', 
+                      badgeText: 'text-emerald-700',
+                      dot: 'bg-emerald-500'
+                    },
+                    Cancelled: { 
+                      accent: '#f43f5e', 
+                      gradient: 'linear-gradient(135deg, #ffe6e6 0%, #fff5f5 100%)', 
+                      border: 'rgba(244, 63, 94, 0.2)', 
+                      badgeBg: 'bg-rose-100', 
+                      badgeText: 'text-rose-700',
+                      dot: 'bg-rose-500'
+                    },
+                    InSession: { 
+                      accent: '#f59e0b', 
+                      gradient: 'linear-gradient(135deg, #fff3e6 0%, #fffbf5 100%)', 
+                      border: 'rgba(245, 158, 11, 0.2)', 
+                      badgeBg: 'bg-amber-100', 
+                      badgeText: 'text-amber-700',
+                      dot: 'bg-amber-500'
+                    },
+                    Pending: { 
+                      accent: '#3b82f6', 
+                      gradient: 'linear-gradient(135deg, #eef4ff 0%, #f7faff 100%)', 
+                      border: 'rgba(59, 130, 246, 0.2)', 
+                      badgeBg: 'bg-blue-100', 
+                      badgeText: 'text-blue-700',
+                      dot: 'bg-blue-500'
+                    },
+                    Confirmed: { 
+                      accent: '#6366f1', 
+                      gradient: 'linear-gradient(135deg, #f0f4ff 0%, #fbfcfe 100%)', 
+                      border: 'rgba(99, 102, 241, 0.2)', 
+                      badgeBg: 'bg-indigo-100', 
+                      badgeText: 'text-indigo-700',
+                      dot: 'bg-indigo-500'
+                    }
+                  };
+
+                  const currentStatusKey = isCompleted ? 'Completed' : isCancelled ? 'Cancelled' : isLive ? 'InSession' : isPending ? 'Pending' : 'Confirmed';
+                  const style = statusColors[currentStatusKey];
 
                   return (
-                    <div key={b.id} className="relative group rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1" style={{
-                      background: 'rgba(255,255,255,0.85)',
-                      backdropFilter: 'blur(24px)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
-                    }}>
-                      {/* Status Accent Bar */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 group-hover:w-2" style={{ backgroundColor: accentColor }}></div>
+                    <div 
+                      key={b.id} 
+                      className="group relative rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] hover:-translate-y-1 animate-fade-in-up"
+                      style={{ 
+                        animationDelay: `${idx * 50}ms`,
+                        background: style.gradient,
+                        border: `1px solid ${style.border}`,
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.08)'
+                      }}
+                    >
+                      {/* Left Accent Border */}
+                      <div className="absolute left-0 top-0 bottom-0 w-2.5 transition-all duration-300 group-hover:w-3.5" style={{ background: style.accent }}></div>
 
-                      <div className="flex flex-col lg:flex-row items-stretch">
+                      <div className="flex flex-col lg:flex-row">
                         
-                        {/* Column 1: Student Identity */}
-                        <div className="flex items-center gap-5 p-7 pl-8 lg:w-[280px] shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100/60">
-                          <div className="relative group/avatar shrink-0">
-                            <div className={`w-16 h-16 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-[3px] border-white shadow-lg overflow-hidden transition-all duration-500 group-hover/avatar:scale-110`}>
+                        {/* Column 1: Student Identity (Left) */}
+                        <div className="flex items-center gap-6 p-8 lg:w-[320px] shrink-0 lg:border-r border-gray-100 bg-white/30">
+                          <div className="relative shrink-0">
+                            <div className={`w-20 h-20 rounded-[2rem] ${getAvatarColor(studentDispName)} flex items-center justify-center border-4 border-white shadow-xl overflow-hidden transition-transform duration-500 group-hover:scale-105`}>
                               {profileSrc ? (
                                 <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
                               ) : (
-                                <span className="text-white font-black text-xl">{initials}</span>
+                                <span className="text-white font-black text-2xl">{initials}</span>
                               )}
                             </div>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-[3px] border-white shadow-sm" style={{ backgroundColor: accentColor }}></div>
+                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg ${isLive ? 'animate-pulse' : ''}`} style={{ background: style.accent }}></div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-black text-gray-900 text-lg leading-tight tracking-tight mb-1.5 group-hover:text-blue-600 transition-colors truncate">{studentDispName}</h3>
-                            <span className="inline-block text-[10px] font-black text-blue-500/70 uppercase tracking-widest bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-100/50">
-                              {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A")}
-                            </span>
-                            {isLive && (
-                              <span className="inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 bg-red-50 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest animate-pulse border border-red-100">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Live
+                          <div className="min-w-0">
+                            <h3 className="font-black text-slate-900 text-xl tracking-tight leading-tight mb-2 group-hover:text-blue-700 transition-colors truncate">{studentDispName}</h3>
+                            <div className="flex flex-col gap-1.5">
+                              <span className="inline-flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                <User size={10} className="text-blue-600" /> {b.studentId || "STU-" + safeID.substring(0,5)}
                               </span>
-                            )}
+                              {isLive && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-red-600 text-white rounded-lg text-[8px] font-black uppercase tracking-[0.2em] animate-pulse">
+                                  Live Session
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Column 2: Session Details */}
-                        <div className="flex-1 p-6 lg:px-8 border-b lg:border-b-0 lg:border-r border-gray-100/60">
+                        {/* Column 2: Session Info Chips (Center) */}
+                        <div className="flex-1 p-8 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-gray-100">
                           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-500 border border-violet-100/60 shrink-0"><Activity size={17}/></div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Type</span>
-                                <span className="text-sm font-black text-gray-800 capitalize leading-none mt-0.5 truncate">{b.sessionType || "1-on-1"}</span>
+                            {[
+                              { label: 'Type', val: b.sessionType || "Individual", icon: Activity, bg: 'bg-violet-600/5', iconColor: 'text-violet-600' },
+                              { label: 'Date', val: b.date || "TBD", icon: Calendar, bg: 'bg-blue-600/5', iconColor: 'text-blue-600' },
+                              { label: 'Time', val: b.time || "TBD", icon: Clock, bg: 'bg-indigo-600/5', iconColor: 'text-indigo-600' },
+                              { label: 'ID', val: safeID.substring(0,8), icon: Hash, bg: 'bg-slate-600/5', iconColor: 'text-slate-600' }
+                            ].map((item, i) => (
+                              <div key={i} className={`flex items-center gap-3 p-3.5 rounded-2xl border border-white transition-all hover:bg-white/60 ${item.bg}`}>
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm bg-white ${item.iconColor}`}><item.icon size={16} strokeWidth={2.5}/></div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.label}</span>
+                                  <span className="text-[13px] font-black text-slate-800 truncate leading-none mt-1">{item.val}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100/60 shrink-0"><Calendar size={17}/></div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Date</span>
-                                <span className="text-sm font-black text-gray-800 leading-none mt-0.5 truncate">{b.date || "N/A"}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100/60 shrink-0"><Clock size={17}/></div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Time</span>
-                                <span className="text-sm font-black text-gray-800 leading-none mt-0.5 truncate">{b.time || "N/A"}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100/60 shrink-0"><Hash size={17}/></div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Appt ID</span>
-                                <span className="text-sm font-black text-gray-800 uppercase leading-none mt-0.5 truncate">{safeID ? safeID.substring(0,8) : "N/A"}</span>
-                              </div>
-                            </div>
+                            ))}
                           </div>
-
-                          {/* Rejection Reason */}
+                          
                           {b.rejectReason && (
-                            <div className="mt-4 p-3 rounded-xl bg-rose-50/60 border border-rose-100 flex items-start gap-2.5">
-                              <XCircle size={15} className="text-rose-400 mt-0.5 shrink-0" />
-                              <p className="text-[11px] text-rose-600 font-bold leading-relaxed"><span className="opacity-50 mr-1.5">Reason:</span>{b.rejectReason}</p>
+                            <div className="mt-5 p-4 rounded-2xl bg-white/60 border border-rose-200/50 flex items-start gap-3">
+                              <AlertTriangle size={16} className="text-rose-500 mt-0.5 shrink-0" />
+                              <p className="text-[11px] text-slate-600 font-bold leading-relaxed"><span className="font-black uppercase tracking-widest text-[9px] mr-2 text-rose-600 opacity-70">Reason:</span>{b.rejectReason}</p>
                             </div>
                           )}
                         </div>
 
-                        {/* Column 3: Status + Actions */}
-                        <div className="lg:w-[220px] shrink-0 p-6 flex flex-col justify-center gap-4">
-                          {/* Status Badge */}
-                          <div className={`self-center lg:self-stretch flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] border shadow-sm ${
-                            isCompleted ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                            isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' : 
-                            isLive ? 'bg-red-50 text-red-700 border-red-200' : 
-                            isPending ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                            'bg-blue-50 text-blue-700 border-blue-200'
-                          }`}>
-                            <span className={`w-2 h-2 rounded-full ${
-                              isCompleted ? 'bg-emerald-500' : isCancelled ? 'bg-rose-500' : isLive ? 'bg-red-500 animate-pulse' : isPending ? 'bg-amber-500' : 'bg-blue-500'
-                            }`}></span>
-                            {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : isLive ? 'Live Session' : (b.status || "Pending")}
+                        {/* Column 3: Status & Actions (Right) */}
+                        <div className="lg:w-[260px] shrink-0 p-8 flex flex-col justify-center gap-4 bg-white/20">
+                          {/* Premium Status Badge */}
+                          <div className={`flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border shadow-sm transition-all duration-300 ${style.badgeBg} ${style.badgeText} border-white/60`}>
+                            <span className={`w-2 h-2 rounded-full ${style.dot} ${isLive ? 'animate-pulse' : ''}`}></span>
+                            {isLive ? 'In Session' : (b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : (b.status || 'Pending'))}
                           </div>
 
-                          {/* Primary Action */}
-                          <div className="flex flex-col gap-2">
+                          {/* Action Grid */}
+                          <div className="grid gap-2">
                             {isPending && (
-                              <button 
-                                onClick={() => confirmBookingByCounsellor(b.id)} 
-                                className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95"
-                              >
-                                <CheckCircle size={14} strokeWidth={3}/> Confirm
+                              <button onClick={() => confirmBookingByCounsellor(b.id)} className="w-full py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <CheckCircle size={15} strokeWidth={3}/> Confirm Appt
                               </button>
                             )}
 
                             {(isConfirmed || isLive) && (
-                              <>
-                                {isLive ? (
-                                  <button onClick={() => window.open(b.sessionLink, "_blank")} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-red-600 text-white hover:bg-red-700 hover:-translate-y-0.5 active:scale-95">
-                                    <Video size={14} strokeWidth={3}/> Open Room
-                                  </button>
-                                ) : (
-                                  <button onClick={() => startSession(b.id)} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-0.5 active:scale-95">
-                                    <Video size={14} strokeWidth={3}/> Start Session
-                                  </button>
-                                )}
-                                <button onClick={() => completeBooking(b.id)} className="w-full h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5 active:scale-95">
-                                  <CheckCircle size={14} strokeWidth={3}/> Complete
+                              <div className="flex flex-col gap-2">
+                                <button onClick={() => isLive ? window.open(b.sessionLink, "_blank") : startSession(b.id)} className={`w-full py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg ${isLive ? 'bg-red-600 hover:bg-red-700 shadow-red-100' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'}`}>
+                                  <Video size={15} strokeWidth={3}/> {isLive ? 'Join Room' : 'Start Session'}
                                 </button>
-                              </>
+                                <button onClick={() => completeBooking(b.id)} className="w-full py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                  <CheckCircle size={15} strokeWidth={3}/> Mark Complete
+                                </button>
+                              </div>
                             )}
 
                             {isCompleted && (
-                              <button 
-                                onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
-                                className="w-full h-10 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 active:scale-95"
-                              >
-                                <MessageCircle size={14} strokeWidth={3}/> Chat
+                              <button onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(studentDispName)}`)} className="w-full py-4 rounded-3xl font-black text-[10px] uppercase tracking-widest bg-slate-900 text-white hover:bg-blue-600 shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <MessageCircle size={15} strokeWidth={3}/> Patient Chat
                               </button>
                             )}
-                          </div>
 
-                          {/* Secondary Actions */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <button 
-                              onClick={() => navigate(`/counsellor/appointment/${b.id}`)} 
-                              className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all border border-gray-100 bg-white/80 text-gray-400 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 active:scale-95 flex items-center justify-center"
-                            >
-                              Details
-                            </button>
-                            
-                            {isCompleted ? (
-                              <button onClick={() => openNotesModal("booking", b)} className={`h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center border active:scale-95 ${
-                                note ? 'bg-sky-50 text-sky-600 border-sky-100' : 'bg-gray-50 text-gray-400 border-gray-100'
-                              }`}>
-                                {note ? "Note" : "Add Note"}
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              <button onClick={() => navigate(`/counsellor/appointment/${b.id}`)} className="h-11 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all bg-white text-slate-500 border border-slate-100 hover:border-blue-400 hover:text-blue-600 active:scale-95 shadow-sm">
+                                Details
                               </button>
-                            ) : (
-                              <button 
-                                onClick={() => {
-                                  setPopInput("");
-                                  setPopMsg({
-                                    isOpen: true,
-                                    title: isPending ? "Decline Invitation" : "Revoke Session",
-                                    message: isPending ? "Provide a reason for declining:" : "This session is confirmed. Mandatory reason for cancellation:",
-                                    type: 'prompt',
-                                    onConfirm: () => handleModalCancel(b.id)
-                                  });
-                                }}
-                                className="h-9 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all border border-rose-100/60 text-rose-300 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 active:scale-95 flex items-center justify-center"
-                              >
-                                {isPending ? "Decline" : "Cancel"}
-                              </button>
-                            )}
+                              
+                              {isCompleted ? (
+                                <button onClick={() => openNotesModal("booking", b)} className={`h-11 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all border active:scale-95 shadow-sm ${note ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 border-slate-100 hover:text-blue-600 hover:border-blue-300'}`}>
+                                  {note ? "View Note" : "Add Note"}
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={() => {
+                                    setPopInput("");
+                                    setPopMsg({
+                                      isOpen: true,
+                                      title: isPending ? "Decline Request" : "Cancel Session",
+                                      message: "Please provide a valid reason for the student:",
+                                      type: 'prompt',
+                                      onConfirm: () => handleModalCancel(b.id)
+                                    });
+                                  }}
+                                  className="h-11 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all bg-white text-rose-400 border border-rose-50 hover:text-rose-600 hover:border-rose-200 active:scale-95 shadow-sm"
+                                >
+                                  {isPending ? "Decline" : "Cancel"}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1041,15 +1082,18 @@ export default function CounsellorDashboard() {
                   );
                 })
               ) : (
-                <div className="text-center py-20 rounded-2xl border border-dashed border-gray-200" style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(16px)' }}>
-                  <Calendar className="mx-auto h-14 w-14 text-gray-200 mb-5" />
-                  <h3 className="text-lg font-black text-gray-700 tracking-tight">No appointments found</h3>
-                  <p className="text-gray-400 text-sm font-medium mt-1.5">Try adjusting your filters or search term.</p>
+                <div className="text-center py-24 rounded-[3rem] border-4 border-dashed border-white/20 bg-white/5 backdrop-blur-xl animate-fade-in">
+                  <div className="w-24 h-24 bg-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-white/20">
+                    <Calendar className="text-white/40" size={48} />
+                  </div>
+                  <h3 className="text-2xl font-black text-white tracking-tight">No Appointments Synchronized</h3>
+                  <p className="text-gray-400 text-sm font-medium mt-2">Adjust your filters to view historical or pending correspondence.</p>
                 </div>
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Session Notes Tab */}
         {activeTab === "session notes" && (
@@ -1226,197 +1270,334 @@ export default function CounsellorDashboard() {
 
       </div>
 
-      {/* Advanced Session Note Form Modal */}
+      {/* Advanced Clinical Session Note Modal */}
       {showNoteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {isViewOnly ? "View Session Note" : (existingNoteId ? "Edit Session Note" : "New Session Note")}
-                </h2>
-                {currentBooking && <p className="text-sm text-gray-500 mt-1">For {currentBooking.studentName} | {currentBooking.date}</p>}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto transition-all duration-500">
+          <div className="bg-[#fcfdfe] rounded-[2.5rem] w-full max-w-4xl shadow-[0_30px_70px_rgba(0,0,0,0.15)] my-8 overflow-hidden flex flex-col max-h-[95vh] border border-white animate-fade-in-up">
+            
+            {/* Modal Header */}
+            <div className="p-8 lg:px-10 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                  <ClipboardList size={28} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1.5">
+                    {isViewOnly ? "Clinical Record View" : (existingNoteId ? "Update Session Note" : "New Session Note")}
+                  </h2>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Activity size={12} className="text-blue-500" /> Record and analyze counselling session details
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setShowNoteModal(false)} className="text-gray-400 hover:text-gray-700 transition">
-                <XCircle size={24} />
+              <button onClick={() => setShowNoteModal(false)} className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center active:scale-90">
+                <XCircle size={24} strokeWidth={2.5} />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto space-y-6 flex-grow">
+            <div className="p-8 lg:p-10 overflow-y-auto space-y-10 flex-grow scrollbar-hide">
               
-              {!currentBooking && !existingNoteId && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Select Appointment *</label>
-                  <select 
-                    value={selectedBookingId}
-                    disabled={isViewOnly}
-                    onChange={(e) => { setSelectedBookingId(e.target.value); if(errors.selectedBookingId) setErrors({...errors, selectedBookingId: null}); }}
-                    className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-teal-600 outline-none transition bg-white disabled:bg-gray-50 disabled:text-gray-400 ${errors.selectedBookingId ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                  >
-                    <option value="">-- Choose a past appointment --</option>
-                    {completedBookingsForNotes.length > 0 ? (
-                      completedBookingsForNotes.map(b => {
-                        const hasNote = !!getNoteByBookingId(b?.id);
-                        const safeID = (b?.id || "").toString();
-                        return (
-                          <option key={b?.id || Math.random()} value={b?.id} disabled={hasNote}>
-                            {b?.studentName || b?.name || "N/A"} – {b?.studentId || ("STU-" + safeID.substring(0,5))} – {b?.date || "N/A"} – {b?.time || "N/A"} – {safeID.substring(0,8)} {hasNote ? "(Note already added)" : ""}
-                          </option>
-                        );
-                      })
-                    ) : (
-                      <option disabled value="">No completed appointments available for session notes</option>
-                    )}
-                  </select>
-                  {errors.selectedBookingId && <p className="text-red-600 text-xs mt-1 font-medium">{errors.selectedBookingId}</p>}
+              {/* Section 1: Appointment Context */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100/50 flex items-center justify-center text-blue-600"><Hash size={16} strokeWidth={3}/></div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Section 01: Appointment Context</h3>
                 </div>
-              )}
+                
+                {!currentBooking && !existingNoteId ? (
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Target Appointment *</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                      <select 
+                        value={selectedBookingId}
+                        disabled={isViewOnly}
+                        onChange={(e) => { setSelectedBookingId(e.target.value); if(errors.selectedBookingId) setErrors({...errors, selectedBookingId: null}); }}
+                        className={`w-full h-14 pl-12 pr-10 border rounded-2xl outline-none transition-all font-bold text-sm bg-[#f7faff] appearance-none disabled:bg-slate-50 disabled:text-slate-300 ${errors.selectedBookingId ? 'border-red-300 ring-4 ring-red-500/5' : 'border-slate-100 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 focus:bg-white'}`}
+                      >
+                        <option value="">Select a completed session to associate...</option>
+                        {completedBookingsForNotes.length > 0 ? (
+                          completedBookingsForNotes.map(b => {
+                            const hasNote = !!getNoteByBookingId(b?.id);
+                            const safeID = (b?.id || "").toString();
+                            return (
+                              <option key={b?.id || Math.random()} value={b?.id} disabled={hasNote}>
+                                {b?.studentName || b?.name || "N/A"} – {b?.studentId || ("STU-" + safeID.substring(0,5))} – {b?.date || "N/A"} {hasNote ? "(Already Documented)" : ""}
+                              </option>
+                            );
+                          })
+                        ) : (
+                          <option disabled value="">No completed appointments found</option>
+                        )}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <Plus size={16} className="rotate-45" />
+                      </div>
+                    </div>
+                    {errors.selectedBookingId && <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mt-2 ml-1">{errors.selectedBookingId}</p>}
+                  </div>
+                ) : (
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
+                    <div className={`w-16 h-16 rounded-2xl ${getAvatarColor(currentBooking?.studentName || "S")} flex items-center justify-center text-white text-2xl font-black shadow-lg`}>
+                      {currentBooking?.studentName?.charAt(0) || "S"}
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <h4 className="text-xl font-black text-slate-900 tracking-tight">{currentBooking?.studentName || "Documented Student"}</h4>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        Session Date: <span className="text-blue-600">{currentBooking?.date || "N/A"}</span> | ID: <span className="text-slate-600">{(currentBooking?.id || "").toString().substring(0,8)}</span>
+                      </p>
+                    </div>
+                    <div className="px-5 py-2.5 bg-white rounded-2xl border border-blue-100 text-[10px] font-black text-blue-700 uppercase tracking-widest shadow-sm">
+                      Linked Appointment
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Note Title *</label>
-                  <input 
-                    type="text" 
-                    value={noteTitle}
-                    disabled={isViewOnly}
-                    onChange={(e) => { setNoteTitle(e.target.value); if(errors.noteTitle) setErrors({...errors, noteTitle: null}); }}
-                    placeholder="e.g. Initial Assessment"
-                    className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition disabled:bg-gray-50 ${errors.noteTitle ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                  />
-                  {errors.noteTitle && <p className="text-red-600 text-xs mt-1 font-medium">{errors.noteTitle}</p>}
+              <div className="w-full h-px bg-slate-100 opacity-50"></div>
+
+              {/* Section 2: Core Classification */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100/50 flex items-center justify-center text-emerald-600"><Info size={16} strokeWidth={3}/></div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Section 02: Core Classification</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Risk Level *</label>
-                  <select 
-                    value={riskLevel}
-                    disabled={isViewOnly}
-                    onChange={(e) => { setRiskLevel(e.target.value); if(errors.riskLevel) setErrors({...errors, riskLevel: null}); }}
-                    className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition appearance-none bg-white disabled:bg-gray-50 ${errors.riskLevel ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                  >
-                    <option value="Low">Low Risk</option>
-                    <option value="Medium">Medium Risk</option>
-                    <option value="High">High Risk</option>
-                    <option value="Critical">Critical Risk</option>
-                    <option value="Severe">Severe Risk</option>
-                  </select>
-                  {errors.riskLevel && <p className="text-red-600 text-xs mt-1 font-medium">{errors.riskLevel}</p>}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Case Title *</label>
+                    <input 
+                      type="text" 
+                      value={noteTitle}
+                      disabled={isViewOnly}
+                      onChange={(e) => { setNoteTitle(e.target.value); if(errors.noteTitle) setErrors({...errors, noteTitle: null}); }}
+                      placeholder="e.g. Anxiety Assessment & Stress Management"
+                      className={`w-full h-14 px-5 border rounded-2xl outline-none transition-all font-bold text-sm bg-[#f7faff] disabled:bg-slate-50 ${errors.noteTitle ? 'border-red-300 ring-4 ring-red-500/5' : 'border-slate-100 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 focus:bg-white'}`}
+                    />
+                    {errors.noteTitle && <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mt-2 ml-1">{errors.noteTitle}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Risk Assessment *</label>
+                    <div className="relative">
+                      <ShieldAlert className={`absolute left-4 top-1/2 -translate-y-1/2 ${
+                        riskLevel === 'High' || riskLevel === 'Critical' || riskLevel === 'Severe' ? 'text-rose-500' :
+                        riskLevel === 'Medium' ? 'text-amber-500' : 'text-emerald-500'
+                      }`} size={18} />
+                      <select 
+                        value={riskLevel}
+                        disabled={isViewOnly}
+                        onChange={(e) => { setRiskLevel(e.target.value); if(errors.riskLevel) setErrors({...errors, riskLevel: null}); }}
+                        className={`w-full h-14 pl-12 pr-10 border rounded-2xl outline-none transition-all font-bold text-sm bg-[#f7faff] appearance-none disabled:bg-slate-50 ${errors.riskLevel ? 'border-red-300 ring-4 ring-red-500/5' : 'border-slate-100 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 focus:bg-white'}`}
+                      >
+                        <option value="Low">Low Risk (Baseline)</option>
+                        <option value="Medium">Medium Risk (Monitoring)</option>
+                        <option value="High">High Risk (Urgent)</option>
+                        <option value="Critical">Critical Risk (Emergency)</option>
+                        <option value="Severe">Severe Risk (Acute)</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <Plus size={16} className="rotate-45" />
+                      </div>
+                    </div>
+                    {errors.riskLevel && <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mt-2 ml-1">{errors.riskLevel}</p>}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-semibold text-gray-700">Detailed Session Notes *</label>
+              <div className="w-full h-px bg-slate-100 opacity-50"></div>
+
+              {/* Section 3: Detailed Documentation */}
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-100/50 flex items-center justify-center text-violet-600"><FileText size={16} strokeWidth={3}/></div>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Section 03: Session Documentation</h3>
+                  </div>
                   <button 
                     onClick={analyzeRisk} 
                     disabled={isAnalyzing || noteText.trim().length < 10 || isViewOnly}
-                    className="text-sm bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 font-medium transition disabled:opacity-50"
+                    className="group/btn relative px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all overflow-hidden disabled:opacity-50"
                   >
-                    <Sparkles size={14} /> {isAnalyzing ? "Analyzing..." : "Analyze Risk"}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 transition-all group-hover/btn:scale-110"></div>
+                    <span className="relative flex items-center justify-center gap-2 text-white">
+                      <Sparkles size={14} className={isAnalyzing ? 'animate-spin' : 'animate-pulse'} /> 
+                      {isAnalyzing ? "Intelli-Analysis..." : "AI Intelligence Analyze"}
+                    </span>
                   </button>
                 </div>
-                <textarea
-                  value={noteText}
-                  disabled={isViewOnly}
-                  onChange={(e) => { setNoteText(e.target.value); if(errors.noteText) setErrors({...errors, noteText: null}); }}
-                  placeholder="Record observations, discussed topics, and student progress..."
-                  rows={6}
-                  className={`w-full border rounded-xl p-4 focus:ring-2 focus:ring-blue-600 text-sm outline-none transition resize-none disabled:bg-gray-50 ${errors.noteText ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                />
-                {errors.noteText && <p className="text-red-600 text-xs mt-1 font-medium">{errors.noteText}</p>}
+                
+                <div className="relative group">
+                  <textarea
+                    value={noteText}
+                    disabled={isViewOnly}
+                    onChange={(e) => { setNoteText(e.target.value); if(errors.noteText) setErrors({...errors, noteText: null}); }}
+                    placeholder="Enter detailed clinical observations, discussed topics, student progress, and mental state markers..."
+                    rows={8}
+                    className={`w-full border rounded-[2rem] p-8 outline-none transition-all text-sm font-medium leading-relaxed bg-[#f7faff] resize-none disabled:bg-slate-50 ${errors.noteText ? 'border-red-300 ring-4 ring-red-500/5' : 'border-slate-100 focus:ring-8 focus:ring-blue-500/5 focus:border-blue-300 focus:bg-white shadow-inner'}`}
+                  />
+                  {errors.noteText && <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mt-3 ml-1">{errors.noteText}</p>}
+                </div>
               </div>
 
               {aiAnalysis && (
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
-                  <div className="flex items-start gap-3 mb-3">
-                    <Sparkles className="text-indigo-600 mt-0.5 shrink-0" size={20} />
-                    <div>
-                      <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                        AI Risk Level Suggestion: 
-                        <span className={`px-2 py-0.5 rounded text-xs border ${
-                          aiAnalysis.suggestedRisk === 'Critical' || aiAnalysis.suggestedRisk === 'High' ? 'bg-red-100 text-red-800 border-red-200' :
-                          aiAnalysis.suggestedRisk === 'Medium' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                          'bg-green-100 text-green-800 border-green-200'
-                        }`}>{aiAnalysis.suggestedRisk} Risk</span>
+                <div className="bg-gradient-to-br from-indigo-50/50 to-blue-50/50 border border-indigo-100 rounded-[2rem] p-8 shadow-sm animate-in fade-in zoom-in duration-500">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-600 shadow-md">
+                      <Sparkles size={24} className="animate-pulse" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-slate-900 flex flex-wrap items-center gap-3">
+                        Intelli-Analysis Result: 
+                        <span className={`px-4 py-1 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+                          aiAnalysis.suggestedRisk === 'Critical' || aiAnalysis.suggestedRisk === 'High' || aiAnalysis.suggestedRisk === 'Severe' ? 'bg-rose-100 text-rose-700 border-rose-200' :
+                          aiAnalysis.suggestedRisk === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
+                          <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                             aiAnalysis.suggestedRisk === 'Critical' || aiAnalysis.suggestedRisk === 'High' || aiAnalysis.suggestedRisk === 'Severe' ? 'bg-rose-500' :
+                             aiAnalysis.suggestedRisk === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`}></span>
+                          {aiAnalysis.suggestedRisk} Risk Suggested
+                        </span>
                       </h4>
-                      <p className="text-sm text-gray-700 mt-1">{aiAnalysis.reason}</p>
+                      <p className="text-sm text-slate-600 mt-2 font-medium leading-relaxed italic border-l-4 border-indigo-200 pl-4 py-1">
+                        "{aiAnalysis.reason}"
+                      </p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-8 mt-4">
-                    <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Warning Indicators</div>
-                      <div className="flex flex-wrap gap-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 ml-4">
+                    <div className="bg-white/60 p-4 rounded-2xl border border-white">
+                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Detected Markers</div>
+                      <div className="flex flex-wrap gap-2">
                         {aiAnalysis.indicators.length > 0 ? aiAnalysis.indicators.map(ind => (
-                          <span key={ind} className="bg-white border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-xs font-medium">{ind}</span>
-                        )) : <span className="text-sm text-gray-500 italic">None detected</span>}
+                          <span key={ind} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-indigo-100/50">{ind}</span>
+                        )) : <span className="text-xs text-slate-400 italic">No major indicators identified</span>}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Suggested Assessment</div>
-                      <div className="text-sm font-medium text-gray-800">{aiAnalysis.suggestedAction}</div>
+                    <div className="bg-white/60 p-4 rounded-2xl border border-white">
+                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Suggested Action</div>
+                      <div className="text-sm font-black text-slate-800 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                        {aiAnalysis.suggestedAction}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="ml-8 mt-5 pt-4 border-t border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-1.5 text-xs text-amber-700 font-medium">
-                      <AlertTriangle size={14} /> This suggestion is generated by AI and must be reviewed.
+                  <div className="pt-6 border-t border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                    <div className="flex items-start gap-2.5 text-[10px] text-amber-600 font-bold max-w-md">
+                      <AlertTriangle size={14} className="shrink-0 mt-0.5" /> 
+                      AI suggestions are decision-support tools only and do not replace professional clinical judgment.
                     </div>
                     <button 
                       onClick={() => {
                         setRiskLevel(aiAnalysis.suggestedRisk);
                         if (!counsellorAssessment) setCounsellorAssessment(aiAnalysis.suggestedAction);
+                        toast.success("Intelligence data applied to form.");
                       }}
                       disabled={isViewOnly}
-                      className="text-sm bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-semibold transition shadow-sm disabled:opacity-50"
+                      className="px-6 py-3 bg-white text-indigo-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 border border-indigo-100"
                     >
-                      Apply Suggestion
+                      Apply Analysis
                     </button>
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Counsellor Assessment *</label>
-                <textarea 
-                  value={counsellorAssessment}
-                  disabled={isViewOnly}
-                  onChange={(e) => { setCounsellorAssessment(e.target.value); if(errors.counsellorAssessment) setErrors({...errors, counsellorAssessment: null}); }}
-                  placeholder="Record professional clinical assessment and diagnostic notes..."
-                  rows={3}
-                  className={`w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-600 outline-none transition disabled:bg-gray-50 ${errors.counsellorAssessment ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                />
-                {errors.counsellorAssessment && <p className="text-red-600 text-xs mt-1 font-medium">{errors.counsellorAssessment}</p>}
+              <div className="w-full h-px bg-slate-100 opacity-50"></div>
+
+              {/* Section 4: Clinical Assessment */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-100/50 flex items-center justify-center text-rose-600"><Activity size={16} strokeWidth={3}/></div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Section 04: Clinical Assessment</h3>
+                </div>
+
+                <div className="group">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Professional Assessment *</label>
+                  <textarea 
+                    value={counsellorAssessment}
+                    disabled={isViewOnly}
+                    onChange={(e) => { setCounsellorAssessment(e.target.value); if(errors.counsellorAssessment) setErrors({...errors, counsellorAssessment: null}); }}
+                    placeholder="Record professional clinical assessment, diagnostic notes, and post-session recommendations..."
+                    rows={4}
+                    className={`w-full border rounded-2xl p-6 outline-none transition-all text-sm font-medium bg-[#f7faff] resize-none disabled:bg-slate-50 ${errors.counsellorAssessment ? 'border-red-300 ring-4 ring-red-500/5' : 'border-slate-100 focus:ring-8 focus:ring-rose-500/5 focus:border-rose-300 focus:bg-white shadow-inner'}`}
+                  />
+                  {errors.counsellorAssessment && <p className="text-red-600 text-[10px] font-black uppercase tracking-wider mt-3 ml-1">{errors.counsellorAssessment}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Note Status</label>
-                <div className="flex gap-4">
-                  <label className={`flex-1 flex items-center justify-center p-3 border rounded-xl cursor-pointer transition ${noteStatus === 'Draft' ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm' : 'border-gray-200 hover:bg-gray-50'} ${isViewOnly ? 'pointer-events-none' : ''}`}>
-                    <input type="radio" name="noteStatus" value="Draft" checked={noteStatus === 'Draft'} onChange={() => setNoteStatus("Draft")} className="sr-only" disabled={isViewOnly} />
-                    <span className="font-medium">Save as Draft</span>
-                  </label>
-                  <label className={`flex-1 flex items-center justify-center p-3 border rounded-xl cursor-pointer transition ${noteStatus === 'Completed' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' : 'border-gray-200 hover:bg-gray-50'} ${isViewOnly ? 'pointer-events-none' : ''}`}>
-                    <input type="radio" name="noteStatus" value="Completed" checked={noteStatus === 'Completed'} onChange={() => setNoteStatus("Completed")} className="sr-only" disabled={isViewOnly} />
-                    <span className="font-medium">Mark as Completed</span>
-                  </label>
+              <div className="w-full h-px bg-slate-100 opacity-50"></div>
+
+              {/* Section 5: Note Finalization */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><Save size={16} strokeWidth={3}/></div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Section 05: Note Finalization</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { val: 'Draft', label: 'Save as Internal Draft', icon: Pencil, color: 'amber' },
+                    { val: 'Completed', label: 'Finalize Clinical Record', icon: CheckCircle, color: 'blue' }
+                  ].map(option => (
+                    <label 
+                      key={option.val}
+                      className={`relative flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                        noteStatus === option.val 
+                          ? `border-${option.color}-500 bg-${option.color}-50/50 shadow-md` 
+                          : 'border-slate-100 bg-white hover:bg-slate-50'
+                      } ${isViewOnly ? 'opacity-60 cursor-default' : 'active:scale-[0.98]'}`}
+                    >
+                      <input type="radio" name="noteStatus" value={option.val} checked={noteStatus === option.val} onChange={() => !isViewOnly && setNoteStatus(option.val)} className="sr-only" disabled={isViewOnly} />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        noteStatus === option.val ? `bg-${option.color}-500 text-white` : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        <option.icon size={20} strokeWidth={2.5} />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-xs font-black uppercase tracking-widest ${noteStatus === option.val ? `text-${option.color}-700` : 'text-slate-500'}`}>
+                          {option.val}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">{option.label}</p>
+                      </div>
+                      {noteStatus === option.val && (
+                        <div className={`w-5 h-5 rounded-full bg-${option.color}-500 flex items-center justify-center text-white`}>
+                          <CheckCircle size={12} strokeWidth={4} />
+                        </div>
+                      )}
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>
-
-            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center sticky bottom-0">
-              {existingNoteId && !isViewOnly ? (
-                <button onClick={handleDeleteNote} className="text-red-600 hover:text-red-800 font-medium px-4 py-2 hover:bg-red-50 rounded-lg transition">
-                  Delete Note
-                </button>
-              ) : <div></div>}
+            
+            {/* Modal Footer */}
+            <div className="p-8 lg:px-10 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-5 sticky bottom-0">
+              <div className="w-full sm:w-auto">
+                {existingNoteId && !isViewOnly && (
+                  <button 
+                    onClick={handleDeleteNote} 
+                    className="w-full sm:w-auto px-6 py-3 text-rose-500 hover:text-white hover:bg-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 border border-rose-100 hover:border-rose-500 shadow-sm"
+                  >
+                    Discard Record
+                  </button>
+                )}
+              </div>
               
-              <div className="flex gap-3">
-                <button onClick={() => setShowNoteModal(false)} className="px-6 py-2.5 hover:bg-gray-200 bg-white border border-gray-200 rounded-xl font-medium text-gray-700 transition">
-                  {isViewOnly ? "Close" : "Cancel"}
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button 
+                  onClick={() => setShowNoteModal(false)} 
+                  className="flex-1 sm:flex-none px-8 py-3.5 bg-slate-50 text-slate-500 hover:bg-slate-100 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 border border-slate-100"
+                >
+                  {isViewOnly ? "Close Record" : "Cancel"}
                 </button>
                 {!isViewOnly && (
-                  <button onClick={saveNotes} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-sm transition flex items-center gap-2">
-                    <CheckCircle size={18} /> {existingNoteId ? "Update File" : "Save File"}
+                  <button 
+                    onClick={saveNotes} 
+                    className="flex-1 sm:flex-none px-10 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-200 hover:shadow-indigo-300 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-3"
+                  >
+                    <Save size={18} strokeWidth={2.5} /> {existingNoteId ? "Update Clinical File" : "Commit to System"}
                   </button>
                 )}
               </div>
