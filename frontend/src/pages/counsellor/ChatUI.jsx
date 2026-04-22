@@ -252,9 +252,13 @@ export default function ChatUI() {
                   </div>
               </div>
 
-              {activeMessages.map((m, idx) => {
-                // FORGIVING MATCH: Any message with role 'counsellor' is treated as 'Me' in this view
-                const isMe = m.senderId === user.id || m.senderRole === 'counsellor' || m.senderRole === user.role;
+              {activeMessages
+                .filter(msg => 
+                  (msg.senderId === user.id && msg.receiverId === activeTarget.id) ||
+                  (msg.senderId === activeTarget.id && msg.receiverId === user.id)
+                )
+                .map((m, idx) => {
+                const isMe = m.senderId === user.id;
                 return (
                   <div 
                     key={m._id || idx} 
