@@ -5,8 +5,8 @@ import { useAuth } from "./AuthContext";
 const ChatContext = createContext();
 ChatContext.displayName = 'ChatContext';
 
-const SOCKET_URL = "http://localhost:5001";
-const API_URL = "http://localhost:5001/api/messages";
+const SOCKET_URL = "http://localhost:5005";
+const API_URL = "http://localhost:5005/api/messages";
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();

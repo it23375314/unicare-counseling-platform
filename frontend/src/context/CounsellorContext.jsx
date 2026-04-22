@@ -1,21 +1,16 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "./ToastContext";
 
 const CounsellorContext = createContext();
-const API_URL = "http://localhost:5001/api";
+const API_URL = "http://localhost:5005/api";
 
 export const useCounsellorContext = () => useContext(CounsellorContext);
 
 export const CounsellorProvider = ({ children }) => {
   const { addToast } = useToast();
-  
   const [counsellors, setCounsellors] = useState([]);
 
-  useEffect(() => {
-    fetchCounsellors();
-  }, []);
-
-  const fetchCounsellors = async () => {
+  const fetchCounsellors = useCallback(async () => {
     try {
         const res = await fetch(`${API_URL}/counsellors`);
         if (res.ok) {
@@ -31,9 +26,13 @@ export const CounsellorProvider = ({ children }) => {
         console.error("Failed to fetch counsellors", e);
         return null;
     }
-  };
+  }, []);
 
-  const addCounsellor = async (counsellorData) => {
+  useEffect(() => {
+    fetchCounsellors();
+  }, [fetchCounsellors]);
+
+  const addCounsellor = useCallback(async (counsellorData) => {
     try {
         const res = await fetch(`${API_URL}/counsellors`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -52,9 +51,9 @@ export const CounsellorProvider = ({ children }) => {
         addToast(e.message || "Error adding counsellor", "error");
         throw e;
     }
-  };
+  }, [addToast]);
 
-  const editCounsellor = async (id, updatedData) => {
+  const editCounsellor = useCallback(async (id, updatedData) => {
     try {
         const res = await fetch(`${API_URL}/counsellors/${id}`, {
             method: "PUT", headers: { "Content-Type": "application/json" },
@@ -74,9 +73,9 @@ export const CounsellorProvider = ({ children }) => {
         addToast(e.message || "Error updating counsellor", "error");
         throw e;
     }
-  };
+  }, [addToast]);
 
-  const deleteCounsellor = async (id) => {
+  const deleteCounsellor = useCallback(async (id) => {
     try {
         const res = await fetch(`${API_URL}/counsellors/${id}`, { method: "DELETE" });
         const json = await res.json();
@@ -88,9 +87,9 @@ export const CounsellorProvider = ({ children }) => {
     } catch(e) {
         addToast("Error deleting counsellor", "error");
     }
-  };
+  }, [addToast]);
 
-  const updateAvailability = async (counsellorId, date, timeSlots) => {
+  const updateAvailability = useCallback(async (counsellorId, date, timeSlots) => {
     try {
         if (!counsellorId) throw new Error("Counsellor ID is missing");
         const res = await fetch(`${API_URL}/counsellors/${counsellorId}/availability`, {
@@ -110,30 +109,34 @@ export const CounsellorProvider = ({ children }) => {
         addToast(e.message || "Error updating availability", "error");
         throw e;
     }
-  };
+  }, [addToast]);
   
-  const getCounsellorById = (id) => {
+  const getCounsellorById = useCallback((id) => {
     return counsellors.find(c => c.id === id);
-  };
+  }, [counsellors]);
 
-  const getCounsellorByEmail = (email) => {
+  const getCounsellorByEmail = useCallback((email) => {
     if (!email) return null;
     return counsellors.find(c => c.email?.toLowerCase() === email.toLowerCase());
-  };
+  }, [counsellors]);
+
+  const value = useMemo(() => ({
+    counsellors,
+    addCounsellor,
+    editCounsellor,
+    deleteCounsellor,
+    updateAvailability,
+    getCounsellorById,
+    getCounsellorByEmail,
+    fetchCounsellors
+  }), [
+    counsellors, addCounsellor, editCounsellor, deleteCounsellor, 
+    updateAvailability, getCounsellorById, getCounsellorByEmail, 
+    fetchCounsellors
+  ]);
 
   return (
-    <CounsellorContext.Provider
-      value={{
-        counsellors,
-        addCounsellor,
-        editCounsellor,
-        deleteCounsellor,
-        updateAvailability,
-        getCounsellorById,
-        getCounsellorByEmail,
-        fetchCounsellors
-      }}
-    >
+    <CounsellorContext.Provider value={value}>
       {children}
     </CounsellorContext.Provider>
   );

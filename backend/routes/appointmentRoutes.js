@@ -14,5 +14,8 @@ router.get('/', appointmentController.getAllAppointments);
 // PATCH appointment status or payment
 router.patch('/:id/status', appointmentController.updateStatus);
 
+// PATCH specific session start
+router.patch('/:id/start-session', appointmentController.startSession);
+
 
 module.exports = router;

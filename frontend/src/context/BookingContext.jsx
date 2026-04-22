@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "./ToastContext";
 import { useAuth } from "./AuthContext";
 
 const BookingContext = createContext();
 
 // Backend API Base URL
-const API_BASE = "http://localhost:5001/api/appointments";
+const API_BASE = "http://localhost:5005/api/appointments";
 
 export const useBooking = () => useContext(BookingContext);
 
@@ -16,14 +16,14 @@ export const BookingProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Data Normalization Helper
-  const normalizeBooking = (b) => ({
+  const normalizeBooking = useCallback((b) => ({
     ...b,
     id: b._id || b.id,
     counsellor: b.counsellorName || b.counsellor, // Maintain BC for UI components
     counsellorImage: b.counsellorImage || b.image // Ensure both naming conventions are supported
-  });
+  }), []);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
       // If student, filter by their email on the backend
@@ -43,30 +43,13 @@ export const BookingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.email, user?.role, normalizeBooking]);
 
   useEffect(() => {
     fetchBookings();
-  }, [user?.email, user?.role]);
+  }, [fetchBookings]);
 
-  // Dynamic slot availability logic
-  const getAvailableSlots = (counsellorName, date, allSlots) => {
-    const bookedTimes = bookings
-      .filter(b => (b.counsellorName === counsellorName || b.counsellor === counsellorName) && b.date === date && b.status !== "Cancelled")
-      .map(b => b.time);
-    
-    return allSlots.map(time => {
-      const isPast = !checkIsFutureTime(date, time);
-      const isBooked = bookedTimes.includes(time);
-      return {
-        time,
-        disabled: isPast || isBooked,
-        reason: isBooked ? "Already booked" : (isPast ? "Time passed" : "")
-      };
-    });
-  };
-
-  const syncBookingUpdate = async (id, payload, successMsg) => {
+  const syncBookingUpdate = useCallback(async (id, payload, successMsg) => {
     try {
       const response = await fetch(`${API_BASE}/${id}/status`, {
         method: "PATCH",
@@ -90,9 +73,9 @@ export const BookingProvider = ({ children }) => {
       addToast(err.message, "error");
       throw err;
     }
-  };
+  }, [normalizeBooking, addToast]);
 
-  const addBooking = async (bookingData) => {
+  const addBooking = useCallback(async (bookingData) => {
     try {
       const response = await fetch(API_BASE, {
         method: "POST",
@@ -114,13 +97,13 @@ export const BookingProvider = ({ children }) => {
       addToast(err.message, "error");
       throw err;
     }
-  };
+  }, [normalizeBooking, addToast]);
 
-  const confirmPayment = async (bookingId) => {
+  const confirmPayment = useCallback(async (bookingId) => {
     await syncBookingUpdate(bookingId, { status: "Confirmed", paymentStatus: "Paid" }, "Payment Successful! Booking Confirmed.");
-  };
+  }, [syncBookingUpdate]);
 
-  const cancelBooking = async (bookingId, reason = "") => {
+  const cancelBooking = useCallback(async (bookingId, reason = "") => {
     try {
       const response = await fetch(`${API_BASE}/${bookingId}/status`, {
         method: "PATCH",
@@ -150,35 +133,52 @@ export const BookingProvider = ({ children }) => {
       addToast(err.message, "error");
       throw err;
     }
-  };
+  }, [normalizeBooking, addToast]);
 
-  const rescheduleBooking = async (bookingId, newDate, newTime) => {
+  const rescheduleBooking = useCallback(async (bookingId, newDate, newTime) => {
     await syncBookingUpdate(bookingId, { date: newDate, time: newTime }, "Appointment Rescheduled Successfully!");
-  };
+  }, [syncBookingUpdate]);
 
   // Counsellor Management functions
-  const acceptBooking = (bookingId) => syncBookingUpdate(bookingId, { status: "Accepted" }, "Booking Accepted!");
-  const rejectBooking = (bookingId, reason) => syncBookingUpdate(bookingId, { status: "Rejected", rejectReason: reason }, "Booking Rejected.");
-  const completeBooking = (bookingId) => syncBookingUpdate(bookingId, { status: "Completed" }, "Session marked as Completed.");
-  const confirmBookingByCounsellor = (bookingId) => syncBookingUpdate(bookingId, { status: "Confirmed" }, "Booking Confirmed!");
-  const cancelBookingByCounsellor = (bookingId, reason) => syncBookingUpdate(bookingId, { status: "Cancelled", rejectReason: reason }, "Booking Cancelled.");
-  const addSessionNotes = (bookingId, notes) => syncBookingUpdate(bookingId, { notes }, "Session notes saved.");
+  const acceptBooking = useCallback((bookingId) => syncBookingUpdate(bookingId, { status: "Accepted" }, "Booking Accepted!"), [syncBookingUpdate]);
+  const rejectBooking = useCallback((bookingId, reason) => syncBookingUpdate(bookingId, { status: "Rejected", rejectReason: reason }, "Booking Rejected."), [syncBookingUpdate]);
+  const completeBooking = useCallback((bookingId) => syncBookingUpdate(bookingId, { status: "Completed" }, "Session marked as Completed."), [syncBookingUpdate]);
+  const confirmBookingByCounsellor = useCallback((bookingId) => syncBookingUpdate(bookingId, { status: "Confirmed" }, "Booking Confirmed!"), [syncBookingUpdate]);
+  const cancelBookingByCounsellor = useCallback((bookingId, reason) => syncBookingUpdate(bookingId, { status: "Cancelled", rejectReason: reason }, "Booking Cancelled."), [syncBookingUpdate]);
+  const addSessionNotes = useCallback((bookingId, notes) => syncBookingUpdate(bookingId, { notes }, "Session notes saved."), [syncBookingUpdate]);
+  
+  const startSession = useCallback(async (bookingId) => {
+    addToast("Starting session... Redirecting to meeting room", "success");
 
-  // Helper functions
-  const checkIsRefundable = (dateStr, timeStr) => {
-    const appointmentDate = parseDateTime(dateStr, timeStr);
-    if (!appointmentDate) return false;
-    const now = new Date();
-    const diffHours = (appointmentDate - now) / (1000 * 60 * 60);
-    return diffHours >= 2;
-  };
+    try {
+      const response = await fetch(`${API_BASE}/${bookingId}/start-session`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" }
+      });
 
-  const checkIsFutureTime = (dateStr, timeStr) => {
-     const requestedDate = parseDateTime(dateStr, timeStr);
-     return requestedDate && requestedDate > new Date();
-  }
+      const resJson = await response.json();
 
-  const parseDateTime = (dateStr, timeStr) => {
+      if (!response.ok) {
+        throw new Error(resJson.message || "Failed to initialize session link");
+      }
+      
+      const normalized = normalizeBooking(resJson.data || resJson);
+      setBookings((prev) => prev.map((b) => (String(b.id) === String(bookingId) ? normalized : b)));
+
+      setTimeout(() => {
+        window.open(normalized.sessionLink, "_blank");
+      }, 1500);
+
+      return normalized;
+    } catch (err) {
+      console.error("Session Start Error:", err);
+      addToast(err.message, "error");
+      throw err;
+    }
+  }, [normalizeBooking, addToast]);
+
+  // Utility logic for slots
+  const parseDateTime = useCallback((dateStr, timeStr) => {
     if (!dateStr || !timeStr) return null;
     try {
       const match12 = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
@@ -198,28 +198,64 @@ export const BookingProvider = ({ children }) => {
       return null;
     }
     return null;
-  }
+  }, []);
+
+  const checkIsFutureTime = useCallback((dateStr, timeStr) => {
+    const requestedDate = parseDateTime(dateStr, timeStr);
+    return requestedDate && requestedDate > new Date();
+  }, [parseDateTime]);
+
+  const checkIsRefundable = useCallback((dateStr, timeStr) => {
+    const appointmentDate = parseDateTime(dateStr, timeStr);
+    if (!appointmentDate) return false;
+    const now = new Date();
+    const diffHours = (appointmentDate - now) / (1000 * 60 * 60);
+    return diffHours >= 2;
+  }, [parseDateTime]);
+
+  const getAvailableSlots = useCallback((counsellorName, date, allSlots) => {
+    const bookedTimes = bookings
+      .filter(b => (b.counsellorName === counsellorName || b.counsellor === counsellorName) && b.date === date && b.status !== "Cancelled")
+      .map(b => b.time);
+    
+    return allSlots.map(time => {
+      const isPast = !checkIsFutureTime(date, time);
+      const isBooked = bookedTimes.includes(time);
+      return {
+        time,
+        disabled: isPast || isBooked,
+        reason: isBooked ? "Already booked" : (isPast ? "Time passed" : "")
+      };
+    });
+  }, [bookings, checkIsFutureTime]);
+
+  const value = useMemo(() => ({
+    bookings,
+    loading,
+    addBooking,
+    confirmPayment,
+    cancelBooking,
+    rescheduleBooking,
+    getAvailableSlots,
+    checkIsRefundable,
+    fetchBookings,
+    acceptBooking,
+    rejectBooking,
+    completeBooking,
+    confirmBookingByCounsellor,
+    cancelBookingByCounsellor,
+    addSessionNotes,
+    startSession
+  }), [
+    bookings, loading, addBooking, confirmPayment, cancelBooking, 
+    rescheduleBooking, getAvailableSlots, checkIsRefundable, 
+    fetchBookings, acceptBooking, rejectBooking, completeBooking, 
+    confirmBookingByCounsellor, cancelBookingByCounsellor, 
+    addSessionNotes, startSession
+  ]);
 
   return (
-    <BookingContext.Provider
-      value={{
-        bookings,
-        loading,
-        addBooking,
-        confirmPayment,
-        cancelBooking,
-        rescheduleBooking,
-        getAvailableSlots,
-        checkIsRefundable,
-        fetchBookings,
-        acceptBooking,
-        rejectBooking,
-        completeBooking,
-        confirmBookingByCounsellor,
-        cancelBookingByCounsellor,
-        addSessionNotes
-      }}
-    >
+    <BookingContext.Provider value={value}>
       {children}
     </BookingContext.Provider>
   );

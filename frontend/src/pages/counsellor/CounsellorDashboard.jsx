@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCounsellorContext } from "../../context/CounsellorContext";
 import { useBooking } from "../../context/BookingContext";
 import { useSessionNotes } from "../../context/SessionNoteContext";
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Activity, Search, Filter, Plus, MessageCircle, Sparkles, AlertTriangle, Eye, Pencil, User, Trash2, Video, Hash } from "lucide-react";
 import toast from "react-hot-toast";
 import FeedbackForm from "../../components/FeedbackForm";
 import PopMsg from "../../components/PopMsg";
@@ -845,7 +845,7 @@ export default function CounsellorDashboard() {
                   const initials = studentDispName.split(' ').map(nm => nm[0] || '').join('').substring(0, 2).toUpperCase() || '??';
                   const profileSrc = b.studentProfile || b.profileImage || getGuestPhoto(safeID || 'default');
                   return (
-                    <div key={b.id || index} className={`relative flex flex-col lg:flex-row glass-blue overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group ${
+                    <div key={b.id || index} className={`relative flex flex-col lg:flex-row items-stretch glass-blue overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 group ${
                         b.status === 'Cancelled' || b.status === 'Rejected' 
                         ? 'border-rose-200' 
                         : b.status === 'Completed'
@@ -856,176 +856,160 @@ export default function CounsellorDashboard() {
                         b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-500' : b.status === 'Completed' ? 'bg-emerald-500' : 'bg-blue-600'
                       }`}></div>
                       
-                      <div className="flex-1 p-10 pl-12">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-8">
-                          <div className="relative group/avatar shrink-0">
-                            <div className={`w-14 h-14 rounded-2xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-2 border-white shadow-md overflow-hidden transition-all duration-500 group-hover/avatar:rotate-3 group-hover/avatar:scale-110`}>
-                              {profileSrc ? (
-                                <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-white font-black text-lg">{initials}</span>
-                              )}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+                      {/* Segment 1: Student Identity (25%) */}
+                      <div className="flex flex-col items-center justify-center p-8 lg:w-1/4 text-center border-b lg:border-b-0 border-gray-100/50 bg-white/10">
+                        <div className="relative group/avatar shrink-0 mb-4">
+                          <div className={`w-20 h-20 rounded-3xl ${getAvatarColor(studentDispName)} flex items-center justify-center border-4 border-white shadow-xl overflow-hidden transition-all duration-500 group-hover/avatar:rotate-6 group-hover/avatar:scale-110`}>
+                            {profileSrc ? (
+                              <img src={profileSrc} alt={studentDispName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-white font-black text-2xl">{initials}</span>
+                            )}
                           </div>
-                          <div>
-                            <h3 className="font-black text-gray-900 text-2xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{studentDispName}</h3>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className="text-[10px] font-black text-blue-600/60 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100/50">
-                                {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A ID")}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className={`sm:ml-auto flex items-center gap-2.5 px-5 py-2 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 shadow-sm transition-all duration-300 ${
-                            b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
-                            b.status === 'In Session' ? 'bg-red-100 text-red-800 border-red-200' : 
-                            b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
-                            b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
-                            'bg-amber-100 text-amber-800 border-amber-200'
-                          }`}>
-                            <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
-                              b.status === 'Completed' ? 'bg-emerald-600' : 
-                              b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-600' : 
-                              b.status === 'In Session' ? 'bg-red-600' : 
-                              b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-600' : 'bg-amber-600'
-                            }`}></span>
-                            {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : b.status === 'In Session' ? 'Session Live' : (b.status || "Pending")}
-                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-white rounded-full shadow-md"></div>
                         </div>
-                        
-                        <div className="grid grid-cols-2 xl:grid-cols-4 gap-6 mt-10">
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-violet-100 hover:bg-violet-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-violet-100/50 flex items-center justify-center text-violet-600 shadow-sm group-hover/item:scale-110 transition-transform"><Activity size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Type</span>
-                              <span className="text-xs font-bold text-gray-800 capitalize leading-none mt-0.5">{b.sessionType || "1-on-1"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm group-hover/item:scale-110 transition-transform"><Calendar size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.date || "N/A"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm group-hover/item:scale-110 transition-transform"><Clock size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Time</span>
-                              <span className="text-xs font-bold text-gray-800 leading-none mt-0.5">{b.time || "N/A"}</span>
-                            </div>
-                          </div>
-                          <div className="group/item flex items-center gap-3.5 bg-white/50 p-2 pr-4 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50/30 transition-all">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm group-hover/item:scale-110 transition-transform"><FileText size={18}/></div>
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">ID</span>
-                              <span className="text-xs font-bold text-gray-800 uppercase leading-none mt-0.5">{safeID ? safeID.substring(0,8) : "N/A"}</span>
-                            </div>
-                          </div>
-                        </div>
-                        {b.rejectReason && <p className="text-sm text-rose-700 mt-6 font-bold bg-rose-100/50 border border-rose-200/50 inline-block px-5 py-2.5 rounded-2xl shadow-sm">Reason: {b.rejectReason}</p>}
+                        <h3 className="font-black text-gray-900 text-xl leading-tight group-hover:text-blue-600 transition-colors tracking-tight mb-2">{studentDispName}</h3>
+                        <span className="text-[10px] font-black text-blue-600/60 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100/50">
+                          {b.studentId || (safeID ? "STU-" + safeID.substring(0,5) : "N/A ID")}
+                        </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto p-10 lg:pl-0 lg:pr-12 lg:ml-auto">
-                        <button 
-                          onClick={() => navigate(`/counsellor/appointment/${b.id}`)} 
-                          className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-gray-100 bg-white text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-700 hover:shadow-xl active:scale-95"
-                        >
-                          Details
-                        </button>
-                      
-                        {b.status === "Pending" && (
-                          <>
-                            <button 
-                              onClick={() => confirmBookingByCounsellor(b.id)} 
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
-                            >
-                              <CheckCircle size={20} strokeWidth={3}/> Confirm
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setPopInput("");
-                                setPopMsg({
-                                  isOpen: true,
-                                  title: "Cancel Appointment",
-                                  message: "Please provide a professional reason for cancelling this student's coordination session.",
-                                  type: 'prompt',
-                                  onConfirm: () => {
-                                    // Note: We need to use the current popInput value, but onConfirm is defined here.
-                                    // Better to use an intermediate function or state to trigger the actual cancellation.
-                                    // For now, I'll pass the logic.
-                                    handleModalCancel(b.id);
-                                  }
-                                });
-                              }}
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
-                            >
-                              <XCircle size={20} strokeWidth={3}/> Cancel
-                            </button>
-                          </>
+                      {/* Segment 2: Session Context (50%) */}
+                      <div className="flex-1 flex flex-col justify-center p-8 lg:px-12 border-b lg:border-b-0 lg:border-r border-gray-100/50">
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="h-0.5 w-8 bg-blue-600/20 rounded-full"></div>
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Session Details</span>
+                          <div className="h-0.5 flex-1 bg-blue-600/10 rounded-full"></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                          <div className="group/item flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-violet-100/50 flex items-center justify-center text-violet-600 shadow-sm border border-violet-100 group-hover/item:scale-110 transition-transform"><Activity size={20}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Type</span>
+                              <span className="text-sm font-black text-gray-800 capitalize leading-none mt-1">{b.sessionType || "1-on-1"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-blue-100/50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 group-hover/item:scale-110 transition-transform"><Calendar size={20}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</span>
+                              <span className="text-sm font-black text-gray-800 leading-none mt-1">{b.date || "N/A"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-indigo-100/50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 group-hover/item:scale-110 transition-transform"><Clock size={20}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</span>
+                              <span className="text-sm font-black text-gray-800 leading-none mt-1">{b.time || "N/A"}</span>
+                            </div>
+                          </div>
+                          <div className="group/item flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-600 shadow-sm border border-slate-100 group-hover/item:scale-110 transition-transform"><Hash size={20}/></div>
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Appointment ID</span>
+                              <span className="text-sm font-black text-gray-800 uppercase leading-none mt-1">{safeID ? safeID.substring(0,8) : "N/A"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {b.rejectReason && (
+                          <div className="mt-8 p-4 rounded-2xl bg-rose-50 border border-rose-100 flex items-start gap-3">
+                            <XCircle size={18} className="text-rose-500 mt-0.5 shrink-0" />
+                            <p className="text-xs text-rose-700 font-bold leading-relaxed"><span className="uppercase text-[10px] tracking-widest opacity-60 mr-2">Declined reason:</span>{b.rejectReason}</p>
+                          </div>
                         )}
+                      </div>
 
-                        {(b.status === "Confirmed" || b.status === "Accepted" || b.status === "In Session") && (
-                          <>
+                      {/* Segment 3: Operations (25%) */}
+                      <div className="lg:w-1/4 p-8 flex flex-col justify-center gap-6 bg-gray-50/10">
+                        <div className={`self-center lg:self-end flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 shadow-sm transition-all duration-300 w-fit ${
+                          b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                          b.status === 'In Session' ? 'bg-rose-50 text-rose-800 border-rose-200' : 
+                          b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
+                          b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
+                          'bg-amber-100 text-amber-800 border-amber-200'
+                        }`}>
+                          <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+                            b.status === 'Completed' ? 'bg-emerald-600' : 
+                            b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-600' : 
+                            b.status === 'In Session' ? 'bg-rose-600' : 
+                            b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-600' : 'bg-amber-600'
+                          }`}></span>
+                          {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : b.status === 'In Session' ? 'Session Live' : (b.status || "Pending")}
+                        </div>
 
-                            {b.status === "In Session" ? (
-                              <div className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 bg-red-50 text-red-600 border-[3px] border-red-200 cursor-default">
-                                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
-                                Session Live
-                              </div>
-                            ) : (
+                        <div className="flex flex-col gap-3">
+                          {/* Primary Session Actions */}
+                          <div className="flex flex-col gap-3">
+                            {b.status === "Pending" && (
                               <button 
-                                className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
-                                onClick={() => startSession(b.id)}
+                                onClick={() => confirmBookingByCounsellor(b.id)} 
+                                className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200 hover:-translate-y-0.5 active:scale-95"
                               >
-                                <Video size={20} strokeWidth={3}/> Start Session
+                                <CheckCircle size={16} strokeWidth={3}/> Confirm
                               </button>
                             )}
-                            <button 
-                              onClick={() => completeBooking(b.id)} 
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-emerald-200"
-                            >
-                              <CheckCircle size={20} strokeWidth={3}/> Complete
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setPopInput("");
-                                setPopMsg({
-                                  isOpen: true,
-                                  title: "Revoke Appointment",
-                                  message: "This session is already confirmed. Cancelling now will alert the student and trigger policy reviews. Provide a reason:",
-                                  type: 'prompt',
-                                  onConfirm: () => handleModalCancel(b.id)
-                                });
-                              }}
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] border-rose-100 text-rose-600 bg-white hover:bg-rose-50 hover:border-rose-400 hover:shadow-xl active:scale-95"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
 
-                        {b.status === "Completed" && (
-                          <>
+                            {(b.status === "Confirmed" || b.status === "Accepted" || b.status === "In Session") && (
+                              <>
+                                {b.status === "In Session" ? (
+                                  <button onClick={() => window.open(b.sessionLink, "_blank")} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-rose-600 text-white hover:bg-rose-700 hover:shadow-rose-200 hover:-translate-y-0.5 active:scale-95">
+                                    <Video size={16} strokeWidth={3}/> Open Room
+                                  </button>
+                                ) : (
+                                  <button onClick={() => startSession(b.id)} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-200 hover:-translate-y-0.5 active:scale-95">
+                                    <Video size={16} strokeWidth={3}/> Start Session
+                                  </button>
+                                )}
+                                <button onClick={() => completeBooking(b.id)} className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-emerald-200 hover:-translate-y-0.5 active:scale-95">
+                                  <CheckCircle size={16} strokeWidth={3}/> Finalize
+                                </button>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Secondary Utility Actions */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <button 
+                              onClick={() => navigate(`/counsellor/appointment/${b.id}`)} 
+                              className="h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border-2 border-gray-100 bg-white text-gray-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 flex items-center justify-center"
+                            >
+                              Details
+                            </button>
+                            
+                            {b.status === "Completed" ? (
+                               <button onClick={() => openNotesModal("booking", b)} className={`h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center ${note ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-gray-50 text-gray-400 border-gray-100'} border-2 active:scale-95`}>
+                                 {note ? "View Note" : "Add Note"}
+                               </button>
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setPopInput("");
+                                  setPopMsg({
+                                    isOpen: true,
+                                    title: b.status === "Pending" ? "Decline Invitation" : "Revoke Session",
+                                    message: b.status === "Pending" ? "Provide a reason for declining:" : "This session is confirmed. Mandatory reason for cancellation:",
+                                    type: 'prompt',
+                                    onConfirm: () => handleModalCancel(b.id)
+                                  });
+                                }}
+                                className="h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border-2 border-rose-50 text-rose-300 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 active:scale-95 flex items-center justify-center"
+                              >
+                                {b.status === "Pending" ? "Decline" : "Cancel"}
+                              </button>
+                            )}
+                          </div>
+
+                          {b.status === "Completed" && (
                             <button 
                               onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
+                              className="w-full h-10 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white active:scale-95 mt-1"
                             >
-                              <MessageCircle size={20} strokeWidth={3}/> Chat
+                              <MessageCircle size={14} strokeWidth={3}/> Patient Chat
                             </button>
-                            <button 
-                              onClick={() => openNotesModal("booking", b)} 
-                              className={`flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 border-[3px] active:scale-95 ${
-                                note 
-                                  ? 'border-sky-200 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-400 hover:shadow-xl' 
-                                  : 'border-sky-500 bg-white text-sky-600 hover:bg-sky-600 hover:text-white hover:shadow-xl shadow-sky-100'
-                              }`}
-                            >
-                              <FileText size={20} strokeWidth={3} /> {note ? "Note" : "Add Note"}
-                            </button>
-                          </>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

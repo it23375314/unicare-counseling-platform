@@ -182,3 +182,33 @@ exports.updateStatus = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+// Start session specialized logic
+exports.startSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Use findByIdAndUpdate for an atomic, validation-safe update
+    const appointment = await Appointment.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          status: 'In Session',
+          sessionLink: `https://meet.jit.si/unicare-${id}`,
+          sessionStartedAt: new Date()
+        }
+      },
+      { new: true, runValidators: false } // runValidators: false ensures partial updates work with legacy data
+    );
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found in our records' });
+    }
+    
+    console.log(`🚀 Session Atomic Start Success: ${appointment._id}`);
+    res.json({ success: true, data: appointment });
+  } catch (err) {
+    console.error("❌ Start Session ERROR:", err);
+    res.status(500).json({ success: false, message: `System error initiating session: ${err.message}` });
+  }
+};

@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
 });
 
 // ─── Start Server ──────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5005;
 
 server.listen(PORT, () => {
   console.log(`🚀 UniCare Backend API running on port ${PORT}`);

@@ -55,7 +55,7 @@ export default function AppointmentProfile() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { bookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking, startSession } = useBooking();
   const { getNoteByBookingId } = useSessionNotes();
 
   const appointment = bookings.find(b => String(b.id) === String(id) || String(b._id) === String(id));
@@ -167,9 +167,17 @@ export default function AppointmentProfile() {
                   {/* General Info */}
                   <div className="flex-1 space-y-8">
                     <div>
-                      <h3 className="text-3xl font-black text-gray-900 leading-tight mb-2">
-                        {appointment.studentName || appointment.name || getGuestName(appointment.id || appointment.studentId || 'default')}
-                      </h3>
+                      <div className="flex items-center gap-4 mb-2">
+                        <h3 className="text-3xl font-black text-gray-900 leading-tight">
+                          {appointment.studentName || appointment.name || getGuestName(appointment.id || appointment.studentId || 'default')}
+                        </h3>
+                        {appointment.status === "In Session" && (
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-100 text-rose-600 rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse border border-rose-200">
+                            <div className="w-1.5 h-1.5 rounded-full bg-rose-600"></div>
+                            Live
+                          </span>
+                        )}
+                      </div>
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-500 rounded-xl text-[10px] font-black tracking-widest uppercase border border-gray-200/50">
                         Student ID: {appointment.studentId || "N/A ID"}
                       </div>
@@ -341,11 +349,32 @@ export default function AppointmentProfile() {
                 {/* State: Confirmed */}
                 {(appointment.status === "Confirmed" || appointment.status === "Accepted") && (
                   <>
+                    <button 
+                      onClick={() => startSession(appointment.id)} 
+                      className="h-16 flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-100 active:scale-95"
+                    >
+                      <ExternalLink size={20} /> Start Video Session
+                    </button>
                     <button onClick={() => completeBooking(appointment.id)} className="h-16 flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-100 active:scale-95">
                       <CheckCircle size={20} /> Finalize Session
                     </button>
                     <button onClick={() => { const reason = window.prompt("Reason for cancellation:"); if(reason !== null) cancelBookingByCounsellor(appointment.id, reason); }} className="h-16 flex items-center justify-center gap-3 bg-white text-rose-600 border border-rose-100 hover:bg-rose-50 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95">
                       <XCircle size={20} /> Cancel Appointment
+                    </button>
+                  </>
+                )}
+
+                {/* State: In Session */}
+                {appointment.status === "In Session" && (
+                  <>
+                    <button 
+                      onClick={() => window.open(appointment.sessionLink, "_blank")} 
+                      className="h-16 flex items-center justify-center gap-3 bg-red-600 text-white hover:bg-red-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-100 active:scale-95"
+                    >
+                      <ExternalLink size={20} /> Open Active Session
+                    </button>
+                    <button onClick={() => completeBooking(appointment.id)} className="h-16 flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                      <CheckCircle size={20} /> Finalize Session
                     </button>
                   </>
                 )}
