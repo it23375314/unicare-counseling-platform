@@ -20,10 +20,16 @@ export const CounsellorProvider = ({ children }) => {
         const res = await fetch(`${API_URL}/counsellors`);
         if (res.ok) {
             const json = await res.json();
-            if(json.success) setCounsellors(json.data.map(c => ({...c, id: c._id || c.id})));
+            if(json.success) {
+               const mapped = json.data.map(c => ({...c, id: c._id || c.id}));
+               setCounsellors(mapped);
+               return mapped;
+            }
         }
+        return null;
     } catch(e) {
         console.error("Failed to fetch counsellors", e);
+        return null;
     }
   };
 
@@ -86,6 +92,7 @@ export const CounsellorProvider = ({ children }) => {
 
   const updateAvailability = async (counsellorId, date, timeSlots) => {
     try {
+        if (!counsellorId) throw new Error("Counsellor ID is missing");
         const res = await fetch(`${API_URL}/counsellors/${counsellorId}/availability`, {
             method: "PATCH", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ date, slots: timeSlots })
@@ -95,9 +102,13 @@ export const CounsellorProvider = ({ children }) => {
         if(json.success) {
             setCounsellors((prev) => prev.map((c) => c.id === counsellorId ? { ...c, availability: json.data.availability } : c));
             addToast("Availability updated!", "success");
+            return json;
+        } else {
+            throw new Error(json.message || "Failed to update API");
         }
     } catch(e) {
-        addToast("Error updating availability", "error");
+        addToast(e.message || "Error updating availability", "error");
+        throw e;
     }
   };
   

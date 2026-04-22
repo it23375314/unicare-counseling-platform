@@ -34,6 +34,7 @@ exports.createAppointment = async (req, res) => {
     const appointment = new Appointment({
       studentName,
       studentEmail,
+      studentId: req.body.studentId, // Ensure ID is captured
       counsellorId,
       counsellorName: finalCounsellorName || "UniCare Expert",
       date,
@@ -160,6 +161,9 @@ exports.updateStatus = async (req, res) => {
     if (paymentStatus) appointment.paymentStatus = paymentStatus;
     if (date) appointment.date = date;
     if (time) appointment.time = time;
+    if (req.body.roomId) appointment.roomId = req.body.roomId;
+    if (req.body.sessionLink) appointment.sessionLink = req.body.sessionLink;
+    if (req.body.sessionStartedAt) appointment.sessionStartedAt = req.body.sessionStartedAt;
 
     await appointment.save();
 

@@ -103,6 +103,7 @@ exports.updateAvailability = async (req, res) => {
       counsellor.availability.push({ date, slots });
     }
 
+    counsellor.markModified('availability');
     await counsellor.save();
     res.status(200).json({ success: true, data: counsellor });
   } catch (err) {

@@ -59,7 +59,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed'],
+    enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed', 'In Session'],
     default: 'Pending'
   },
   paymentStatus: {
@@ -83,6 +83,18 @@ const appointmentSchema = new mongoose.Schema({
   cancelReason: {
     type: String,
     default: ''
+  },
+  roomId: {
+    type: String,
+    required: false
+  },
+  sessionLink: {
+    type: String,
+    required: false
+  },
+  sessionStartedAt: {
+    type: Date,
+    required: false
   }
 }, { timestamps: true });
 

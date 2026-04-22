@@ -65,22 +65,30 @@ app.use('/api/messages',  messageRoutes);
 io.on('connection', (socket) => {
   console.log('🔌 New client connected:', socket.id);
 
-  socket.on('join-chat', (data) => {
-    const { userId } = data;
-    socket.join(userId);
-    console.log(`👤 User joined room: ${userId}`);
+  // Users join a room named after the specific appointmentId
+  socket.on('join-room', (data) => {
+    const { appointmentId } = data;
+    if (appointmentId) {
+      socket.join(appointmentId);
+      console.log(`👤 User ${socket.id} joined room: ${appointmentId}`);
+    }
   });
 
+  // Messages are sent to the room, so both student and counsellor see them
   socket.on('send-message', (data) => {
-    const { receiverId } = data;
-    // Emit to specific receiver's room
-    io.to(receiverId).emit('receive-message', data);
-    console.log('✉️ Message routed to:', receiverId);
+    const { appointmentId } = data;
+    if (appointmentId) {
+      // Emit to everyone in the room except the sender (optional, can use io.to().emit if we want sender to receive it too)
+      socket.to(appointmentId).emit('receive-message', data);
+      console.log('✉️ Message routed to room:', appointmentId);
+    }
   });
 
   socket.on('typing', (data) => {
-    const { receiverId, isTyping } = data;
-    io.to(receiverId).emit('display-typing', { ...data, senderId: socket.id });
+    const { appointmentId, isTyping } = data;
+    if (appointmentId) {
+      socket.to(appointmentId).emit('display-typing', { ...data, senderSocketId: socket.id });
+    }
   });
 
   socket.on('disconnect', () => {

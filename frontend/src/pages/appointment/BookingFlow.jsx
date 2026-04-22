@@ -114,7 +114,8 @@ const BookingFlow = () => {
       price: activeCounsellor.price || 3000,
       status: "Pending",
       paymentStatus: "Unpaid",
-      type: "Video Session"
+      type: "Video Session",
+      studentId: user?.id || "" // Pass logged-in user ID
     };
 
     try {

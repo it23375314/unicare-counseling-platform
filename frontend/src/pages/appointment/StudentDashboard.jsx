@@ -16,7 +16,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Stethoscope,
-  Info
+  Info,
+  MessageCircle
 } from "lucide-react";
 import { useBooking } from "../../context/BookingContext";
 import FeedbackForm from "../../components/FeedbackForm";
@@ -342,6 +343,13 @@ const StudentDashboard = () => {
                                 className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20 transition-all active:scale-95"
                               >
                                 Complete Final Enrollment
+                              </Link>
+                            ) : app.status === "Completed" ? (
+                              <Link 
+                                to={`/chat?appointmentId=${app.id}&id=${app.counsellorId}&name=${encodeURIComponent(app.counsellor)}`}
+                                className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-all active:scale-95"
+                              >
+                                <MessageCircle size={16} /> Start Correspondence
                               </Link>
                             ) : null}
 

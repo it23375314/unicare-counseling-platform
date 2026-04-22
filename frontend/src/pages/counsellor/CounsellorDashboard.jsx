@@ -56,8 +56,8 @@ const getAvatarColor = (name) => {
 
 export default function CounsellorDashboard() {
   const { user } = useAuth();
-  const { getCounsellorById, getCounsellorByEmail, updateAvailability } = useCounsellorContext();
-  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking } = useBooking();
+  const { getCounsellorById, getCounsellorByEmail, updateAvailability, fetchCounsellors } = useCounsellorContext();
+  const { bookings, fetchBookings, confirmBookingByCounsellor, cancelBookingByCounsellor, completeBooking, startSession } = useBooking();
   const { notes, addNote, updateNote, deleteNote, getNoteByBookingId } = useSessionNotes();
 
   const counsellor = getCounsellorById(user?.id) || getCounsellorByEmail(user?.email) || null;
@@ -82,6 +82,14 @@ export default function CounsellorDashboard() {
       fetchBookings();
     }
   }, [activeTab, fetchBookings]);
+
+  // Ensure counsellor is loaded if accessed directly
+  useEffect(() => {
+    if (!counsellor?.id && user?.email && typeof fetchCounsellors === 'function') {
+      fetchCounsellors();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [counsellor?.id, user?.email]);
 
   // For Availability
   const [selectedDate, setSelectedDate] = useState("");
@@ -160,8 +168,23 @@ export default function CounsellorDashboard() {
     }
 
     try {
+      let activeCounsellorId = counsellor?.id;
+      
+      if (!activeCounsellorId && typeof fetchCounsellors === 'function') {
+        const refreshed = await fetchCounsellors();
+        if (refreshed && user?.email) {
+            const found = refreshed.find(c => c.email?.toLowerCase() === user.email.toLowerCase());
+            if (found) activeCounsellorId = found.id || found._id;
+        }
+      }
+      
+      if (!activeCounsellorId) {
+         toast.error("Connecting to server. Please wait or refresh the page.");
+         return;
+      }
+
       if (typeof updateAvailability === 'function') {
-        const promise = updateAvailability(counsellor?.id, selectedDate, selectedSlots);
+        const promise = updateAvailability(activeCounsellorId, selectedDate, selectedSlots);
         if (promise instanceof Promise) await promise;
       }
       toast.success("Availability saved successfully.");
@@ -853,6 +876,7 @@ export default function CounsellorDashboard() {
                           
                           <div className={`sm:ml-auto flex items-center gap-2.5 px-5 py-2 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] border-2 shadow-sm transition-all duration-300 ${
                             b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                            b.status === 'In Session' ? 'bg-red-100 text-red-800 border-red-200' : 
                             b.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 
                             b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-100 text-rose-800 border-rose-200' : 
                             'bg-amber-100 text-amber-800 border-amber-200'
@@ -860,9 +884,10 @@ export default function CounsellorDashboard() {
                             <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${
                               b.status === 'Completed' ? 'bg-emerald-600' : 
                               b.status === 'Cancelled' || b.status === 'Rejected' ? 'bg-rose-600' : 
+                              b.status === 'In Session' ? 'bg-red-600' : 
                               b.status === 'Confirmed' || b.status === 'Accepted' ? 'bg-blue-600' : 'bg-amber-600'
                             }`}></span>
-                            {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : (b.status || "Pending")}
+                            {b.status === 'Accepted' ? 'Confirmed' : b.status === 'Rejected' ? 'Cancelled' : b.status === 'In Session' ? 'Session Live' : (b.status || "Pending")}
                           </div>
                         </div>
                         
@@ -938,20 +963,22 @@ export default function CounsellorDashboard() {
                           </>
                         )}
 
-                        {(b.status === "Confirmed" || b.status === "Accepted") && (
+                        {(b.status === "Confirmed" || b.status === "Accepted" || b.status === "In Session") && (
                           <>
-                            <button 
-                              onClick={() => navigate(`/chat?id=${b.studentId || b.id}&name=${encodeURIComponent(b.studentName || b.name || 'Student')}`)} 
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-indigo-200"
-                            >
-                              <MessageCircle size={20} strokeWidth={3}/> {hasChatHistory(b.studentName || b.name) ? "Chat" : "Start Chat"}
-                            </button>
-                            <button 
-                              className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
-                              onClick={() => toast.success("Joining Clinical Suite...")}
-                            >
-                              <Video size={20} strokeWidth={3}/> Join Session
-                            </button>
+
+                            {b.status === "In Session" ? (
+                              <div className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-md flex items-center justify-center gap-3 bg-red-50 text-red-600 border-[3px] border-red-200 cursor-default">
+                                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+                                Session Live
+                              </div>
+                            ) : (
+                              <button 
+                                className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-blue-200"
+                                onClick={() => startSession(b.id)}
+                              >
+                                <Video size={20} strokeWidth={3}/> Start Session
+                              </button>
+                            )}
                             <button 
                               onClick={() => completeBooking(b.id)} 
                               className="flex-1 lg:flex-none h-14 px-10 rounded-3xl font-black text-sm transition-all shadow-lg flex items-center justify-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-2xl hover:-translate-y-1 active:scale-95 shadow-emerald-200"

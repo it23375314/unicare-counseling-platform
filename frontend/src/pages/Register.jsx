@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../config/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -31,7 +29,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/auth/register`, formData);
+      const res = await axios.post(`/api/auth/register`, formData);
 
       // If counsellor, show pending screen — DO NOT auto-login
       if (res.data.pending) {
@@ -40,7 +38,7 @@ export default function Register() {
       }
 
       // For students/admins: auto-login after registration
-      const loginRes = await axios.post(`${API_URL}/api/auth/login`, {
+      const loginRes = await axios.post(`/api/auth/login`, {
         email: formData.email,
         password: formData.password,
       });
@@ -53,8 +51,9 @@ export default function Register() {
         navigate('/login');
       }
     } catch (err) {
-      const msg = err.response?.data?.msg || err.response?.data?.errors?.[0]?.msg || 'Registration failed';
-      setError(msg);
+      const backendMsg = err.response?.data?.msg || err.response?.data?.errors?.[0]?.msg;
+      const networkMsg = err.message === 'Network Error' ? 'Cannot connect to the server. Please ensure the backend is running.' : 'Registration failed: An unexpected error occurred.';
+      setError(backendMsg || networkMsg);
     } finally {
       setLoading(false);
     }
